@@ -37,6 +37,9 @@ mac80211_hostapd_setup_base() {
 				ht_capab="$ht_capab[$cap]"
 			done
 			[ -n "$ht_capab" ] && append base_cfg "ht_capab=$ht_capab" "$N"
+			config_get obss_interval "$device" obss_interval
+			[ "$obss_interval" -gt 0 ] && append base_cfg "obss_interval=$obss_interval" "$N"
+
 		}
 	}
 
