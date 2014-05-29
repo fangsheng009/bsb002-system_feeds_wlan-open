@@ -3,12 +3,13 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=qca-backports
 
-PKG_VERSION:=g919b972-kac172d6
-PKG_RELEASE:=1
-PKG_SOURCE_URL:=http://tritium.qca.qualcomm.com/mirror/openwrt
-PKG_BACKPORT_VERSION:=
-PKG_MD5SUM:=f161d5afab70789b8d06928626dde2bb
+PKG_BACKPORTS_REV:=919b972
+PKG_KERNEL_REV:=ac172d6
+PKG_VERSION:=g$(PKG_BACKPORTS_REV)-k$(PKG_KERNEL_REV)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
+PKG_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
+PKG_RELEASE:=1
+
 PKG_BUILD_DIR:=$(KERNEL_BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_BUILD_PARALLEL:=1
 
@@ -118,6 +119,38 @@ define Download/qca-ath10k-firmware
   #MIRROR_MD5SUM:=$(PKG_ATH10K_LINUX_FIRMWARE_MIRROR_MD5SUM)
 endef
 $(eval $(call Download,qca-ath10k-firmware))
+
+PKG_BACKPORTS_KERNEL_GIT:=https://github.com/kvalo/ath.git
+PKG_BACKPORTS_GIT:=git://git.kernel.org/pub/scm/linux/kernel/git/backports/backports.git
+define DownloadBackports
+  $(eval $(Download/Defaults))
+  $(eval $(Download/backports))
+
+  $(foreach dep,$(DOWNLOAD_RDEP),
+    $(dep): $(DL_DIR)/$(FILE)
+  )
+  download: $(DL_DIR)/$(FILE)
+
+  $(DL_DIR)/$(FILE):
+	mkdir -p $(TMP_DIR)/dl/$(PKG_NAME)-$(PKG_VERSION)
+	git clone $(PKG_BACKPORTS_KERNEL_GIT) $(TMP_DIR)/dl/$(PKG_NAME)-kernel
+	(cd $(TMP_DIR)/dl/$(PKG_NAME)-kernel && git checkout $(PKG_KERNEL_REV))
+	git clone $(PKG_BACKPORTS_GIT) $(TMP_DIR)/dl/$(PKG_NAME)-source
+	cp files/copy-list.hwsim $(TMP_DIR)/dl/$(PKG_NAME)-source
+	(cd $(TMP_DIR)/dl/$(PKG_NAME)-source && git checkout $(PKG_BACKPORTS_REV) && \
+	./gentree.py --clean --git-revision $(PKG_KERNEL_REV) --copy-list ./copy-list.hwsim \
+		$(TMP_DIR)/dl/$(PKG_NAME)-kernel $(TMP_DIR)/dl/$(SUBDIR))
+	(cd $(TMP_DIR)/dl; $(call dl_pack,$(TMP_DIR)/dl/$(FILE),$(SUBDIR)))
+	mv $(TMP_DIR)/dl/$(FILE) $(DL_DIR)
+	rm -rf $(TMP_DIR)/dl/$(PKG_NAME)-kernel $(TMP_DIR)/dl/$(PKG_NAME)-source
+
+endef
+
+define Download/backports
+  FILE:=$(PKG_SOURCE)
+  SUBDIR:=$(PKG_SUBDIR)
+endef
+$(eval $(call DownloadBackports,backports))
 
 define KernelPackage/qca-ath/config
   if PACKAGE_kmod-qca-ath
