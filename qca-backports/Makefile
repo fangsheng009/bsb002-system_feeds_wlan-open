@@ -1,15 +1,15 @@
 include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
-PKG_NAME:=qca_backports
+PKG_NAME:=qca-backports
 
-PKG_VERSION:=20140117
+PKG_VERSION:=g919b972-kac172d6
 PKG_RELEASE:=1
-PKG_SOURCE_URL:=https://www.kernel.org/pub/linux/kernel/projects/backports/2014/01/17
+PKG_SOURCE_URL:=http://tritium.qca.qualcomm.com/mirror/openwrt
 PKG_BACKPORT_VERSION:=
-PKG_MD5SUM:=913e78a2c42488cd419e8cefa86434db
-PKG_SOURCE:=backports-$(PKG_VERSION).tar.gz
-PKG_BUILD_DIR:=$(KERNEL_BUILD_DIR)/backports-$(PKG_VERSION)
+PKG_MD5SUM:=f161d5afab70789b8d06928626dde2bb
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
+PKG_BUILD_DIR:=$(KERNEL_BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_BUILD_PARALLEL:=1
 
 PKG_DRIVERS = ath9k-common ath9k ath9k-htc ath10k ath
@@ -37,7 +37,7 @@ endef
 define KernelPackage/qca-cfg80211
   $(call KernelPackage/qca-mac80211/Default)
   TITLE:=cfg80211 - wireless configuration API
-  DEPENDS+= +iw
+  DEPENDS+= +iw +kmod-crypto-core +kmod-crypto-manager
   FILES:= \
 	$(PKG_BUILD_DIR)/compat/compat.ko \
 	$(PKG_BUILD_DIR)/net/wireless/cfg80211.ko
@@ -51,7 +51,7 @@ endef
 define KernelPackage/qca-mac80211
   $(call KernelPackage/qca-mac80211/Default)
   TITLE:=Linux 802.11 Wireless Networking Stack
-  DEPENDS+= +kmod-crypto-core +kmod-crypto-arc4 +kmod-crypto-aes +kmod-qca-cfg80211
+  DEPENDS+= +kmod-crypto-core +kmod-crypto-arc4 +kmod-crypto-aes +kmod-qca-cfg80211 +hostapd-common
   KCONFIG:=\
 	CONFIG_AVERAGE=y
   FILES:= $(PKG_BUILD_DIR)/net/mac80211/mac80211.ko
@@ -316,15 +316,9 @@ ifneq ($(CONFIG_PACKAGE_kmod-qca-cfg80211)$(CONFIG_PACKAGE_kmod-lib80211),)
  endef
 endif
 
-ifeq ($(CONFIG_TARGET_ipq806x),y)
-  define Build/Configure
-	cmp $(PKG_BUILD_DIR)/include/linux/ath9k_platform.h $(LINUX_DIR)/source/include/linux/ath9k_platform.h
-  endef
-else
-  define Build/Configure
+define Build/Configure
 	cmp $(PKG_BUILD_DIR)/include/linux/ath9k_platform.h $(LINUX_DIR)/include/linux/ath9k_platform.h
-  endef
-endif
+endef
 
 define Build/Compile
 	$(SH_FUNC) var2file "$(call shvar,mac80211_config)" $(PKG_BUILD_DIR)/.config
@@ -346,7 +340,9 @@ endef
 
 define KernelPackage/qca-cfg80211/install
 	$(INSTALL_DIR) $(1)/lib/wifi
+	$(INSTALL_DIR) $(1)/lib/wifi $(1)/lib/netifd/wireless
 	$(INSTALL_DATA) ./files/lib/wifi/mac80211.sh $(1)/lib/wifi
+	$(INSTALL_BIN) ./files/lib/netifd/wireless/mac80211.sh $(1)/lib/netifd/wireless
 endef
 
 define KernelPackage/qca-ath9k-htc/install
