@@ -42,7 +42,6 @@ define KernelPackage/qca-cfg80211
   FILES:= \
 	$(PKG_BUILD_DIR)/compat/compat.ko \
 	$(PKG_BUILD_DIR)/net/wireless/cfg80211.ko
-  AUTOLOAD:=$(call AutoLoad,20,compat cfg80211)
 endef
 
 define KernelPackage/qca-cfg80211/description
@@ -52,11 +51,10 @@ endef
 define KernelPackage/qca-mac80211
   $(call KernelPackage/qca-mac80211/Default)
   TITLE:=Linux 802.11 Wireless Networking Stack
-  DEPENDS+= +kmod-crypto-core +kmod-crypto-arc4 +kmod-crypto-aes +kmod-qca-cfg80211 +hostapd-common
+  DEPENDS+= +kmod-crypto-arc4 +kmod-crypto-aes +kmod-qca-cfg80211 +hostapd-common
   KCONFIG:=\
 	CONFIG_AVERAGE=y
   FILES:= $(PKG_BUILD_DIR)/net/mac80211/mac80211.ko
-  AUTOLOAD:=$(call AutoLoad,21,mac80211)
   MENU:=1
 endef
 
@@ -178,7 +176,6 @@ define KernelPackage/qca-ath
   TITLE:=QCA common driver part
   DEPENDS+= @PCI_SUPPORT||USB_SUPPORT||TARGET_ar71xx||TARGET_atheros +kmod-qca-mac80211
   FILES:=$(PKG_BUILD_DIR)/drivers/net/wireless/ath/ath.ko
-  AUTOLOAD:=$(call AutoLoad,26,ath)
   MENU:=1
 endef
 
@@ -194,7 +191,6 @@ define KernelPackage/qca-ath9k-common
   FILES:= \
 	$(PKG_BUILD_DIR)/drivers/net/wireless/ath/ath9k/ath9k_common.ko \
 	$(PKG_BUILD_DIR)/drivers/net/wireless/ath/ath9k/ath9k_hw.ko
-  AUTOLOAD:=$(call AutoLoad,27,ath9k_hw ath9k_common)
 endef
 
 define KernelPackage/qca-ath9k
@@ -204,7 +200,7 @@ define KernelPackage/qca-ath9k
   DEPENDS+= @PCI_SUPPORT||TARGET_ar71xx +kmod-qca-ath9k-common
   FILES:= \
 	$(PKG_BUILD_DIR)/drivers/net/wireless/ath/ath9k/ath9k.ko
-  AUTOLOAD:=$(call AutoLoad,28,ath9k)
+  AUTOLOAD:=$(call AutoProbe,ath9k)
 endef
 
 define KernelPackage/qca-ath9k/description
@@ -219,7 +215,7 @@ define KernelPackage/qca-ath9k-htc
   DEPENDS+= @USB_SUPPORT +kmod-qca-ath9k-common +kmod-usb-core
   FILES:= \
 	$(PKG_BUILD_DIR)/drivers/net/wireless/ath/ath9k/ath9k_htc.ko
-  AUTOLOAD:=$(call AutoLoad,55,ath9k_htc)
+  AUTOLOAD:=$(call AutoProbe,ath9k_htc)
 endef
 
 define KernelPackage/qca-ath9k-htc/description
@@ -246,7 +242,7 @@ define KernelPackage/qca-ath10k
   FILES:= \
 	$(PKG_BUILD_DIR)/drivers/net/wireless/ath/ath10k/ath10k_core.ko \
 	$(PKG_BUILD_DIR)/drivers/net/wireless/ath/ath10k/ath10k_pci.ko
-  AUTOLOAD:=$(call AutoLoad,55,ath10k_core ath10k_pci)
+  AUTOLOAD:=$(call AutoProbe,ath10k_core ath10k_pci)
   MENU:=1
 endef
 
