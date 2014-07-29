@@ -3,9 +3,15 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=qca-backports
 
-PKG_BACKPORTS_REV:=a717694
-PKG_KERNEL_REV:=930ab55
-PKG_VERSION:=g$(PKG_BACKPORTS_REV)-k$(PKG_KERNEL_REV)
+PKG_BACKPORTS_VERSION:=a717694
+PKG_BACKPORTS_SOURCE_URL:=git://git.kernel.org/pub/scm/linux/kernel/git/backports/backports.git
+PKG_BACKPORTS_BRANCH:=master
+
+PKG_KERNEL_VERSION:=930ab55
+PKG_KERNEL_SOURCE_URL:=https://github.com/kvalo/ath.git
+PKG_KERNEL_BRANCH:=ath-qca
+
+PKG_VERSION:=g$(PKG_BACKPORTS_VERSION)-k$(PKG_KERNEL_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_RELEASE:=1
@@ -83,6 +89,7 @@ endef
 
 PKG_LINUX_FIRMWARE_NAME:=linux-firmware
 PKG_LINUX_FIRMWARE_VERSION:=7d0c7a8cfd78388d90cc784a185b19dcbdbce824
+PKG_LINUX_FIRMWARE_BRANCH:=master
 PKG_LINUX_FIRMWARE_SOURCE:=$(PKG_LINUX_FIRMWARE_NAME)-$(PKG_LINUX_FIRMWARE_VERSION).tar.bz2
 PKG_LINUX_FIRMWARE_PROTO:=git
 PKG_LINUX_FIRMWARE_SOURCE_URL:=git://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git
@@ -102,11 +109,11 @@ $(eval $(call Download,qca-linux-firmware))
 
 PKG_ATH10K_LINUX_FIRMWARE_NAME:=ath10k-firmware
 PKG_ATH10K_LINUX_FIRMWARE_VERSION:=38eeda3
+PKG_ATH10K_LINUX_FIRMWARE_BRANCH:=master
 PKG_ATH10K_LINUX_FIRMWARE_SOURCE:=$(PKG_ATH10K_LINUX_FIRMWARE_NAME)-$(PKG_ATH10K_LINUX_FIRMWARE_VERSION).tar.bz2
 PKG_ATH10K_LINUX_FIRMWARE_PROTO:=git
 PKG_ATH10K_LINUX_FIRMWARE_SOURCE_URL:=https://github.com/kvalo/ath10k-firmware.git
 PKG_ATH10K_LINUX_FIRMWARE_SUBDIR:=$(PKG_ATH10K_LINUX_FIRMWARE_NAME)-$(PKG_ATH10K_LINUX_FIRMWARE_VERSION)
-#PKG_ATH10K_LINUX_FIRMWARE_MIRROR_MD5SUM:=?
 
 define Download/qca-ath10k-firmware
   FILE:=$(PKG_ATH10K_LINUX_FIRMWARE_SOURCE)
@@ -118,8 +125,6 @@ define Download/qca-ath10k-firmware
 endef
 $(eval $(call Download,qca-ath10k-firmware))
 
-PKG_BACKPORTS_KERNEL_GIT:=https://github.com/kvalo/ath.git
-PKG_BACKPORTS_GIT:=git://git.kernel.org/pub/scm/linux/kernel/git/backports/backports.git
 define DownloadBackports
   $(eval $(Download/Defaults))
   $(eval $(Download/backports))
@@ -131,12 +136,12 @@ define DownloadBackports
 
   $(DL_DIR)/$(FILE):
 	mkdir -p $(TMP_DIR)/dl/$(PKG_NAME)-$(PKG_VERSION)
-	git clone $(PKG_BACKPORTS_KERNEL_GIT) $(TMP_DIR)/dl/$(PKG_NAME)-kernel
-	(cd $(TMP_DIR)/dl/$(PKG_NAME)-kernel && git checkout $(PKG_KERNEL_REV))
-	git clone $(PKG_BACKPORTS_GIT) $(TMP_DIR)/dl/$(PKG_NAME)-source
+	git clone $(PKG_KERNEL_SOURCE_URL) $(TMP_DIR)/dl/$(PKG_NAME)-kernel
+	(cd $(TMP_DIR)/dl/$(PKG_NAME)-kernel && git checkout $(PKG_KERNEL_VERSION))
+	git clone $(PKG_BACKPORTS_SOURCE_URL) $(TMP_DIR)/dl/$(PKG_NAME)-source
 	cp files/copy-list.hwsim $(TMP_DIR)/dl/$(PKG_NAME)-source
-	(cd $(TMP_DIR)/dl/$(PKG_NAME)-source && git checkout $(PKG_BACKPORTS_REV) && \
-	./gentree.py --clean --git-revision $(PKG_KERNEL_REV) --copy-list ./copy-list.hwsim \
+	(cd $(TMP_DIR)/dl/$(PKG_NAME)-source && git checkout $(PKG_BACKPORTS_VERSION) && \
+	./gentree.py --clean --git-revision $(PKG_KERNEL_VERSION) --copy-list ./copy-list.hwsim \
 		$(TMP_DIR)/dl/$(PKG_NAME)-kernel $(TMP_DIR)/dl/$(SUBDIR))
 	(cd $(TMP_DIR)/dl; $(call dl_pack,$(TMP_DIR)/dl/$(FILE),$(SUBDIR)))
 	mv $(TMP_DIR)/dl/$(FILE) $(DL_DIR)
