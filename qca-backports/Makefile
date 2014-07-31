@@ -125,6 +125,19 @@ define Download/qca-ath10k-firmware
 endef
 $(eval $(call Download,qca-ath10k-firmware))
 
+ifneq ($(CONFIG_KERNEL_GIT_CLONE_URI),)
+# --reference option doesn't work on git trees synced with "repo", so instead
+# we're manually using clone & fetch to speed up sync time
+  define FastCloneKernel
+	git clone $(CONFIG_KERNEL_GIT_CLONE_URI) $(2)
+	(cd $(2); git remote add src $(1); git fetch src)
+  endef
+else
+  define FastCloneKernel
+	git clone $(1) $(2)
+  endef
+endif
+
 define DownloadBackports
   $(eval $(Download/Defaults))
   $(eval $(Download/backports))
@@ -136,7 +149,7 @@ define DownloadBackports
 
   $(DL_DIR)/$(FILE):
 	mkdir -p $(TMP_DIR)/dl/$(PKG_NAME)-$(PKG_VERSION)
-	git clone $(PKG_KERNEL_SOURCE_URL) $(TMP_DIR)/dl/$(PKG_NAME)-kernel
+	$(call FastCloneKernel,$(PKG_KERNEL_SOURCE_URL),$(TMP_DIR)/dl/$(PKG_NAME)-kernel)
 	(cd $(TMP_DIR)/dl/$(PKG_NAME)-kernel && git checkout $(PKG_KERNEL_VERSION))
 	git clone $(PKG_BACKPORTS_SOURCE_URL) $(TMP_DIR)/dl/$(PKG_NAME)-source
 	cp files/copy-list.hwsim $(TMP_DIR)/dl/$(PKG_NAME)-source
