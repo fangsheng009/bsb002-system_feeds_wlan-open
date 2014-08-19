@@ -304,7 +304,7 @@ config-$(CONFIG_PCI) += ATH9K_PCI
 config-$(CONFIG_QCA_ATH_USER_REGD) += ATH_USER_REGD
 
 config-$(call config_package,qca-ath9k-htc) += ATH9K_HTC
-config-$(call config_package,qca-ath10k) += ATH10K ATH10K_PCI
+config-$(call config_package,qca-ath10k) += ATH10K ATH10K_PCI ATH10K_DFS_CERTIFIED
 
 config-$(CONFIG_LEDS_TRIGGERS) += MAC80211_LEDS
 
