@@ -55,5 +55,6 @@ drivers/net/wireless/ath/regd.c
 drivers/net/wireless/ath/regd_common.h
 drivers/net/wireless/ath/regd.h
 drivers/net/wireless/ath/reg.h
+drivers/net/wireless/ath/spectral_common.h
 drivers/net/wireless/mac80211_hwsim.c
 drivers/net/wireless/mac80211_hwsim.h
