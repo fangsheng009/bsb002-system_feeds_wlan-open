@@ -24,6 +24,7 @@ PKG_DRIVERS = ath9k-common ath9k ath9k-htc ath10k ath
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_PACKAGE_kmod-qca-mac80211 \
 	$(patsubst %,CONFIG_PACKAGE_kmod-qca-%,$(PKG_DRIVERS)) \
+	CONFIG_PACKAGE_QCA_MAC80211_MESSAGE_TRACING \
 	CONFIG_PACKAGE_QCA_MAC80211_DEBUGFS \
 	CONFIG_PACKAGE_QCA_MAC80211_MESH \
 	CONFIG_PACKAGE_QCA_ATH_DEBUG \
@@ -80,6 +81,65 @@ define KernelPackage/qca-mac80211/config
 		bool "Enable 802.11s mesh support"
 		default y
 
+	config PACKAGE_QCA_MAC80211_MESSAGE_TRACING
+		bool "Enable mac80211 message tracing"
+		default n
+		help
+		  Select this option to enable tracing.
+
+	config PACKAGE_QCA_MAC80211_DEBUG_MENU
+		bool "Select mac80211 debugging features"
+		default n
+		help
+		  This option collects various mac80211 debug settings.
+
+	menu "mac80211 debugging features"
+		depends on PACKAGE_QCA_MAC80211_DEBUG_MENU
+
+	config PACKAGE_QCA_MAC80211_VERBOSE_DEBUG
+		bool "Verbose debugging output"
+		default n
+		help
+		  Selecting this option causes mac80211 to print out
+		  many debugging messages.
+
+	config PACKAGE_QCA_MAC80211_MLME_DEBUG
+		bool "Verbose managed MLME output"
+		default n
+		help
+		  Selecting this option causes mac80211 to print out
+		  debugging messages for the managed-mode MLME.
+
+	config PACKAGE_QCA_MAC80211_STA_DEBUG
+		bool "Verbose station debugging"
+		default n
+		help
+		  Selecting this option causes mac80211 to print out
+		  debugging messages for station addition/removal.
+
+	config PACKAGE_QCA_MAC80211_HT_DEBUG
+		bool "Verbose HT debugging"
+		default n
+		help
+		  This option enables 802.11n High Throughput features
+		  debug tracing output.
+
+	config PACKAGE_QCA_MAC80211_IBSS_DEBUG
+		bool "Verbose IBSS debugging"
+		default n
+		help
+		  Selecting this option causes mac80211 to print out
+		  very verbose IBSS debugging messages.
+
+	config PACKAGE_QCA_MAC80211_PS_DEBUG
+		bool "Verbose powersave mode debugging"
+		default n
+		help
+		  Selecting this option causes mac80211 to print out very
+		  verbose power save mode debugging messages (when mac80211
+		  is an AP and has power saving stations.)
+
+	endmenu
   endif
 endef
 
@@ -294,6 +354,15 @@ ifdef CONFIG_PACKAGE_QCA_MAC80211_DEBUGFS
 	ATH9K_HTC_DEBUGFS \
 	ATH10K_DEBUGFS
 endif
+
+config-$(CONFIG_PACKAGE_QCA_MAC80211_MESSAGE_TRACING) += MAC80211_MESSAGE_TRACING ATH10K_TRACING
+config-$(CONFIG_PACKAGE_QCA_MAC80211_DEBUG_MENU) += MAC80211_DEBUG_MENU
+config-$(CONFIG_PACKAGE_QCA_MAC80211_VERBOSE_DEBUG) += MAC80211_VERBOSE_DEBUG
+config-$(CONFIG_PACKAGE_QCA_MAC80211_MLME_DEBUG) += MAC80211_MLME_DEBUG
+config-$(CONFIG_PACKAGE_QCA_MAC80211_STA_DEBUG) += MAC80211_STA_DEBUG
+config-$(CONFIG_PACKAGE_QCA_MAC80211_HT_DEBUG) += MAC80211_HT_DEBUG
+config-$(CONFIG_PACKAGE_QCA_MAC80211_IBSS_DEBUG) += MAC80211_IBSS_DEBUG
+config-$(CONFIG_PACKAGE_QCA_MAC80211_PS_DEBUG) += MAC80211_PS_DEBUG
 
 config-$(call config_package,qca-ath) += ATH_CARDS ATH_COMMON
 config-$(CONFIG_PACKAGE_QCA_ATH_DEBUG) += ATH_DEBUG ATH10K_DEBUG
