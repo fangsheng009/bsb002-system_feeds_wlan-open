@@ -302,7 +302,9 @@ config-$(call config_package,qca-ath9k) += ATH9K
 config-$(call config_package,qca-ath9k-common) += ATH9K_COMMON
 config-$(CONFIG_TARGET_ar71xx) += ATH9K_AHB
 config-$(CONFIG_PCI) += ATH9K_PCI
-config-$(CONFIG_QCA_ATH_USER_REGD) += ATH_USER_REGD
+config-$(CONFIG_QCA_ATH_USER_REGD) += ATH_USER_REGD \
+				      ATH_REG_DYNAMIC_USER_REG_HINTS \
+				      ATH_REG_DYNAMIC_USER_CERT_TESTING
 
 config-$(call config_package,qca-ath9k-htc) += ATH9K_HTC
 config-$(call config_package,qca-ath10k) += ATH10K ATH10K_PCI
