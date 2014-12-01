@@ -1,8 +1,6 @@
-diff --git a/drivers/net/wireless/ath/ath10k/mac.c b/drivers/net/wireless/ath/ath10k/mac.c
-index feba92e..0b6d9db 100644
 --- a/drivers/net/wireless/ath/ath10k/mac.c
 +++ b/drivers/net/wireless/ath/ath10k/mac.c
-@@ -1330,6 +1330,15 @@ static void ath10k_peer_assoc_h_vht(struct ath10k *ar,
+@@ -1362,6 +1362,15 @@ static void ath10k_peer_assoc_h_vht(stru
  		return;
  
  	arg->peer_flags |= WMI_PEER_VHT;
@@ -18,7 +16,7 @@ index feba92e..0b6d9db 100644
  	arg->peer_vht_caps = vht_cap->cap;
  
  	ampdu_factor = (vht_cap->cap &
-@@ -1394,7 +1403,12 @@ static void ath10k_peer_assoc_h_phymode(struct ath10k *ar,
+@@ -1427,7 +1436,12 @@ static void ath10k_peer_assoc_h_phymode(
  
  	switch (ar->hw->conf.chandef.chan->band) {
  	case IEEE80211_BAND_2GHZ:
@@ -32,7 +30,7 @@ index feba92e..0b6d9db 100644
  			if (sta->bandwidth == IEEE80211_STA_RX_BW_40)
  				phymode = MODE_11NG_HT40;
  			else
-@@ -4819,7 +4833,9 @@ int ath10k_mac_register(struct ath10k *ar)
+@@ -4989,7 +5003,9 @@ int ath10k_mac_register(struct ath10k *a
  		band->bitrates = ath10k_g_rates;
  		band->ht_cap = ht_cap;
  
@@ -43,21 +41,18 @@ index feba92e..0b6d9db 100644
  
  		ar->hw->wiphy->bands[IEEE80211_BAND_2GHZ] = band;
  	}
-@@ -4891,6 +4907,9 @@ int ath10k_mac_register(struct ath10k *ar)
- 	ar->hw->wiphy->max_remain_on_channel_duration = 5000;
- 
+@@ -5060,6 +5076,8 @@ int ath10k_mac_register(struct ath10k *a
  	ar->hw->wiphy->flags |= WIPHY_FLAG_AP_UAPSD;
-+
+ 	ar->hw->wiphy->features |= NL80211_FEATURE_AP_MODE_CHAN_WIDTH_CHANGE;
+ 
 +	if (PHY_2G_256QAM_CAPBILITY)
 +		ar->hw->wiphy->features |= NL80211_FEATURE_256QAM_2G;
  	/*
  	 * on LL hardware queues are managed entirely by the FW
  	 * so we only advertise to mac we can do the queues thing
-diff --git a/drivers/net/wireless/ath/ath10k/mac.h b/drivers/net/wireless/ath/ath10k/mac.h
-index 965c511..f4e0bb7 100644
 --- a/drivers/net/wireless/ath/ath10k/mac.h
 +++ b/drivers/net/wireless/ath/ath10k/mac.h
-@@ -26,6 +26,12 @@ struct ath10k_generic_iter {
+@@ -28,6 +28,12 @@ struct ath10k_generic_iter {
  	int ret;
  };
  
@@ -70,11 +65,9 @@ index 965c511..f4e0bb7 100644
  struct ath10k *ath10k_mac_create(size_t priv_size);
  void ath10k_mac_destroy(struct ath10k *ar);
  int ath10k_mac_register(struct ath10k *ar);
-diff --git a/drivers/net/wireless/ath/ath10k/wmi.h b/drivers/net/wireless/ath/ath10k/wmi.h
-index a38d788..669e38a 100644
 --- a/drivers/net/wireless/ath/ath10k/wmi.h
 +++ b/drivers/net/wireless/ath/ath10k/wmi.h
-@@ -4317,7 +4317,12 @@ struct wmi_peer_set_q_empty_callback_cmd {
+@@ -4322,7 +4322,12 @@ struct wmi_peer_set_q_empty_callback_cmd
  #define WMI_PEER_SPATIAL_MUX    0x00200000
  #define WMI_PEER_VHT            0x02000000
  #define WMI_PEER_80MHZ          0x04000000
@@ -88,23 +81,21 @@ index a38d788..669e38a 100644
  
  /*
   * Peer rate capabilities.
-diff --git a/include/uapi/linux/nl80211.h b/include/uapi/linux/nl80211.h
-index 576a0d9..d434e71 100644
 --- a/include/uapi/linux/nl80211.h
 +++ b/include/uapi/linux/nl80211.h
-@@ -3961,6 +3961,7 @@ enum nl80211_ap_sme_features {
-  * @NL80211_FEATURE_AP_MODE_CHAN_WIDTH_CHANGE: This driver supports dynamic
-  *	channel bandwidth change (e.g., HT 20 <-> 40 MHz channel) during the
-  *	lifetime of a BSS.
+@@ -4070,6 +4070,7 @@ enum nl80211_ap_sme_features {
+  * @NL80211_FEATURE_MAC_ON_CREATE: Device supports configuring
+  *	the vif's MAC address upon creation.
+  *	See 'macaddr' field in the vif_params (cfg80211.h).
 + * @NL80211_FEATURE_256QAM_2G: Device supports 256QAM on 2.4G band
   */
  enum nl80211_feature_flags {
  	NL80211_FEATURE_SK_TX_STATUS			= 1 << 0,
-@@ -3982,6 +3983,7 @@ enum nl80211_feature_flags {
- 	NL80211_FEATURE_USERSPACE_MPM			= 1 << 16,
- 	NL80211_FEATURE_ACTIVE_MONITOR			= 1 << 17,
- 	NL80211_FEATURE_AP_MODE_CHAN_WIDTH_CHANGE	= 1 << 18,
-+	NL80211_FEATURE_256QAM_2G                       = 1 << 26,
+@@ -4100,6 +4101,7 @@ enum nl80211_feature_flags {
+ 	NL80211_FEATURE_DYNAMIC_SMPS			= 1 << 25,
+ 	NL80211_FEATURE_SUPPORTS_WMM_ADMISSION		= 1 << 26,
+ 	NL80211_FEATURE_MAC_ON_CREATE			= 1 << 27,
++	NL80211_FEATURE_256QAM_2G                       = 1 << 28,
  };
  
  /**
