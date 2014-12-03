@@ -1,22 +1,22 @@
 --- a/drivers/net/wireless/ath/ath10k/mac.c
 +++ b/drivers/net/wireless/ath/ath10k/mac.c
-@@ -1362,6 +1362,15 @@ static void ath10k_peer_assoc_h_vht(stru
+@@ -1330,6 +1330,15 @@ static void ath10k_peer_assoc_h_vht(stru
  		return;
  
  	arg->peer_flags |= WMI_PEER_VHT;
 +
 +	if (ar->hw->conf.chandef.chan->band == IEEE80211_BAND_2GHZ) {
 +		arg->peer_flags |= WMI_PEER_VHT_2G;
-+		if (INTEROP_2G_256QAM_CAPBILITY)
-+			arg->peer_flags |=
-+				(WMI_PEER_VHT_INTEROP_DISABLE_AMSDU_REQ |
-+				 WMI_PEER_VHT_INTEROP_DISABLE_AMSDU_RESP);
++		if (INTEROP_2G_256QAM_CAPBILITY) {
++			arg->peer_flags |= (WMI_PEER_DISABLE_AMSDU_REQ |
++					    WMI_PEER_DISABLE_AMSDU_RESP);
++		}
 +	}
 +
  	arg->peer_vht_caps = vht_cap->cap;
  
  	ampdu_factor = (vht_cap->cap &
-@@ -1427,7 +1436,12 @@ static void ath10k_peer_assoc_h_phymode(
+@@ -1394,7 +1403,12 @@ static void ath10k_peer_assoc_h_phymode(
  
  	switch (ar->hw->conf.chandef.chan->band) {
  	case IEEE80211_BAND_2GHZ:
@@ -30,72 +30,44 @@
  			if (sta->bandwidth == IEEE80211_STA_RX_BW_40)
  				phymode = MODE_11NG_HT40;
  			else
-@@ -4989,7 +5003,9 @@ int ath10k_mac_register(struct ath10k *a
+@@ -4819,7 +4833,8 @@ int ath10k_mac_register(struct ath10k *a
  		band->bitrates = ath10k_g_rates;
  		band->ht_cap = ht_cap;
  
 -		/* vht is not supported in 2.4 GHz */
-+		/* Enable the 256QAM support at 2.4 GHz */
-+		if (PHY_2G_256QAM_CAPBILITY)
-+			band->vht_cap = vht_cap;
++		/* Enable the VHT support at 2.4 GHz */
++		band->vht_cap = vht_cap;
  
  		ar->hw->wiphy->bands[IEEE80211_BAND_2GHZ] = band;
  	}
-@@ -5060,6 +5076,8 @@ int ath10k_mac_register(struct ath10k *a
- 	ar->hw->wiphy->flags |= WIPHY_FLAG_AP_UAPSD;
- 	ar->hw->wiphy->features |= NL80211_FEATURE_AP_MODE_CHAN_WIDTH_CHANGE;
- 
-+	if (PHY_2G_256QAM_CAPBILITY)
-+		ar->hw->wiphy->features |= NL80211_FEATURE_256QAM_2G;
- 	/*
- 	 * on LL hardware queues are managed entirely by the FW
- 	 * so we only advertise to mac we can do the queues thing
 --- a/drivers/net/wireless/ath/ath10k/mac.h
 +++ b/drivers/net/wireless/ath/ath10k/mac.h
-@@ -28,6 +28,12 @@ struct ath10k_generic_iter {
+@@ -26,6 +26,8 @@ struct ath10k_generic_iter {
  	int ret;
  };
  
-+/* FIXME: Both below configuration should be manual enable/disable from
-+ * userspace via the debugfs?
-+ */
-+#define PHY_2G_256QAM_CAPBILITY         1
-+#define INTEROP_2G_256QAM_CAPBILITY	1
++#define INTEROP_2G_256QAM_CAPBILITY   1
 +
  struct ath10k *ath10k_mac_create(size_t priv_size);
  void ath10k_mac_destroy(struct ath10k *ar);
  int ath10k_mac_register(struct ath10k *ar);
 --- a/drivers/net/wireless/ath/ath10k/wmi.h
 +++ b/drivers/net/wireless/ath/ath10k/wmi.h
-@@ -4322,7 +4322,12 @@ struct wmi_peer_set_q_empty_callback_cmd
+@@ -4307,6 +4307,7 @@ struct wmi_peer_set_q_empty_callback_cmd
+ #define WMI_PEER_QOS            0x00000002
+ #define WMI_PEER_NEED_PTK_4_WAY 0x00000004
+ #define WMI_PEER_NEED_GTK_2_WAY 0x00000010
++#define WMI_PEER_DISABLE_AMSDU_REQ  0x00000400
+ #define WMI_PEER_APSD           0x00000800
+ #define WMI_PEER_HT             0x00001000
+ #define WMI_PEER_40MHZ          0x00002000
+@@ -4317,7 +4318,8 @@ struct wmi_peer_set_q_empty_callback_cmd
  #define WMI_PEER_SPATIAL_MUX    0x00200000
  #define WMI_PEER_VHT            0x02000000
  #define WMI_PEER_80MHZ          0x04000000
 -#define WMI_PEER_PMF            0x08000000
 +#define WMI_PEER_VHT_2G         0x08000000
-+
-+/* Defined to solve the 2G 256QAM IOT issue with BCM device */
-+#define WMI_PEER_VHT_INTEROP_DISABLE_AMSDU_REQ  0x400
-+#define WMI_PEER_VHT_INTEROP_DISABLE_AMSDU_RESP 0x20000000
-+
++#define WMI_PEER_DISABLE_AMSDU_RESP 0x20000000
  
  /*
   * Peer rate capabilities.
---- a/include/uapi/linux/nl80211.h
-+++ b/include/uapi/linux/nl80211.h
-@@ -4070,6 +4070,7 @@ enum nl80211_ap_sme_features {
-  * @NL80211_FEATURE_MAC_ON_CREATE: Device supports configuring
-  *	the vif's MAC address upon creation.
-  *	See 'macaddr' field in the vif_params (cfg80211.h).
-+ * @NL80211_FEATURE_256QAM_2G: Device supports 256QAM on 2.4G band
-  */
- enum nl80211_feature_flags {
- 	NL80211_FEATURE_SK_TX_STATUS			= 1 << 0,
-@@ -4100,6 +4101,7 @@ enum nl80211_feature_flags {
- 	NL80211_FEATURE_DYNAMIC_SMPS			= 1 << 25,
- 	NL80211_FEATURE_SUPPORTS_WMM_ADMISSION		= 1 << 26,
- 	NL80211_FEATURE_MAC_ON_CREATE			= 1 << 27,
-+	NL80211_FEATURE_256QAM_2G                       = 1 << 28,
- };
- 
- /**
