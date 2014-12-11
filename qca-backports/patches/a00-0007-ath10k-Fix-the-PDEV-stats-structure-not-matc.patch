@@ -1,3 +1,5 @@
+diff --git a/drivers/net/wireless/ath/ath10k/Makefile b/drivers/net/wireless/ath/ath10k/Makefile
+index ad83d18..154021a 100644
 --- a/drivers/net/wireless/ath/ath10k/Makefile
 +++ b/drivers/net/wireless/ath/ath10k/Makefile
 @@ -8,6 +8,7 @@ ath10k_core-y += mac.o \
@@ -5,10 +7,33 @@
  		 txrx.o \
  		 wmi.o \
 +		 wmi_10_2.o \
+ 		 wmi-tlv.o \
  		 bmi.o
  
- ath10k_core-$(CPTCFG_ATH10K_DEBUGFS) += spectral.o
---- /dev/null
+diff --git a/drivers/net/wireless/ath/ath10k/wmi.c b/drivers/net/wireless/ath/ath10k/wmi.c
+index 94b9e86..473cce7 100644
+--- a/drivers/net/wireless/ath/ath10k/wmi.c
++++ b/drivers/net/wireless/ath/ath10k/wmi.c
+@@ -21,6 +21,7 @@
+ #include "core.h"
+ #include "htc.h"
+ #include "debug.h"
++#include "wmi_10_2.h"
+ #include "wmi.h"
+ #include "wmi-tlv.h"
+ #include "mac.h"
+@@ -4700,7 +4701,7 @@ static const struct wmi_ops wmi_10_2_ops = {
+ 	/* shared with 10.1 */
+ 	.map_svc = wmi_10x_svc_map,
+ 	.pull_svc_rdy = ath10k_wmi_10x_op_pull_svc_rdy_ev,
+-	.pull_fw_stats = ath10k_wmi_10x_op_pull_fw_stats,
++	.pull_fw_stats = ath10k_wmi_10_2_op_pull_fw_stats,
+ 	.gen_pdev_set_rd = ath10k_wmi_10x_op_gen_pdev_set_rd,
+ 	.gen_start_scan = ath10k_wmi_10x_op_gen_start_scan,
+ 
+diff --git a/drivers/net/wireless/ath/ath10k/wmi_10_2.c b/drivers/net/wireless/ath/ath10k/wmi_10_2.c
+index e69de29..e0adff6 100644
+--- a/drivers/net/wireless/ath/ath10k/wmi_10_2.c
 +++ b/drivers/net/wireless/ath/ath10k/wmi_10_2.c
 @@ -0,0 +1,151 @@
 +/*
@@ -91,7 +116,7 @@
 +	dst->mpdu_errs = __le32_to_cpu(rx->mpdu_errs);
 +}
 +
-+int ath10k_wmi_10_2_pull_fw_stats(struct ath10k *ar, struct sk_buff *skb,
++int ath10k_wmi_10_2_op_pull_fw_stats(struct ath10k *ar, struct sk_buff *skb,
 +				  struct ath10k_fw_stats *stats)
 +{
 +	const struct wmi_10_2_stats_event *ev = (void *)skb->data;
@@ -162,7 +187,9 @@
 +
 +	return 0;
 +}
---- /dev/null
+diff --git a/drivers/net/wireless/ath/ath10k/wmi_10_2.h b/drivers/net/wireless/ath/ath10k/wmi_10_2.h
+index e69de29..0b126fd 100644
+--- a/drivers/net/wireless/ath/ath10k/wmi_10_2.h
 +++ b/drivers/net/wireless/ath/ath10k/wmi_10_2.h
 @@ -0,0 +1,239 @@
 +/*
@@ -401,32 +428,6 @@
 +	__le32  excretries[4];
 +} __packed;
 +
-+int ath10k_wmi_10_2_pull_fw_stats(struct ath10k *ar, struct sk_buff *skb,
++int ath10k_wmi_10_2_op_pull_fw_stats(struct ath10k *ar, struct sk_buff *skb,
 +				  struct ath10k_fw_stats *stats);
 +#endif /* _WMI_10_2_H_ */
---- a/drivers/net/wireless/ath/ath10k/wmi.c
-+++ b/drivers/net/wireless/ath/ath10k/wmi.c
-@@ -21,6 +21,7 @@
- #include "core.h"
- #include "htc.h"
- #include "debug.h"
-+#include "wmi_10_2.h"
- #include "wmi.h"
- #include "mac.h"
- #include "testmode.h"
-@@ -1553,9 +1554,12 @@ static int ath10k_wmi_10x_pull_fw_stats(
- int ath10k_wmi_pull_fw_stats(struct ath10k *ar, struct sk_buff *skb,
- 			     struct ath10k_fw_stats *stats)
- {
--	if (test_bit(ATH10K_FW_FEATURE_WMI_10X, ar->fw_features))
--		return ath10k_wmi_10x_pull_fw_stats(ar, skb, stats);
--	else
-+	if (test_bit(ATH10K_FW_FEATURE_WMI_10X, ar->fw_features)) {
-+		if (test_bit(ATH10K_FW_FEATURE_WMI_10_2, ar->fw_features))
-+			return ath10k_wmi_10_2_pull_fw_stats(ar, skb, stats);
-+		else
-+			return ath10k_wmi_10x_pull_fw_stats(ar, skb, stats);
-+	} else
- 		return ath10k_wmi_main_pull_fw_stats(ar, skb, stats);
- }
- 
