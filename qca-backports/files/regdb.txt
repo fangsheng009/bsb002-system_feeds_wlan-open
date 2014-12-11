@@ -364,8 +364,8 @@ country EE: DFS-ETSI
 
 country EG: DFS-ETSI
 	(2402 - 2482 @ 40), (20)
-	(5170 - 5250 @ 80), (20)
-	(5250 - 5330 @ 80), (20), DFS
+	(5170 - 5250 @ 40), (20)
+	(5250 - 5330 @ 40), (20), DFS
 
 # Orden IET/787/2013, de 25 de abril, por la que se aprueba
 # el cuadro nacional de atribución de frecuencias.
