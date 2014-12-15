@@ -480,7 +480,7 @@ ifeq ($(CONFIG_ATH10K_AP_FIRMWARE),y)
 		$(PKG_BUILD_DIR)/$(PKG_ATH10K_LINUX_FIRMWARE_SUBDIR)/ath10k/QCA988X/hw2.0/board.bin \
 		$(1)/lib/firmware/ath10k/QCA988X/hw2.0/
 	$(INSTALL_DATA) \
-		$(PKG_BUILD_DIR)/$(PKG_ATH10K_LINUX_FIRMWARE_SUBDIR)/10.2/firmware-3.bin_10.2-00082-4-2 \
+		$(PKG_BUILD_DIR)/$(PKG_ATH10K_LINUX_FIRMWARE_SUBDIR)/10.2.4/untested/firmware-3.bin_10.2.4.13-1 \
 		$(1)/lib/firmware/ath10k/QCA988X/hw2.0/firmware-3.bin
   endef
 else
