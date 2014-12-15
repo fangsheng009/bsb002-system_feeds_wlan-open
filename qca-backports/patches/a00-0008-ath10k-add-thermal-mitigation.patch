@@ -1,0 +1,730 @@
+diff --git a/drivers/net/wireless/ath/ath10k/Makefile b/drivers/net/wireless/ath/ath10k/Makefile
+index 154021a..5229b33 100644
+--- a/drivers/net/wireless/ath/ath10k/Makefile
++++ b/drivers/net/wireless/ath/ath10k/Makefile
+@@ -15,6 +15,7 @@ ath10k_core-y += mac.o \
+ ath10k_core-$(CPTCFG_ATH10K_DEBUGFS) += spectral.o
+ ath10k_core-$(CPTCFG_NL80211_TESTMODE) += testmode.o
+ ath10k_core-$(CPTCFG_ATH10K_TRACING) += trace.o
++ath10k_core-$(CPTCFG_THERMAL) += thermal.o
+ 
+ obj-$(CPTCFG_ATH10K_PCI) += ath10k_pci.o
+ ath10k_pci-y += pci.o \
+diff --git a/drivers/net/wireless/ath/ath10k/core.c b/drivers/net/wireless/ath/ath10k/core.c
+index 1f4e1d0..8ff22c2 100644
+--- a/drivers/net/wireless/ath/ath10k/core.c
++++ b/drivers/net/wireless/ath/ath10k/core.c
+@@ -843,6 +843,7 @@ static void ath10k_core_restart(struct work_struct *work)
+ 	complete_all(&ar->offchan_tx_completed);
+ 	complete_all(&ar->install_key_done);
+ 	complete_all(&ar->vdev_setup_done);
++	complete_all(&ar->thermal.wmi_sync);
+ 	wake_up(&ar->htt.empty_tx_wq);
+ 	wake_up(&ar->wmi.tx_credits_wq);
+ 	wake_up(&ar->peer_mapping_wq);
+@@ -897,7 +898,12 @@ static int ath10k_core_init_firmware_features(struct ath10k *ar)
+ 	 */
+ 	if (ar->wmi.op_version == ATH10K_FW_WMI_OP_VERSION_UNSET) {
+ 		if (test_bit(ATH10K_FW_FEATURE_WMI_10X, ar->fw_features)) {
+-			if (test_bit(ATH10K_FW_FEATURE_WMI_10_2, ar->fw_features))
++			if (test_bit(ATH10K_FW_FEATURE_WMI_10_2_4,
++				     ar->fw_features))
++				ar->wmi.op_version =
++					ATH10K_FW_WMI_OP_VERSION_10_2_4;
++			else if (test_bit(ATH10K_FW_FEATURE_WMI_10_2,
++					  ar->fw_features))
+ 				ar->wmi.op_version = ATH10K_FW_WMI_OP_VERSION_10_2;
+ 			else
+ 				ar->wmi.op_version = ATH10K_FW_WMI_OP_VERSION_10_1;
+@@ -914,6 +920,7 @@ static int ath10k_core_init_firmware_features(struct ath10k *ar)
+ 		break;
+ 	case ATH10K_FW_WMI_OP_VERSION_10_1:
+ 	case ATH10K_FW_WMI_OP_VERSION_10_2:
++	case ATH10K_FW_WMI_OP_VERSION_10_2_4:
+ 		ar->max_num_peers = TARGET_10X_NUM_PEERS;
+ 		ar->max_num_stations = TARGET_10X_NUM_STATIONS;
+ 		ar->htt.max_num_pending_tx = TARGET_10X_NUM_MSDU_DESC;
+@@ -1229,9 +1236,18 @@ static void ath10k_core_register_work(struct work_struct *work)
+ 		goto err_debug_destroy;
+ 	}
+ 
++	status = ath10k_thermal_register(ar);
++	if (status) {
++		ath10k_err(ar, "could not register thermal device: %d\n",
++			   status);
++		goto err_spectral_destroy;
++	}
++
+ 	set_bit(ATH10K_FLAG_CORE_REGISTERED, &ar->dev_flags);
+ 	return;
+ 
++err_spectral_destroy:
++	ath10k_spectral_destroy(ar);
+ err_debug_destroy:
+ 	ath10k_debug_destroy(ar);
+ err_unregister_mac:
+@@ -1261,6 +1277,7 @@ void ath10k_core_unregister(struct ath10k *ar)
+ 	if (!test_bit(ATH10K_FLAG_CORE_REGISTERED, &ar->dev_flags))
+ 		return;
+ 
++	ath10k_thermal_unregister(ar);
+ 	/* Stop spectral before unregistering from mac80211 to remove the
+ 	 * relayfs debugfs file cleanly. Otherwise the parent debugfs tree
+ 	 * would be already be free'd recursively, leading to a double free.
+@@ -1307,6 +1324,7 @@ struct ath10k *ath10k_core_create(size_t priv_size, struct device *dev,
+ 
+ 	init_completion(&ar->install_key_done);
+ 	init_completion(&ar->vdev_setup_done);
++	init_completion(&ar->thermal.wmi_sync);
+ 
+ 	INIT_DELAYED_WORK(&ar->scan.timeout, ath10k_scan_timeout_work);
+ 
+diff --git a/drivers/net/wireless/ath/ath10k/core.h b/drivers/net/wireless/ath/ath10k/core.h
+index 5847880..7937c44 100644
+--- a/drivers/net/wireless/ath/ath10k/core.h
++++ b/drivers/net/wireless/ath/ath10k/core.h
+@@ -34,6 +34,7 @@
+ #include "../regd.h"
+ #include "../dfs_pattern_detector.h"
+ #include "spectral.h"
++#include "thermal.h"
+ 
+ #define MS(_v, _f) (((_v) & _f##_MASK) >> _f##_LSB)
+ #define SM(_v, _f) (((_v) << _f##_LSB) & _f##_MASK)
+@@ -387,6 +388,11 @@ enum ath10k_fw_features {
+ 	 */
+ 	ATH10K_FW_FEATURE_WMI_10_2 = 4,
+ 
++	/* Firmware 10.2.4 supports bitmask in resource config to configure
++	 * Airtime fairness and rx batch mode
++	 */
++	ATH10K_FW_FEATURE_WMI_10_2_4 = 5,
++
+ 	/* keep last */
+ 	ATH10K_FW_FEATURE_COUNT,
+ };
+@@ -633,6 +639,8 @@ struct ath10k {
+ 		u32 fw_cold_reset_counter;
+ 	} stats;
+ 
++	struct ath10k_thermal thermal;
++
+ 	/* must be last */
+ 	u8 drv_priv[0] __aligned(sizeof(void *));
+ };
+diff --git a/drivers/net/wireless/ath/ath10k/hw.h b/drivers/net/wireless/ath/ath10k/hw.h
+index 809c252..892b6f0 100644
+--- a/drivers/net/wireless/ath/ath10k/hw.h
++++ b/drivers/net/wireless/ath/ath10k/hw.h
+@@ -72,6 +72,7 @@ enum ath10k_fw_wmi_op_version {
+ 	ATH10K_FW_WMI_OP_VERSION_10_1 = 2,
+ 	ATH10K_FW_WMI_OP_VERSION_10_2 = 3,
+ 	ATH10K_FW_WMI_OP_VERSION_TLV = 4,
++	ATH10K_FW_WMI_OP_VERSION_10_2_4 = 5,
+ 
+ 	/* keep last */
+ 	ATH10K_FW_WMI_OP_VERSION_MAX,
+diff --git a/drivers/net/wireless/ath/ath10k/thermal.c b/drivers/net/wireless/ath/ath10k/thermal.c
+new file mode 100644
+index 0000000..a70d11a
+--- /dev/null
++++ b/drivers/net/wireless/ath/ath10k/thermal.c
+@@ -0,0 +1,238 @@
++/*
++ * Copyright (c) 2014 Qualcomm Atheros, Inc.
++ *
++ * Permission to use, copy, modify, and/or distribute this software for any
++ * purpose with or without fee is hereby granted, provided that the above
++ * copyright notice and this permission notice appear in all copies.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
++ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
++ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
++ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
++ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
++ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
++ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
++ */
++#define CPTCFG_THERMAL 1
++#include <linux/device.h>
++#include <linux/sysfs.h>
++#include <linux/thermal.h>
++#include <linux/hwmon.h>
++#include <linux/hwmon-sysfs.h>
++#include "core.h"
++#include "debug.h"
++#include "wmi-ops.h"
++
++static int ath10k_thermal_get_active_vifs(struct ath10k *ar,
++					  enum wmi_vdev_type type)
++{
++	struct ath10k_vif *arvif;
++	int count = 0;
++
++	lockdep_assert_held(&ar->conf_mutex);
++
++	list_for_each_entry(arvif, &ar->arvifs, list) {
++		if (!arvif->is_started)
++			continue;
++
++		if (!arvif->is_up)
++			continue;
++
++		if (arvif->vdev_type != type)
++			continue;
++
++		count++;
++	}
++	return count;
++}
++
++static int ath10k_thermal_get_max_dutycycle(struct thermal_cooling_device *cdev,
++					    unsigned long *state)
++{
++	*state = ATH10K_QUIET_DUTY_CYCLE_MAX;
++
++	return 0;
++}
++
++static int ath10k_thermal_get_cur_dutycycle(struct thermal_cooling_device *cdev,
++					    unsigned long *state)
++{
++	struct ath10k *ar = cdev->devdata;
++
++	mutex_lock(&ar->conf_mutex);
++	*state = ar->thermal.duty_cycle;
++	mutex_unlock(&ar->conf_mutex);
++
++	return 0;
++}
++
++static int ath10k_thermal_set_cur_dutycycle(struct thermal_cooling_device *cdev,
++					    unsigned long duty_cycle)
++{
++	struct ath10k *ar = cdev->devdata;
++	u32 period, duration, enabled;
++	int num_bss, ret = 0;
++
++	mutex_lock(&ar->conf_mutex);
++	if (ar->state != ATH10K_STATE_ON) {
++		ret = -ENETDOWN;
++		goto out;
++	}
++
++	if (duty_cycle > ATH10K_QUIET_DUTY_CYCLE_MAX) {
++		ath10k_warn(ar, "duty cycle %ld is exceeding the limit %d\n",
++			    duty_cycle, ATH10K_QUIET_DUTY_CYCLE_MAX);
++		ret = -EINVAL;
++		goto out;
++	}
++	/* TODO: Right now, thermal mitigation is handled only for single/multi
++	 * vif AP mode. Since quiet param is not validated in STA mode, it needs
++	 * to be investigated further to handle multi STA and multi-vif (AP+STA)
++	 * mode properly.
++	 */
++	num_bss = ath10k_thermal_get_active_vifs(ar, WMI_VDEV_TYPE_AP);
++	if (!num_bss) {
++		ath10k_warn(ar, "no active AP interfaces\n");
++		ret = -ENETDOWN;
++		goto out;
++	}
++	period = max(ATH10K_QUIET_PERIOD_MIN,
++		     (ATH10K_QUIET_PERIOD_DEFAULT / num_bss));
++	duration = period * (duty_cycle / 100);
++	enabled = duration ? 1 : 0;
++
++	ret = ath10k_wmi_pdev_set_quiet_mode(ar, period, duration,
++					     ATH10K_QUIET_START_OFFSET,
++					     enabled);
++	if (ret) {
++		ath10k_warn(ar, "failed to set quiet mode period %u duarion %u enabled %u ret %d\n",
++			    period, duration, enabled, ret);
++		goto out;
++	}
++	ar->thermal.duty_cycle = duty_cycle;
++out:
++	mutex_unlock(&ar->conf_mutex);
++	return ret;
++}
++
++static struct thermal_cooling_device_ops ath10k_thermal_ops = {
++	.get_max_state = ath10k_thermal_get_max_dutycycle,
++	.get_cur_state = ath10k_thermal_get_cur_dutycycle,
++	.set_cur_state = ath10k_thermal_set_cur_dutycycle,
++};
++
++static ssize_t ath10k_thermal_show_temp(struct device *dev,
++					struct device_attribute *attr,
++					char *buf)
++{
++	struct ath10k *ar = dev_get_drvdata(dev);
++	int ret, temperature;
++
++	mutex_lock(&ar->conf_mutex);
++
++	/* Can't get temperature when the card is off */
++	if (ar->state != ATH10K_STATE_ON) {
++		ret = -ENETDOWN;
++		goto out;
++	}
++
++	reinit_completion(&ar->thermal.wmi_sync);
++	ret = ath10k_wmi_pdev_get_temperature(ar);
++	if (ret) {
++		ath10k_warn(ar, "failed to read temperature %d\n", ret);
++		goto out;
++	}
++
++	if (test_bit(ATH10K_FLAG_CRASH_FLUSH, &ar->dev_flags)) {
++		ret = -ESHUTDOWN;
++		goto out;
++	}
++
++	ret = wait_for_completion_timeout(&ar->thermal.wmi_sync,
++					  ATH10K_THERMAL_SYNC_TIMEOUT_HZ);
++	if (ret == 0) {
++		ath10k_warn(ar, "failed to synchronize thermal read\n");
++		ret = -ETIMEDOUT;
++		goto out;
++	}
++
++	spin_lock_bh(&ar->data_lock);
++	temperature = ar->thermal.temperature;
++	spin_unlock_bh(&ar->data_lock);
++
++	ret = snprintf(buf, PAGE_SIZE, "%d", temperature);
++out:
++	mutex_unlock(&ar->conf_mutex);
++	return ret;
++}
++
++void ath10k_thermal_event_temperature(struct ath10k *ar, int temperature)
++{
++	spin_lock_bh(&ar->data_lock);
++	ar->thermal.temperature = temperature;
++	spin_unlock_bh(&ar->data_lock);
++	complete(&ar->thermal.wmi_sync);
++}
++
++static SENSOR_DEVICE_ATTR(temp1_input, S_IRUGO, ath10k_thermal_show_temp,
++			  NULL, 0);
++
++static struct attribute *ath10k_hwmon_attrs[] = {
++	&sensor_dev_attr_temp1_input.dev_attr.attr,
++	NULL,
++};
++ATTRIBUTE_GROUPS(ath10k_hwmon);
++
++int ath10k_thermal_register(struct ath10k *ar)
++{
++	struct thermal_cooling_device *cdev;
++	struct device *hwmon_dev;
++	int ret;
++
++	cdev = thermal_cooling_device_register("ath10k_thermal", ar,
++					       &ath10k_thermal_ops);
++
++	if (IS_ERR(cdev)) {
++		ath10k_err(ar, "failed to setup thermal device result: %ld\n",
++			   PTR_ERR(cdev));
++		return -EINVAL;
++	}
++
++	ret = sysfs_create_link(&ar->dev->kobj, &cdev->device.kobj,
++				"cooling_device");
++	if (ret) {
++		ath10k_err(ar, "failed to create thermal symlink\n");
++		goto err_cooling_destroy;
++	}
++
++	ar->thermal.cdev = cdev;
++
++	/* Do not register hwmon device when temperature reading is not
++	 * supported by firmware
++	 */
++	if (ar->wmi.op_version != ATH10K_FW_WMI_OP_VERSION_10_2_4)
++		return 0;
++
++	hwmon_dev = devm_hwmon_device_register_with_groups(ar->dev,
++							   "ath10k_hwmon", ar,
++							   ath10k_hwmon_groups);
++	if (IS_ERR(hwmon_dev)) {
++		ath10k_err(ar, "failed to register hwmon device: %ld\n",
++			   PTR_ERR(hwmon_dev));
++		ret = -EINVAL;
++		goto err_remove_link;
++	}
++	return 0;
++
++err_remove_link:
++	sysfs_remove_link(&ar->dev->kobj, "thermal_sensor");
++err_cooling_destroy:
++	thermal_cooling_device_unregister(cdev);
++	return ret;
++}
++
++void ath10k_thermal_unregister(struct ath10k *ar)
++{
++	thermal_cooling_device_unregister(ar->thermal.cdev);
++	sysfs_remove_link(&ar->dev->kobj, "cooling_device");
++}
+diff --git a/drivers/net/wireless/ath/ath10k/thermal.h b/drivers/net/wireless/ath/ath10k/thermal.h
+new file mode 100644
+index 0000000..d4aced1
+--- /dev/null
++++ b/drivers/net/wireless/ath/ath10k/thermal.h
+@@ -0,0 +1,58 @@
++/*
++ * Copyright (c) 2014 Qualcomm Atheros, Inc.
++ *
++ * Permission to use, copy, modify, and/or distribute this software for any
++ * purpose with or without fee is hereby granted, provided that the above
++ * copyright notice and this permission notice appear in all copies.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
++ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
++ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
++ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
++ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
++ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
++ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
++ */
++#ifndef _THERMAL_
++#define _THERMAL_
++
++#define ATH10K_QUIET_PERIOD_DEFAULT     100
++#define ATH10K_QUIET_PERIOD_MIN         25
++#define ATH10K_QUIET_START_OFFSET       10
++#define ATH10K_QUIET_DUTY_CYCLE_MAX     70
++#define ATH10K_HWMON_NAME_LEN           15
++#define ATH10K_THERMAL_SYNC_TIMEOUT_HZ (5*HZ)
++
++struct ath10k_thermal {
++	struct thermal_cooling_device *cdev;
++	struct completion wmi_sync;
++
++	/* protected by conf_mutex */
++	u32 duty_cycle;
++	/* temperature value in Celcius degree
++	 * protected by data_lock
++	 */
++	int temperature;
++};
++
++#ifdef CPTCFG_THERMAL
++int ath10k_thermal_register(struct ath10k *ar);
++void ath10k_thermal_unregister(struct ath10k *ar);
++void ath10k_thermal_event_temperature(struct ath10k *ar, int temperature);
++#else
++static inline int ath10k_thermal_register(struct ath10k *ar)
++{
++	return 0;
++}
++
++static inline void ath10k_thermal_unregister(struct ath10k *ar)
++{
++}
++
++static inline void ath10k_thermal_event_temperature(struct ath10k *ar,
++						    int temperature)
++{
++}
++
++#endif
++#endif /* _THERMAL_ */
+diff --git a/drivers/net/wireless/ath/ath10k/wmi-ops.h b/drivers/net/wireless/ath/ath10k/wmi-ops.h
+index 1fbc520..20e2c30 100644
+--- a/drivers/net/wireless/ath/ath10k/wmi-ops.h
++++ b/drivers/net/wireless/ath/ath10k/wmi-ops.h
+@@ -114,6 +114,11 @@ struct wmi_ops {
+ 	struct sk_buff *(*gen_dbglog_cfg)(struct ath10k *ar, u32 module_enable);
+ 	struct sk_buff *(*gen_pktlog_enable)(struct ath10k *ar, u32 filter);
+ 	struct sk_buff *(*gen_pktlog_disable)(struct ath10k *ar);
++	struct sk_buff *(*gen_pdev_set_quiet_mode)(struct ath10k *ar,
++						   u32 period, u32 duration,
++						   u32 next_offset,
++						   u32 enabled);
++	struct sk_buff *(*gen_pdev_get_temperature)(struct ath10k *ar);
+ };
+ 
+ int ath10k_wmi_cmd_send(struct ath10k *ar, struct sk_buff *skb, u32 cmd_id);
+@@ -818,4 +823,38 @@ ath10k_wmi_pdev_pktlog_disable(struct ath10k *ar)
+ 				   ar->wmi.cmd->pdev_pktlog_disable_cmdid);
+ }
+ 
++static inline int
++ath10k_wmi_pdev_set_quiet_mode(struct ath10k *ar, u32 period, u32 duration,
++			       u32 next_offset, u32 enabled)
++{
++	struct sk_buff *skb;
++
++	if (!ar->wmi.ops->gen_pdev_set_quiet_mode)
++		return -EOPNOTSUPP;
++
++	skb = ar->wmi.ops->gen_pdev_set_quiet_mode(ar, period, duration,
++						   next_offset, enabled);
++	if (IS_ERR(skb))
++		return PTR_ERR(skb);
++
++	return ath10k_wmi_cmd_send(ar, skb,
++				   ar->wmi.cmd->pdev_set_quiet_mode_cmdid);
++}
++
++static inline int
++ath10k_wmi_pdev_get_temperature(struct ath10k *ar)
++{
++	struct sk_buff *skb;
++
++	if (!ar->wmi.ops->gen_pdev_get_temperature)
++		return -EOPNOTSUPP;
++
++	skb = ar->wmi.ops->gen_pdev_get_temperature(ar);
++	if (IS_ERR(skb))
++		return PTR_ERR(skb);
++
++	return ath10k_wmi_cmd_send(ar, skb,
++				   ar->wmi.cmd->pdev_get_temperature_cmdid);
++}
++
+ #endif
+diff --git a/drivers/net/wireless/ath/ath10k/wmi-tlv.c b/drivers/net/wireless/ath/ath10k/wmi-tlv.c
+index 1627ec5..4c050ce 100644
+--- a/drivers/net/wireless/ath/ath10k/wmi-tlv.c
++++ b/drivers/net/wireless/ath/ath10k/wmi-tlv.c
+@@ -2044,6 +2044,7 @@ static struct wmi_cmd_map wmi_tlv_cmd_map = {
+ 	.force_fw_hang_cmdid = WMI_TLV_FORCE_FW_HANG_CMDID,
+ 	.gpio_config_cmdid = WMI_TLV_GPIO_CONFIG_CMDID,
+ 	.gpio_output_cmdid = WMI_TLV_GPIO_OUTPUT_CMDID,
++	.pdev_get_temperature_cmdid = WMI_TLV_CMD_UNSUPPORTED,
+ };
+ 
+ static struct wmi_pdev_param_map wmi_tlv_pdev_param_map = {
+@@ -2204,6 +2205,8 @@ static const struct wmi_ops wmi_tlv_ops = {
+ 	.gen_dbglog_cfg = ath10k_wmi_tlv_op_gen_dbglog_cfg,
+ 	.gen_pktlog_enable = ath10k_wmi_tlv_op_gen_pktlog_enable,
+ 	.gen_pktlog_disable = ath10k_wmi_tlv_op_gen_pktlog_disable,
++	/* .gen_pdev_set_quiet_mode not implemented */
++	/* .gen_pdev_get_temperature not implemented */
+ };
+ 
+ /************/
+diff --git a/drivers/net/wireless/ath/ath10k/wmi.c b/drivers/net/wireless/ath/ath10k/wmi.c
+index 473cce7..a0bb4df 100644
+--- a/drivers/net/wireless/ath/ath10k/wmi.c
++++ b/drivers/net/wireless/ath/ath10k/wmi.c
+@@ -146,6 +146,7 @@ static struct wmi_cmd_map wmi_cmd_map = {
+ 	.force_fw_hang_cmdid = WMI_FORCE_FW_HANG_CMDID,
+ 	.gpio_config_cmdid = WMI_GPIO_CONFIG_CMDID,
+ 	.gpio_output_cmdid = WMI_GPIO_OUTPUT_CMDID,
++	.pdev_get_temperature_cmdid = WMI_CMD_UNSUPPORTED,
+ };
+ 
+ /* 10.X WMI cmd track */
+@@ -268,6 +269,7 @@ static struct wmi_cmd_map wmi_10x_cmd_map = {
+ 	.force_fw_hang_cmdid = WMI_CMD_UNSUPPORTED,
+ 	.gpio_config_cmdid = WMI_10X_GPIO_CONFIG_CMDID,
+ 	.gpio_output_cmdid = WMI_10X_GPIO_OUTPUT_CMDID,
++	.pdev_get_temperature_cmdid = WMI_CMD_UNSUPPORTED,
+ };
+ 
+ /* MAIN WMI VDEV param map */
+@@ -612,6 +614,7 @@ static struct wmi_cmd_map wmi_10_2_cmd_map = {
+ 	.force_fw_hang_cmdid = WMI_CMD_UNSUPPORTED,
+ 	.gpio_config_cmdid = WMI_10_2_GPIO_CONFIG_CMDID,
+ 	.gpio_output_cmdid = WMI_10_2_GPIO_OUTPUT_CMDID,
++	.pdev_get_temperature_cmdid = WMI_10_2_PDEV_GET_TEMPERATURE_CMDID,
+ };
+ 
+ void ath10k_wmi_put_wmi_channel(struct wmi_channel *ch,
+@@ -2795,6 +2798,18 @@ int ath10k_wmi_event_ready(struct ath10k *ar, struct sk_buff *skb)
+ 	return 0;
+ }
+ 
++static int ath10k_wmi_event_temperature(struct ath10k *ar, struct sk_buff *skb)
++{
++	const struct wmi_pdev_temperature_event *ev;
++
++	ev = (struct wmi_pdev_temperature_event *)skb->data;
++	if (WARN_ON(skb->len < sizeof(*ev)))
++		return -EPROTO;
++
++	ath10k_thermal_event_temperature(ar, __le32_to_cpu(ev->temperature));
++	return 0;
++}
++
+ static void ath10k_wmi_op_rx(struct ath10k *ar, struct sk_buff *skb)
+ {
+ 	struct wmi_cmd_hdr *cmd_hdr;
+@@ -3134,6 +3149,9 @@ static void ath10k_wmi_10_2_op_rx(struct ath10k *ar, struct sk_buff *skb)
+ 	case WMI_10_2_READY_EVENTID:
+ 		ath10k_wmi_event_ready(ar, skb);
+ 		break;
++	case WMI_10_2_PDEV_TEMPERATURE_EVENTID:
++		ath10k_wmi_event_temperature(ar, skb);
++		break;
+ 	case WMI_10_2_RTT_KEEPALIVE_EVENTID:
+ 	case WMI_10_2_GPIO_INPUT_EVENTID:
+ 	case WMI_10_2_PEER_RATECODE_LIST_EVENTID:
+@@ -4415,6 +4433,19 @@ ath10k_wmi_10_2_op_gen_peer_assoc(struct ath10k *ar,
+ 	return skb;
+ }
+ 
++static struct sk_buff *
++ath10k_wmi_10_2_op_gen_pdev_get_temperature(struct ath10k *ar)
++{
++	struct sk_buff *skb;
++
++	skb = ath10k_wmi_alloc_skb(ar, 0);
++	if (!skb)
++		return ERR_PTR(-ENOMEM);
++
++	ath10k_dbg(ar, ATH10K_DBG_WMI, "wmi pdev get temperature\n");
++	return skb;
++}
++
+ /* This function assumes the beacon is already DMA mapped */
+ static struct sk_buff *
+ ath10k_wmi_op_gen_beacon_dma(struct ath10k_vif *arvif)
+@@ -4590,6 +4621,30 @@ ath10k_wmi_op_gen_pktlog_disable(struct ath10k *ar)
+ 	return skb;
+ }
+ 
++static struct sk_buff *
++ath10k_wmi_op_gen_pdev_set_quiet_mode(struct ath10k *ar, u32 period,
++				      u32 duration, u32 next_offset,
++				      u32 enabled)
++{
++	struct wmi_pdev_set_quiet_cmd *cmd;
++	struct sk_buff *skb;
++
++	skb = ath10k_wmi_alloc_skb(ar, sizeof(*cmd));
++	if (!skb)
++		return ERR_PTR(-ENOMEM);
++
++	cmd = (struct wmi_pdev_set_quiet_cmd *)skb->data;
++	cmd->period = __cpu_to_le32(period);
++	cmd->duration = __cpu_to_le32(duration);
++	cmd->next_start = __cpu_to_le32(next_offset);
++	cmd->enabled = __cpu_to_le32(enabled);
++
++	ath10k_dbg(ar, ATH10K_DBG_WMI,
++		   "wmi quiet param: period %u duration %u enabled %d\n",
++		   period, duration, enabled);
++	return skb;
++}
++
+ static const struct wmi_ops wmi_ops = {
+ 	.rx = ath10k_wmi_op_rx,
+ 	.map_svc = wmi_main_svc_map,
+@@ -4639,6 +4694,8 @@ static const struct wmi_ops wmi_ops = {
+ 	.gen_dbglog_cfg = ath10k_wmi_op_gen_dbglog_cfg,
+ 	.gen_pktlog_enable = ath10k_wmi_op_gen_pktlog_enable,
+ 	.gen_pktlog_disable = ath10k_wmi_op_gen_pktlog_disable,
++	.gen_pdev_set_quiet_mode = ath10k_wmi_op_gen_pdev_set_quiet_mode,
++	/* .gen_pdev_get_temperature not implemented */
+ };
+ 
+ static const struct wmi_ops wmi_10_1_ops = {
+@@ -4650,6 +4707,7 @@ static const struct wmi_ops wmi_10_1_ops = {
+ 	.gen_pdev_set_rd = ath10k_wmi_10x_op_gen_pdev_set_rd,
+ 	.gen_start_scan = ath10k_wmi_10x_op_gen_start_scan,
+ 	.gen_peer_assoc = ath10k_wmi_10_1_op_gen_peer_assoc,
++	/* .gen_pdev_get_temperature not implemented */
+ 
+ 	/* shared with main branch */
+ 	.pull_scan = ath10k_wmi_op_pull_scan_ev,
+@@ -4691,12 +4749,14 @@ static const struct wmi_ops wmi_10_1_ops = {
+ 	.gen_dbglog_cfg = ath10k_wmi_op_gen_dbglog_cfg,
+ 	.gen_pktlog_enable = ath10k_wmi_op_gen_pktlog_enable,
+ 	.gen_pktlog_disable = ath10k_wmi_op_gen_pktlog_disable,
++	.gen_pdev_set_quiet_mode = ath10k_wmi_op_gen_pdev_set_quiet_mode,
+ };
+ 
+ static const struct wmi_ops wmi_10_2_ops = {
+ 	.rx = ath10k_wmi_10_2_op_rx,
+ 	.gen_init = ath10k_wmi_10_2_op_gen_init,
+ 	.gen_peer_assoc = ath10k_wmi_10_2_op_gen_peer_assoc,
++	.gen_pdev_get_temperature = ath10k_wmi_10_2_op_gen_pdev_get_temperature,
+ 
+ 	/* shared with 10.1 */
+ 	.map_svc = wmi_10x_svc_map,
+@@ -4744,11 +4804,13 @@ static const struct wmi_ops wmi_10_2_ops = {
+ 	.gen_dbglog_cfg = ath10k_wmi_op_gen_dbglog_cfg,
+ 	.gen_pktlog_enable = ath10k_wmi_op_gen_pktlog_enable,
+ 	.gen_pktlog_disable = ath10k_wmi_op_gen_pktlog_disable,
++	.gen_pdev_set_quiet_mode = ath10k_wmi_op_gen_pdev_set_quiet_mode,
+ };
+ 
+ int ath10k_wmi_attach(struct ath10k *ar)
+ {
+ 	switch (ar->wmi.op_version) {
++	case ATH10K_FW_WMI_OP_VERSION_10_2_4:
+ 	case ATH10K_FW_WMI_OP_VERSION_10_2:
+ 		ar->wmi.cmd = &wmi_10_2_cmd_map;
+ 		ar->wmi.ops = &wmi_10_2_ops;
+diff --git a/drivers/net/wireless/ath/ath10k/wmi.h b/drivers/net/wireless/ath/ath10k/wmi.h
+index aaee7e9..b881b46 100644
+--- a/drivers/net/wireless/ath/ath10k/wmi.h
++++ b/drivers/net/wireless/ath/ath10k/wmi.h
+@@ -550,6 +550,7 @@ struct wmi_cmd_map {
+ 	u32 force_fw_hang_cmdid;
+ 	u32 gpio_config_cmdid;
+ 	u32 gpio_output_cmdid;
++	u32 pdev_get_temperature_cmdid;
+ };
+ 
+ /*
+@@ -1154,6 +1155,11 @@ enum wmi_10_2_cmd_id {
+ 	WMI_10_2_PDEV_SET_MIMOGAIN_TABLE_CMDID,
+ 	WMI_10_2_PDEV_RATEPWR_TABLE_CMDID,
+ 	WMI_10_2_PDEV_RATEPWR_CHAINMSK_TABLE_CMDID,
++	WMI_10_2_PDEV_GET_INFO,
++	WMI_10_2_VDEV_GET_INFO,
++	WMI_10_2_VDEV_ATF_REQUEST_CMDID,
++	WMI_10_2_PEER_ATF_REQUEST_CMDID,
++	WMI_10_2_PDEV_GET_TEMPERATURE_CMDID,
+ 	WMI_10_2_PDEV_UTF_CMDID = WMI_10_2_END_CMDID - 1,
+ };
+ 
+@@ -1195,6 +1201,8 @@ enum wmi_10_2_event_id {
+ 	WMI_10_2_MCAST_BUF_RELEASE_EVENTID,
+ 	WMI_10_2_MCAST_LIST_AGEOUT_EVENTID,
+ 	WMI_10_2_WDS_PEER_EVENTID,
++	WMI_10_2_PEER_STA_PS_STATECHG_EVENTID,
++	WMI_10_2_PDEV_TEMPERATURE_EVENTID,
+ 	WMI_10_2_PDEV_UTF_EVENTID = WMI_10_2_END_EVENTID - 1,
+ };
+ 
+@@ -1940,6 +1948,11 @@ struct wmi_resource_config_10x {
+ 	__le32 max_frag_entries;
+ } __packed;
+ 
++enum wmi_10_2_feature_mask {
++	WMI_10_2_RX_BATCH_MODE = BIT(0),
++	WMI_10_2_ATF_CONFIG    = BIT(1),
++};
++
+ struct wmi_resource_config_10_2 {
+ 	struct wmi_resource_config_10x common;
+ 	__le32 max_peer_ext_stats;
+@@ -1948,7 +1961,7 @@ struct wmi_resource_config_10_2 {
+ 	__le32 be_min_free;
+ 	__le32 vi_min_free;
+ 	__le32 vo_min_free;
+-	__le32 rx_batchmode; /* 0-disable, 1-enable */
++	__le32 feature_mask;
+ } __packed;
+ 
+ #define NUM_UNITS_IS_NUM_VDEVS   0x1
+@@ -4730,6 +4743,11 @@ struct wmi_rdy_ev_arg {
+ 	const u8 *mac_addr;
+ };
+ 
++struct wmi_pdev_temperature_event {
++	/* temperature value in Celcius degree */
++	__le32 temperature;
++} __packed;
++
+ struct ath10k;
+ struct ath10k_vif;
+ struct ath10k_fw_stats_pdev;
