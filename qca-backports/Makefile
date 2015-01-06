@@ -3,15 +3,17 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=qca-backports
 
-PKG_BACKPORTS_VERSION:=f1309fb
+PKG_BACKPORTS_VERSION:=69e3442
 PKG_BACKPORTS_SOURCE_URL:=git://git.kernel.org/pub/scm/linux/kernel/git/backports/backports.git
 PKG_BACKPORTS_BRANCH:=master
 
-PKG_KERNEL_VERSION:=cd696cd
+PKG_KERNEL_VERSION:=a1fd45a
 PKG_KERNEL_SOURCE_URL:=https://github.com/kvalo/ath.git
 PKG_KERNEL_BRANCH:=ath-qca
 
-PKG_VERSION:=20141215
+PKG_KERNEL_REMOTE_MAINLINE:=git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git
+
+PKG_VERSION:=20150106
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_RELEASE:=1
@@ -168,7 +170,7 @@ endef
 $(eval $(call Download,qca-linux-firmware))
 
 PKG_ATH10K_LINUX_FIRMWARE_NAME:=ath10k-firmware
-PKG_ATH10K_LINUX_FIRMWARE_VERSION:=4346fd5
+PKG_ATH10K_LINUX_FIRMWARE_VERSION:=8db9630
 PKG_ATH10K_LINUX_FIRMWARE_BRANCH:=master
 PKG_ATH10K_LINUX_FIRMWARE_SOURCE:=$(PKG_ATH10K_LINUX_FIRMWARE_NAME)-$(PKG_ATH10K_LINUX_FIRMWARE_VERSION).tar.bz2
 PKG_ATH10K_LINUX_FIRMWARE_PROTO:=git
@@ -190,7 +192,8 @@ ifneq ($(CONFIG_KERNEL_GIT_CLONE_URI),)
 # we're manually using clone & fetch to speed up sync time
   define FastCloneKernel
 	git clone $(CONFIG_KERNEL_GIT_CLONE_URI) $(2)
-	(cd $(2); git remote add src $(1); git fetch src)
+	(cd $(2); git remote add src $(1); git fetch src; \
+	git remote add mainline $(PKG_KERNEL_REMOTE_MAINLINE); git fetch mainline)
   endef
 else
   define FastCloneKernel
@@ -211,10 +214,21 @@ define DownloadBackports
 	mkdir -p $(TMP_DIR)/dl/$(PKG_NAME)-$(PKG_VERSION)
 	$(call FastCloneKernel,$(PKG_KERNEL_SOURCE_URL),$(TMP_DIR)/dl/$(PKG_NAME)-kernel)
 	(cd $(TMP_DIR)/dl/$(PKG_NAME)-kernel && git checkout $(PKG_KERNEL_VERSION))
+
+# Cherry-pick commits from mainline that are not
+# present in ath.git.
+#
+# This list needs to be pruned/expanded whenever
+# the backports/ath trees are updated to new versions.
+
+	(cd $(TMP_DIR)/dl/$(PKG_NAME)-kernel && \
+	git cherry-pick 5d26a105b5a73e5635eae0629b42fa0a90e07b7b && \
+	git cherry-pick 4943ba16bbc2db05115707b3ff7b4874e9e3c560)
+
 	git clone $(PKG_BACKPORTS_SOURCE_URL) $(TMP_DIR)/dl/$(PKG_NAME)-source
 	cp files/copy-list.hwsim $(TMP_DIR)/dl/$(PKG_NAME)-source
 	(cd $(TMP_DIR)/dl/$(PKG_NAME)-source && git checkout $(PKG_BACKPORTS_VERSION) && \
-	./gentree.py --clean --git-revision $(PKG_KERNEL_VERSION) --copy-list ./copy-list.hwsim \
+	./gentree.py --clean --copy-list ./copy-list.hwsim \
 		$(TMP_DIR)/dl/$(PKG_NAME)-kernel $(TMP_DIR)/dl/$(SUBDIR))
 	(cd $(TMP_DIR)/dl; $(call dl_pack,$(TMP_DIR)/dl/$(FILE),$(SUBDIR)))
 	mv $(TMP_DIR)/dl/$(FILE) $(DL_DIR)
@@ -480,8 +494,8 @@ ifeq ($(CONFIG_ATH10K_AP_FIRMWARE),y)
 		$(PKG_BUILD_DIR)/$(PKG_ATH10K_LINUX_FIRMWARE_SUBDIR)/ath10k/QCA988X/hw2.0/board.bin \
 		$(1)/lib/firmware/ath10k/QCA988X/hw2.0/
 	$(INSTALL_DATA) \
-		$(PKG_BUILD_DIR)/$(PKG_ATH10K_LINUX_FIRMWARE_SUBDIR)/10.2.4/untested/firmware-3.bin_10.2.4.13-1 \
-		$(1)/lib/firmware/ath10k/QCA988X/hw2.0/firmware-3.bin
+		$(PKG_BUILD_DIR)/$(PKG_ATH10K_LINUX_FIRMWARE_SUBDIR)/10.2.4/firmware-4.bin_10.2.4.13-2 \
+		$(1)/lib/firmware/ath10k/QCA988X/hw2.0/firmware-4.bin
   endef
 else
   define KernelPackage/qca-ath10k/install

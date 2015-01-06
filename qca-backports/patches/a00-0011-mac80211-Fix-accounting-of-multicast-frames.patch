@@ -1,0 +1,58 @@
+From 5cf16616e152dd5c274a65954c77f64892d025a8 Mon Sep 17 00:00:00 2001
+From: Sujith Manoharan <c_manoha@qca.qualcomm.com>
+Date: Wed, 10 Dec 2014 21:26:11 +0530
+Subject: [PATCH] mac80211: Fix accounting of multicast frames
+
+Since multicast frames are marked as no-ack, using
+IEEE80211_TX_STAT_ACK to check if they have been
+successfully transmitted by the driver is incorrect
+since a driver can choose to ignore transmission status
+for no-ack frames. This results in incorrect accounting
+for such frames.
+
+To fix this issue, this patch introduces a new flag
+that can be used by drivers to indicate error-free
+transmission of no-ack frames.
+
+Signed-off-by: Sujith Manoharan <c_manoha@qca.qualcomm.com>
+[add a note about not setting the flag for non-no-ack frames]
+Signed-off-by: Johannes Berg <johannes.berg@intel.com>
+---
+ include/net/mac80211.h | 6 ++++++
+ net/mac80211/status.c  | 9 ++++++---
+ 2 files changed, 12 insertions(+), 3 deletions(-)
+
+--- a/include/net/mac80211.h
++++ b/include/net/mac80211.h
+@@ -505,6 +505,11 @@ struct ieee80211_bss_conf {
+  * @IEEE80211_TX_CTL_DONTFRAG: Don't fragment this packet even if it
+  *	would be fragmented by size (this is optional, only used for
+  *	monitor injection).
++ * @IEEE80211_TX_STAT_NOACK_TRANSMITTED: A frame that was marked with
++ *	IEEE80211_TX_CTL_NO_ACK has been successfully transmitted without
++ *	any errors (like issues specific to the driver/HW).
++ *	This flag must not be set for frames that don't request no-ack
++ *	behaviour with IEEE80211_TX_CTL_NO_ACK.
+  *
+  * Note: If you have to add new flags to the enumeration, then don't
+  *	 forget to update %IEEE80211_TX_TEMPORARY_FLAGS when necessary.
+@@ -540,6 +545,7 @@ enum mac80211_tx_info_flags {
+ 	IEEE80211_TX_STATUS_EOSP		= BIT(28),
+ 	IEEE80211_TX_CTL_USE_MINRATE		= BIT(29),
+ 	IEEE80211_TX_CTL_DONTFRAG		= BIT(30),
++	IEEE80211_TX_STAT_NOACK_TRANSMITTED	= BIT(31),
+ };
+ 
+ #define IEEE80211_TX_CTL_STBC_SHIFT		23
+--- a/net/mac80211/status.c
++++ b/net/mac80211/status.c
+@@ -789,7 +789,8 @@ void ieee80211_tx_status(struct ieee8021
+ 	 * Fragments are passed to low-level drivers as separate skbs, so these
+ 	 * are actually fragments, not frames. Update frame counters only for
+ 	 * the first fragment of the frame. */
+-	if (info->flags & IEEE80211_TX_STAT_ACK) {
++	if ((info->flags & IEEE80211_TX_STAT_ACK) ||
++	    (info->flags & IEEE80211_TX_STAT_NOACK_TRANSMITTED)) {
+ 		if (ieee80211_is_first_frag(hdr->seq_ctrl)) {
+ 			local->dot11TransmittedFrameCount++;
+ 			if (is_multicast_ether_addr(hdr->addr1))

@@ -1,0 +1,32 @@
+From 133303a50feba059be5457dcea113ce08dd8dd51 Mon Sep 17 00:00:00 2001
+From: Sujith Manoharan <c_manoha@qca.qualcomm.com>
+Date: Tue, 9 Dec 2014 02:56:49 +0530
+Subject: [PATCH] ath9k: Fix no-ack frame status
+
+Check if the frame has been completed without any
+error and use IEEE80211_TX_STAT_NOACK_TRANSMITTED to
+indicate successful transmission of no-ack frames.
+
+Signed-off-by: Sujith Manoharan <c_manoha@qca.qualcomm.com>
+---
+ drivers/net/wireless/ath/ath9k/xmit.c | 9 ++++++---
+ 1 file changed, 6 insertions(+), 3 deletions(-)
+
+--- a/drivers/net/wireless/ath/ath9k/xmit.c
++++ b/drivers/net/wireless/ath/ath9k/xmit.c
+@@ -2445,9 +2445,12 @@ static void ath_tx_complete(struct ath_s
+ 	if (sc->sc_ah->caldata)
+ 		set_bit(PAPRD_PACKET_SENT, &sc->sc_ah->caldata->cal_flags);
+ 
+-	if (!(tx_flags & ATH_TX_ERROR))
+-		/* Frame was ACKed */
+-		tx_info->flags |= IEEE80211_TX_STAT_ACK;
++	if (!(tx_flags & ATH_TX_ERROR)) {
++		if (tx_info->flags & IEEE80211_TX_CTL_NO_ACK)
++			tx_info->flags |= IEEE80211_TX_STAT_NOACK_TRANSMITTED;
++		else
++			tx_info->flags |= IEEE80211_TX_STAT_ACK;
++	}
+ 
+ 	padpos = ieee80211_hdrlen(hdr->frame_control);
+ 	padsize = padpos & 3;

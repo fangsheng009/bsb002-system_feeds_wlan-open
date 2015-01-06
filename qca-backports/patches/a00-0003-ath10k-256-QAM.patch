@@ -1,6 +1,6 @@
 --- a/drivers/net/wireless/ath/ath10k/mac.c
 +++ b/drivers/net/wireless/ath/ath10k/mac.c
-@@ -1330,6 +1330,15 @@ static void ath10k_peer_assoc_h_vht(stru
+@@ -1420,6 +1420,15 @@ static void ath10k_peer_assoc_h_vht(stru
  		return;
  
  	arg->peer_flags |= WMI_PEER_VHT;
@@ -16,7 +16,7 @@
  	arg->peer_vht_caps = vht_cap->cap;
  
  	ampdu_factor = (vht_cap->cap &
-@@ -1394,7 +1403,12 @@ static void ath10k_peer_assoc_h_phymode(
+@@ -1498,7 +1507,12 @@ static void ath10k_peer_assoc_h_phymode(
  
  	switch (ar->hw->conf.chandef.chan->band) {
  	case IEEE80211_BAND_2GHZ:
@@ -30,7 +30,7 @@
  			if (sta->bandwidth == IEEE80211_STA_RX_BW_40)
  				phymode = MODE_11NG_HT40;
  			else
-@@ -4819,7 +4833,8 @@ int ath10k_mac_register(struct ath10k *a
+@@ -5062,7 +5076,8 @@ int ath10k_mac_register(struct ath10k *a
  		band->bitrates = ath10k_g_rates;
  		band->ht_cap = ht_cap;
  
@@ -42,7 +42,7 @@
  	}
 --- a/drivers/net/wireless/ath/ath10k/mac.h
 +++ b/drivers/net/wireless/ath/ath10k/mac.h
-@@ -26,6 +26,8 @@ struct ath10k_generic_iter {
+@@ -28,6 +28,8 @@ struct ath10k_generic_iter {
  	int ret;
  };
  
@@ -53,7 +53,7 @@
  int ath10k_mac_register(struct ath10k *ar);
 --- a/drivers/net/wireless/ath/ath10k/wmi.h
 +++ b/drivers/net/wireless/ath/ath10k/wmi.h
-@@ -4307,6 +4307,7 @@ struct wmi_peer_set_q_empty_callback_cmd
+@@ -4420,6 +4420,7 @@ struct wmi_peer_set_q_empty_callback_cmd
  #define WMI_PEER_QOS            0x00000002
  #define WMI_PEER_NEED_PTK_4_WAY 0x00000004
  #define WMI_PEER_NEED_GTK_2_WAY 0x00000010
@@ -61,7 +61,7 @@
  #define WMI_PEER_APSD           0x00000800
  #define WMI_PEER_HT             0x00001000
  #define WMI_PEER_40MHZ          0x00002000
-@@ -4317,7 +4318,8 @@ struct wmi_peer_set_q_empty_callback_cmd
+@@ -4430,7 +4431,8 @@ struct wmi_peer_set_q_empty_callback_cmd
  #define WMI_PEER_SPATIAL_MUX    0x00200000
  #define WMI_PEER_VHT            0x02000000
  #define WMI_PEER_80MHZ          0x04000000

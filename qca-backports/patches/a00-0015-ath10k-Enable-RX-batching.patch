@@ -1,0 +1,36 @@
+From 77cec399c42005d44ba565e0319628988b4a3d89 Mon Sep 17 00:00:00 2001
+From: Sujith Manoharan <c_manoha@qca.qualcomm.com>
+Date: Mon, 29 Dec 2014 11:46:53 +0530
+Subject: [PATCH] ath10k: Enable RX batching
+
+This feature allows the FW to batch RX indications,
+reducing the rate of host interrupt generation, which
+in turn reduces CPU load. Currently, this is enabled
+only for the 10.2 firmware.
+
+Signed-off-by: Sujith Manoharan <c_manoha@qca.qualcomm.com>
+---
+ drivers/net/wireless/ath/ath10k/wmi.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+--- a/drivers/net/wireless/ath/ath10k/wmi.c
++++ b/drivers/net/wireless/ath/ath10k/wmi.c
+@@ -3711,7 +3711,7 @@ static struct sk_buff *ath10k_wmi_10_2_o
+ 	struct wmi_init_cmd_10_2 *cmd;
+ 	struct sk_buff *buf;
+ 	struct wmi_resource_config_10x config = {};
+-	u32 len, val;
++	u32 len, val, features = 0;
+ 
+ 	config.num_vdevs = __cpu_to_le32(TARGET_10X_NUM_VDEVS);
+ 	config.num_peers = __cpu_to_le32(TARGET_10X_NUM_PEERS);
+@@ -3765,6 +3765,9 @@ static struct sk_buff *ath10k_wmi_10_2_o
+ 
+ 	cmd = (struct wmi_init_cmd_10_2 *)buf->data;
+ 
++	features |= WMI_10_2_RX_BATCH_MODE;
++	cmd->resource_config.feature_mask = __cpu_to_le32(features);
++
+ 	memcpy(&cmd->resource_config.common, &config, sizeof(config));
+ 	ath10k_wmi_put_host_mem_chunks(ar, &cmd->mem_chunks);
+ 
