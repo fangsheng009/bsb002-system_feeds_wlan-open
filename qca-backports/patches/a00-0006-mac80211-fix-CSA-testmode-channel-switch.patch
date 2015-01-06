@@ -1,8 +1,6 @@
-diff --git a/net/mac80211/chan.c b/net/mac80211/chan.c
-index c7c5142..0b79097 100644
 --- a/net/mac80211/chan.c
 +++ b/net/mac80211/chan.c
-@@ -814,7 +814,7 @@ int ieee80211_vif_reserve_chanctx(struct ieee80211_sub_if_data *sdata,
+@@ -814,7 +814,7 @@ int ieee80211_vif_reserve_chanctx(struct
  				  bool radar_required)
  {
  	struct ieee80211_local *local = sdata->local;
@@ -11,7 +9,7 @@ index c7c5142..0b79097 100644
  
  	lockdep_assert_held(&local->chanctx_mtx);
  
-@@ -822,7 +822,9 @@ int ieee80211_vif_reserve_chanctx(struct ieee80211_sub_if_data *sdata,
+@@ -822,7 +822,9 @@ int ieee80211_vif_reserve_chanctx(struct
  	if (curr_ctx && local->use_chanctx && !local->ops->switch_vif_chanctx)
  		return -ENOTSUPP;
  
