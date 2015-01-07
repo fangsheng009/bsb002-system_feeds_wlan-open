@@ -344,6 +344,20 @@ QCA IEEE 802.11ac family of chipsets. For now only
 PCI is supported.
 endef
 
+define KernelPackage/qca-wil6210
+  $(call KernelPackage/qca-mac80211/Default)
+  TITLE:=QCA 802.11ad wireless cards support
+  DEPENDS+= @PCI_SUPPORT +kmod-qca-ath
+  FILES:= \
+	$(PKG_BUILD_DIR)/drivers/net/wireless/ath/wil6210/wil6210.ko
+  AUTOLOAD:=$(call AutoProbe,wil6210)
+endef
+
+define KernelPackage/qca-wil6210/description
+This module adds support for wireless adapters based on
+60GHz QCA Wilocity family of chipsets. These support 802.11d.
+endef
+
 config_package=$(if $(CONFIG_PACKAGE_kmod-$(1)),m)
 
 config-y:= \
@@ -391,6 +405,7 @@ config-$(CONFIG_QCA_ATH_USER_REGD) += ATH_USER_REGD \
 
 config-$(call config_package,qca-ath9k-htc) += ATH9K_HTC
 config-$(call config_package,qca-ath10k) += ATH10K ATH10K_PCI
+config-$(call config_package,qca-wil6210) += WIL6210
 config-$(CONFIG_ATH10K_AP_FIRMWARE) += ATH10K_DFS_CERTIFIED
 
 config-$(CONFIG_LEDS_TRIGGERS) += MAC80211_LEDS
@@ -514,3 +529,4 @@ $(eval $(call KernelPackage,qca-ath9k))
 $(eval $(call KernelPackage,qca-ath9k-htc))
 $(eval $(call KernelPackage,qca-ath10k))
 $(eval $(call KernelPackage,qca-ath))
+$(eval $(call KernelPackage,qca-wil6210))
