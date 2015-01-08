@@ -23,6 +23,7 @@ include/linux/ath9k_platform.h
 include/linux/mpls.h
 include/uapi/linux/nl80211.h
 include/uapi/linux/mpls.h
+include/uapi/linux/wil6210_uapi.h
 
 include/net/cfg80211.h
 include/net/cfg80211-wext.h
@@ -40,6 +41,7 @@ net/mac80211/
 drivers/net/wireless/ath/ath10k/
 drivers/net/wireless/ath/ath6kl/
 drivers/net/wireless/ath/ath9k/
+drivers/net/wireless/ath/wil6210/
 drivers/net/wireless/ath/ath.h
 drivers/net/wireless/ath/debug.c
 drivers/net/wireless/ath/dfs_pattern_detector.c
