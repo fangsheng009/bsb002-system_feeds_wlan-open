@@ -1,9 +1,9 @@
 --- a/include/linux/ath9k_platform.h
 +++ b/include/linux/ath9k_platform.h
-@@ -37,6 +37,9 @@ struct ath9k_platform_data {
- 
- 	int (*get_mac_revision)(void);
+@@ -41,6 +41,9 @@ struct ath9k_platform_data {
  	int (*external_reset)(void);
+ 
+ 	bool use_eeprom;
 +
 +	int num_leds;
 +	const struct gpio_led *leds;
@@ -56,7 +56,14 @@
  
  	INIT_LIST_HEAD(&sc->leds);
  
-@@ -120,6 +141,12 @@ void ath_init_leds(struct ath_softc *sc)
+@@ -114,12 +135,18 @@ void ath_init_leds(struct ath_softc *sc)
+ 	snprintf(led_name, sizeof(led_name), "ath9k-%s",
+ 		 wiphy_name(sc->hw->wiphy));
+ 
+-	if (led_blink)
++	if (ath9k_led_blink)
+ 		trigger = sc->led_default_trigger;
+ 	else
  		trigger = ieee80211_get_radio_led_name(sc->hw);
  
  	ath_create_gpio_led(sc, sc->sc_ah->led_pin, led_name, trigger, 1);
