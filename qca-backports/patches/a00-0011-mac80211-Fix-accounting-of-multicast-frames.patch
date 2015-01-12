@@ -1,27 +1,3 @@
-From 5cf16616e152dd5c274a65954c77f64892d025a8 Mon Sep 17 00:00:00 2001
-From: Sujith Manoharan <c_manoha@qca.qualcomm.com>
-Date: Wed, 10 Dec 2014 21:26:11 +0530
-Subject: [PATCH] mac80211: Fix accounting of multicast frames
-
-Since multicast frames are marked as no-ack, using
-IEEE80211_TX_STAT_ACK to check if they have been
-successfully transmitted by the driver is incorrect
-since a driver can choose to ignore transmission status
-for no-ack frames. This results in incorrect accounting
-for such frames.
-
-To fix this issue, this patch introduces a new flag
-that can be used by drivers to indicate error-free
-transmission of no-ack frames.
-
-Signed-off-by: Sujith Manoharan <c_manoha@qca.qualcomm.com>
-[add a note about not setting the flag for non-no-ack frames]
-Signed-off-by: Johannes Berg <johannes.berg@intel.com>
----
- include/net/mac80211.h | 6 ++++++
- net/mac80211/status.c  | 9 ++++++---
- 2 files changed, 12 insertions(+), 3 deletions(-)
-
 --- a/include/net/mac80211.h
 +++ b/include/net/mac80211.h
 @@ -505,6 +505,11 @@ struct ieee80211_bss_conf {

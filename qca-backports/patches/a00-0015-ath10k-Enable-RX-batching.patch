@@ -1,18 +1,3 @@
-From 77cec399c42005d44ba565e0319628988b4a3d89 Mon Sep 17 00:00:00 2001
-From: Sujith Manoharan <c_manoha@qca.qualcomm.com>
-Date: Mon, 29 Dec 2014 11:46:53 +0530
-Subject: [PATCH] ath10k: Enable RX batching
-
-This feature allows the FW to batch RX indications,
-reducing the rate of host interrupt generation, which
-in turn reduces CPU load. Currently, this is enabled
-only for the 10.2 firmware.
-
-Signed-off-by: Sujith Manoharan <c_manoha@qca.qualcomm.com>
----
- drivers/net/wireless/ath/ath10k/wmi.c | 5 ++++-
- 1 file changed, 4 insertions(+), 1 deletion(-)
-
 --- a/drivers/net/wireless/ath/ath10k/wmi.c
 +++ b/drivers/net/wireless/ath/ath10k/wmi.c
 @@ -3711,7 +3711,7 @@ static struct sk_buff *ath10k_wmi_10_2_o

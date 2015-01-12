@@ -1,19 +1,3 @@
-From c0658f85902c2ed4c05491b19ec2f5456b6c75d3 Mon Sep 17 00:00:00 2001
-From: Sujith Manoharan <c_manoha@qca.qualcomm.com>
-Date: Mon, 29 Dec 2014 11:42:36 +0530
-Subject: [PATCH] ath10k: Fix DMA burst size
-
-A value of zero indicates that 128B is the maximum
-DMA request size for read/writes. But PCI cards based
-on AR9880 can support 256B, so enable this for
-the 10.2 firmware.
-
-Signed-off-by: Sujith Manoharan <c_manoha@qca.qualcomm.com>
----
- drivers/net/wireless/ath/ath10k/hw.h  | 3 +++
- drivers/net/wireless/ath/ath10k/wmi.c | 2 +-
- 2 files changed, 4 insertions(+), 1 deletion(-)
-
 --- a/drivers/net/wireless/ath/ath10k/hw.h
 +++ b/drivers/net/wireless/ath/ath10k/hw.h
 @@ -183,6 +183,9 @@ struct ath10k_pktlog_hdr {
