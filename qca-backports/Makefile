@@ -7,13 +7,11 @@ PKG_BACKPORTS_VERSION:=69e3442
 PKG_BACKPORTS_SOURCE_URL:=git://git.kernel.org/pub/scm/linux/kernel/git/backports/backports.git
 PKG_BACKPORTS_BRANCH:=master
 
-PKG_KERNEL_VERSION:=a1fd45a
+PKG_KERNEL_VERSION:=3a6602e
 PKG_KERNEL_SOURCE_URL:=https://github.com/kvalo/ath.git
 PKG_KERNEL_BRANCH:=ath-qca
 
-PKG_KERNEL_REMOTE_MAINLINE:=git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git
-
-PKG_VERSION:=20150109
+PKG_VERSION:=20150113
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_RELEASE:=1
@@ -192,8 +190,7 @@ ifneq ($(CONFIG_KERNEL_GIT_CLONE_URI),)
 # we're manually using clone & fetch to speed up sync time
   define FastCloneKernel
 	git clone $(CONFIG_KERNEL_GIT_CLONE_URI) $(2)
-	(cd $(2); git remote add src $(1); git fetch src; \
-	git remote add mainline $(PKG_KERNEL_REMOTE_MAINLINE); git fetch mainline)
+	(cd $(2); git remote add src $(1); git fetch src)
   endef
 else
   define FastCloneKernel
@@ -214,16 +211,6 @@ define DownloadBackports
 	mkdir -p $(TMP_DIR)/dl/$(PKG_NAME)-$(PKG_VERSION)
 	$(call FastCloneKernel,$(PKG_KERNEL_SOURCE_URL),$(TMP_DIR)/dl/$(PKG_NAME)-kernel)
 	(cd $(TMP_DIR)/dl/$(PKG_NAME)-kernel && git checkout $(PKG_KERNEL_VERSION))
-
-# Cherry-pick commits from mainline that are not
-# present in ath.git.
-#
-# This list needs to be pruned/expanded whenever
-# the backports/ath trees are updated to new versions.
-
-	(cd $(TMP_DIR)/dl/$(PKG_NAME)-kernel && \
-	git cherry-pick 5d26a105b5a73e5635eae0629b42fa0a90e07b7b && \
-	git cherry-pick 4943ba16bbc2db05115707b3ff7b4874e9e3c560)
 
 	git clone $(PKG_BACKPORTS_SOURCE_URL) $(TMP_DIR)/dl/$(PKG_NAME)-source
 	cp files/copy-list.hwsim $(TMP_DIR)/dl/$(PKG_NAME)-source
