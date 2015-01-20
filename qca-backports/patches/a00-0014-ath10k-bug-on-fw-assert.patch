@@ -1,0 +1,98 @@
+--- a/drivers/net/wireless/ath/ath10k/core.c
++++ b/drivers/net/wireless/ath/ath10k/core.c
+@@ -34,16 +34,19 @@ unsigned int ath10k_debug_mask;
+ static bool uart_print;
+ static bool skip_otp;
+ static bool no_calfile = 1;
++bool bug_on_fw_assert = true;
+ 
+ module_param_named(debug_mask, ath10k_debug_mask, uint, 0644);
+ module_param(uart_print, bool, 0644);
+ module_param(skip_otp, bool, 0644);
+ module_param(no_calfile, bool, 0644);
++module_param(bug_on_fw_assert, bool, 0644);
+ 
+ MODULE_PARM_DESC(debug_mask, "Debugging mask");
+ MODULE_PARM_DESC(uart_print, "Uart target debugging");
+ MODULE_PARM_DESC(skip_otp, "Skip otp failure for calibration in testmode");
+ MODULE_PARM_DESC(no_calfile, "Do not try to download calibration files");
++MODULE_PARM_DESC(bug_on_fw_assert, "Bug on firmware assert");
+ 
+ static const struct ath10k_hw_params ath10k_hw_params_list[] = {
+ 	{
+@@ -840,6 +843,7 @@ static void ath10k_core_restart(struct w
+ 	 */
+ 	barrier();
+ 
++	ath10k_dbg_bug_on_fw_assert(ar);
+ 	ieee80211_stop_queues(ar->hw);
+ 	ath10k_drain_tx(ar);
+ 	complete_all(&ar->scan.started);
+--- a/drivers/net/wireless/ath/ath10k/debug.c
++++ b/drivers/net/wireless/ath/ath10k/debug.c
+@@ -2041,3 +2041,47 @@ void ath10k_dbg_dump(struct ath10k *ar,
+ EXPORT_SYMBOL(ath10k_dbg_dump);
+ 
+ #endif /* CPTCFG_ATH10K_DEBUG */
++
++#define ATH10K_FW_DRAM_LENGTH     0x00050000
++#define ATH10K_FW_IO_MEM_ADDR     0x41400000
++#define ATH10K_FW_IO_MEM_SIZE     ((1 * 1024 * 1024) - 128)
++#define ATH10K_FW_READ_BLOCK      2048
++void ath10k_dbg_bug_on_fw_assert(struct ath10k *ar)
++{
++	int ret, i, num_read;
++	u8 *addr, *pos;
++
++	if (!bug_on_fw_assert)
++		return;
++
++	addr = (u8 *)ioremap(ATH10K_FW_IO_MEM_ADDR, ATH10K_FW_IO_MEM_SIZE);
++	if (!addr) {
++		ath10k_err(ar, "Cannot access memory to dump WLAN Firmware data\n");
++		return;
++	}
++
++	pos = addr;
++	num_read = ATH10K_FW_DRAM_LENGTH / ATH10K_FW_READ_BLOCK;
++
++	memset(addr, 0, ATH10K_FW_IO_MEM_SIZE);
++	ath10k_err(ar, "Collecting WLAN Firmware Dump...\n");
++
++	for (i = 0; i < num_read; i++) {
++		ret = ath10k_hif_diag_read(ar, DRAM_BASE_ADDRESS + (i * ATH10K_FW_READ_BLOCK),
++					   pos, ATH10K_FW_READ_BLOCK);
++		if (ret) {
++			ath10k_warn(ar, "failed to read target dram address: %d\n", ret);
++			iounmap(addr);
++			return;
++		}
++		pos += ATH10K_FW_READ_BLOCK;
++	}
++	msleep(200);
++
++	ath10k_err(ar, "Firmware DRAM dump collected successfully\n");
++	iounmap(addr);
++
++	ath10k_err(ar, "XXX: Asserting Host...\n");
++	BUG();
++}
++EXPORT_SYMBOL(ath10k_dbg_bug_on_fw_assert);
+--- a/drivers/net/wireless/ath/ath10k/debug.h
++++ b/drivers/net/wireless/ath/ath10k/debug.h
+@@ -55,6 +55,7 @@ enum ath10k_dbg_aggr_mode {
+ };
+ 
+ extern unsigned int ath10k_debug_mask;
++extern bool bug_on_fw_assert;
+ 
+ __printf(2, 3) void ath10k_info(struct ath10k *ar, const char *fmt, ...);
+ __printf(2, 3) void ath10k_err(struct ath10k *ar, const char *fmt, ...);
+@@ -138,6 +139,7 @@ ath10k_debug_get_new_fw_crash_data(struc
+ void ath10k_sta_add_debugfs(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
+ 			    struct ieee80211_sta *sta, struct dentry *dir);
+ #endif /* CPTCFG_MAC80211_DEBUGFS */
++void ath10k_dbg_bug_on_fw_assert(struct ath10k *ar);
+ 
+ #ifdef CPTCFG_ATH10K_DEBUG
+ __printf(3, 4) void ath10k_dbg(struct ath10k *ar,
