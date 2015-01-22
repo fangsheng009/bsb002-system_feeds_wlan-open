@@ -1,0 +1,145 @@
+diff --git a/drivers/net/wireless/ath/ath10k/core.h b/drivers/net/wireless/ath/ath10k/core.h
+index f97cfc0..5686c59 100644
+--- a/drivers/net/wireless/ath/ath10k/core.h
++++ b/drivers/net/wireless/ath/ath10k/core.h
+@@ -329,6 +329,7 @@ struct ath10k_debug {
+ 
+ 	/* protected by conf_mutex */
+ 	u32 fw_dbglog_mask;
++	u32 fw_dbglog_level;
+ 	u32 pktlog_filter;
+ 	u32 reg_addr;
+ 	u32 nf_cal_period;
+diff --git a/drivers/net/wireless/ath/ath10k/debug.c b/drivers/net/wireless/ath/ath10k/debug.c
+index 379962c..167102b 100644
+--- a/drivers/net/wireless/ath/ath10k/debug.c
++++ b/drivers/net/wireless/ath/ath10k/debug.c
+@@ -1319,10 +1319,10 @@ static ssize_t ath10k_read_fw_dbglog(struct file *file,
+ {
+ 	struct ath10k *ar = file->private_data;
+ 	unsigned int len;
+-	char buf[32];
++	char buf[64];
+ 
+-	len = scnprintf(buf, sizeof(buf), "0x%08x\n",
+-			ar->debug.fw_dbglog_mask);
++	len = scnprintf(buf, sizeof(buf), "0x%08x %u\n",
++			ar->debug.fw_dbglog_mask, ar->debug.fw_dbglog_level);
+ 
+ 	return simple_read_from_buffer(user_buf, count, ppos, buf, len);
+ }
+@@ -1332,19 +1332,30 @@ static ssize_t ath10k_write_fw_dbglog(struct file *file,
+ 				      size_t count, loff_t *ppos)
+ {
+ 	struct ath10k *ar = file->private_data;
+-	unsigned long mask;
+ 	int ret;
++	char buf[64];
++	unsigned int log_level, mask;
+ 
+-	ret = kstrtoul_from_user(user_buf, count, 0, &mask);
+-	if (ret)
+-		return ret;
++	simple_write_to_buffer(buf, sizeof(buf) - 1, ppos, user_buf, count);
++
++	/* make sure that buf is null terminated */
++	buf[sizeof(buf) - 1] = 0;
++
++	ret = sscanf(buf, "%x %u", &mask, &log_level);
++
++	if (!ret)
++		return -EINVAL;
+ 
+ 	mutex_lock(&ar->conf_mutex);
+ 
+ 	ar->debug.fw_dbglog_mask = mask;
++	ar->debug.fw_dbglog_level = (ret == 1) ? ATH10K_DBGLOG_LEVEL_WARN :
++				     log_level;
++
+ 
+ 	if (ar->state == ATH10K_STATE_ON) {
+-		ret = ath10k_wmi_dbglog_cfg(ar, ar->debug.fw_dbglog_mask);
++		ret = ath10k_wmi_dbglog_cfg(ar, ar->debug.fw_dbglog_mask,
++					    ar->debug.fw_dbglog_level);
+ 		if (ret) {
+ 			ath10k_warn(ar, "dbglog cfg failed from debugfs: %d\n",
+ 				    ret);
+@@ -1686,7 +1697,8 @@ int ath10k_debug_start(struct ath10k *ar)
+ 			    ret);
+ 
+ 	if (ar->debug.fw_dbglog_mask) {
+-		ret = ath10k_wmi_dbglog_cfg(ar, ar->debug.fw_dbglog_mask);
++		ret = ath10k_wmi_dbglog_cfg(ar, ar->debug.fw_dbglog_mask,
++					    ATH10K_DBGLOG_LEVEL_WARN);
+ 		if (ret)
+ 			/* not serious */
+ 			ath10k_warn(ar, "failed to enable dbglog during start: %d",
+diff --git a/drivers/net/wireless/ath/ath10k/wmi-ops.h b/drivers/net/wireless/ath/ath10k/wmi-ops.h
+index 0dd49a7..246f646 100644
+--- a/drivers/net/wireless/ath/ath10k/wmi-ops.h
++++ b/drivers/net/wireless/ath/ath10k/wmi-ops.h
+@@ -111,7 +111,8 @@ struct wmi_ops {
+ 					     enum wmi_force_fw_hang_type type,
+ 					     u32 delay_ms);
+ 	struct sk_buff *(*gen_mgmt_tx)(struct ath10k *ar, struct sk_buff *skb);
+-	struct sk_buff *(*gen_dbglog_cfg)(struct ath10k *ar, u32 module_enable);
++	struct sk_buff *(*gen_dbglog_cfg)(struct ath10k *ar, u32 module_enable,
++					  u32 log_level);
+ 	struct sk_buff *(*gen_pktlog_enable)(struct ath10k *ar, u32 filter);
+ 	struct sk_buff *(*gen_pktlog_disable)(struct ath10k *ar);
+ 	struct sk_buff *(*gen_pdev_set_quiet_mode)(struct ath10k *ar,
+@@ -796,14 +797,14 @@ ath10k_wmi_force_fw_hang(struct ath10k *ar,
+ }
+ 
+ static inline int
+-ath10k_wmi_dbglog_cfg(struct ath10k *ar, u32 module_enable)
++ath10k_wmi_dbglog_cfg(struct ath10k *ar, u32 module_enable, u32 log_level)
+ {
+ 	struct sk_buff *skb;
+ 
+ 	if (!ar->wmi.ops->gen_dbglog_cfg)
+ 		return -EOPNOTSUPP;
+ 
+-	skb = ar->wmi.ops->gen_dbglog_cfg(ar, module_enable);
++	skb = ar->wmi.ops->gen_dbglog_cfg(ar, module_enable, log_level);
+ 	if (IS_ERR(skb))
+ 		return PTR_ERR(skb);
+ 
+diff --git a/drivers/net/wireless/ath/ath10k/wmi-tlv.c b/drivers/net/wireless/ath/ath10k/wmi-tlv.c
+index 6f34fc7..3e40ed6 100644
+--- a/drivers/net/wireless/ath/ath10k/wmi-tlv.c
++++ b/drivers/net/wireless/ath/ath10k/wmi-tlv.c
+@@ -1866,8 +1866,8 @@ ath10k_wmi_tlv_op_gen_force_fw_hang(struct ath10k *ar,
+ }
+ 
+ static struct sk_buff *
+-ath10k_wmi_tlv_op_gen_dbglog_cfg(struct ath10k *ar, u32 module_enable)
+-{
++ath10k_wmi_tlv_op_gen_dbglog_cfg(struct ath10k *ar, u32 module_enable,
++				 u32 log_level) {
+ 	struct wmi_tlv_dbglog_cmd *cmd;
+ 	struct wmi_tlv *tlv;
+ 	struct sk_buff *skb;
+diff --git a/drivers/net/wireless/ath/ath10k/wmi.c b/drivers/net/wireless/ath/ath10k/wmi.c
+index bad8ac7..4127643 100644
+--- a/drivers/net/wireless/ath/ath10k/wmi.c
++++ b/drivers/net/wireless/ath/ath10k/wmi.c
+@@ -4788,7 +4788,8 @@ ath10k_wmi_op_gen_force_fw_hang(struct ath10k *ar,
+ }
+ 
+ static struct sk_buff *
+-ath10k_wmi_op_gen_dbglog_cfg(struct ath10k *ar, u32 module_enable)
++ath10k_wmi_op_gen_dbglog_cfg(struct ath10k *ar, u32 module_enable,
++			     u32 log_level)
+ {
+ 	struct wmi_dbglog_cfg_cmd *cmd;
+ 	struct sk_buff *skb;
+@@ -4801,7 +4802,7 @@ ath10k_wmi_op_gen_dbglog_cfg(struct ath10k *ar, u32 module_enable)
+ 	cmd = (struct wmi_dbglog_cfg_cmd *)skb->data;
+ 
+ 	if (module_enable) {
+-		cfg = SM(ATH10K_DBGLOG_LEVEL_VERBOSE,
++		cfg = SM(log_level,
+ 			 ATH10K_DBGLOG_CFG_LOG_LVL);
+ 	} else {
+ 		/* set back defaults, all modules with WARN level */
