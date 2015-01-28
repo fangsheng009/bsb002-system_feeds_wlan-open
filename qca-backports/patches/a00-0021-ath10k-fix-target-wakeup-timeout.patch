@@ -11,7 +11,7 @@
  
 --- a/drivers/net/wireless/ath/ath10k/pci.c
 +++ b/drivers/net/wireless/ath/ath10k/pci.c
-@@ -800,6 +800,8 @@ static int ath10k_pci_wake_wait(struct a
+@@ -807,6 +807,8 @@ static int ath10k_pci_wake_wait(struct a
  
  	while (tot_delay < PCIE_WAKE_TIMEOUT) {
  		if (ath10k_pci_is_awake(ar))

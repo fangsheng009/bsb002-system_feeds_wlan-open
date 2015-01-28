@@ -19,7 +19,7 @@
   * This is the new netlink-based wireless configuration interface.
   *
   * Copyright 2006-2010	Johannes Berg <johannes@sipsolutions.net>
-@@ -6307,6 +6307,16 @@ skip_beacons:
+@@ -6308,6 +6308,16 @@ skip_beacons:
  	if (err)
  		return err;
  

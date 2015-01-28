@@ -18,7 +18,7 @@
  
  static const struct ath10k_hw_params ath10k_hw_params_list[] = {
  	{
-@@ -685,7 +688,8 @@ static int ath10k_core_fetch_firmware_fi
+@@ -713,7 +716,8 @@ static int ath10k_core_fetch_firmware_fi
  	int ret;
  
  	/* calibration file is optional, don't check for any errors */

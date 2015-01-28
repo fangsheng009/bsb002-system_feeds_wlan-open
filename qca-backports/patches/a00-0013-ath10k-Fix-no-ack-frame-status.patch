@@ -1,6 +1,6 @@
 --- a/drivers/net/wireless/ath/ath10k/htt.h
 +++ b/drivers/net/wireless/ath/ath10k/htt.h
-@@ -1159,6 +1159,7 @@ struct htt_tx_done {
+@@ -1222,6 +1222,7 @@ struct htt_tx_done {
  	u32 msdu_id;
  	bool discard;
  	bool no_ack;
@@ -10,7 +10,7 @@
  struct htt_peer_map_event {
 --- a/drivers/net/wireless/ath/ath10k/htt_rx.c
 +++ b/drivers/net/wireless/ath/ath10k/htt_rx.c
-@@ -1476,6 +1476,7 @@ static void ath10k_htt_rx_frm_tx_compl(s
+@@ -1598,6 +1598,7 @@ static void ath10k_htt_rx_frm_tx_compl(s
  		tx_done.no_ack = true;
  		break;
  	case HTT_DATA_TX_STATUS_OK:
@@ -18,7 +18,7 @@
  		break;
  	case HTT_DATA_TX_STATUS_DISCARD:
  	case HTT_DATA_TX_STATUS_POSTPONE:
-@@ -1627,6 +1628,7 @@ void ath10k_htt_t2h_msg_handler(struct a
+@@ -1937,6 +1938,7 @@ void ath10k_htt_t2h_msg_handler(struct a
  
  		switch (status) {
  		case HTT_MGMT_TX_STATUS_OK:
@@ -41,7 +41,7 @@
  
  	if (tx_done->msdu_id >= htt->max_num_pending_tx) {
  		ath10k_warn(ar, "warning: msdu_id %d too big, ignoring\n",
-@@ -91,6 +93,9 @@ void ath10k_txrx_tx_unref(struct ath10k_
+@@ -97,6 +99,9 @@ void ath10k_txrx_tx_unref(struct ath10k_
  	if (tx_done->no_ack)
  		info->flags &= ~IEEE80211_TX_STAT_ACK;
  
