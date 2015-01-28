@@ -1,14 +1,3 @@
-From 1ae6592453dc8834a2a7d5d2f872af4f36326e58 Mon Sep 17 00:00:00 2001
-From: Vasanthakumar Thiagarajan <vthiagar@qti.qualcomm.com>
-Date: Sat, 24 Jan 2015 19:03:57 +0530
-Subject: [PATCH] dfs patch
-
----
- net/wireless/ap.c   |   36 ++++++++++++++++++++++++++++++++++++
- net/wireless/chan.c |   38 ++++++++++++++++++++++++++++++++++++++
- net/wireless/core.h |   11 +++++++++++
- 3 files changed, 85 insertions(+)
-
 diff --git a/net/wireless/ap.c b/net/wireless/ap.c
 index bdad1f9..5df2d15 100644
 --- a/net/wireless/ap.c
