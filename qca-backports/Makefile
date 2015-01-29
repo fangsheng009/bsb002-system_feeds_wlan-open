@@ -147,6 +147,44 @@ define KernelPackage/qca-mac80211/description
 Generic IEEE 802.11 Networking Stack (mac80211)
 endef
 
+PKG_LINUX_FIRMWARE_NAME:=linux-firmware
+PKG_LINUX_FIRMWARE_VERSION:=93c893e
+PKG_LINUX_FIRMWARE_BRANCH:=master
+PKG_LINUX_FIRMWARE_SOURCE:=$(PKG_LINUX_FIRMWARE_NAME)-$(PKG_LINUX_FIRMWARE_VERSION).tar.bz2
+PKG_LINUX_FIRMWARE_PROTO:=git
+PKG_LINUX_FIRMWARE_SOURCE_URL:=git://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git
+PKG_LINUX_FIRMWARE_SUBDIR:=$(PKG_LINUX_FIRMWARE_NAME)-$(PKG_LINUX_FIRMWARE_VERSION)
+PKG_LINUX_FIRMWARE_MIRROR_MD5SUM:=837a1a9456c1ec8b428cc0b2b08a331b
+
+define Download/qca-linux-firmware
+  FILE:=$(PKG_LINUX_FIRMWARE_SOURCE)
+  URL:=$(PKG_LINUX_FIRMWARE_SOURCE_URL)
+  MD5SUM:=$(PKG_LINUX_FIRMWARE_MD5SUM)
+  PROTO:=$(PKG_LINUX_FIRMWARE_PROTO)
+  VERSION:=$(PKG_LINUX_FIRMWARE_VERSION)
+  SUBDIR:=$(PKG_LINUX_FIRMWARE_SUBDIR)
+  MIRROR_MD5SUM:=$(PKG_LINUX_FIRMWARE_MIRROR_MD5SUM)
+endef
+$(eval $(call Download,qca-linux-firmware))
+
+PKG_ATH10K_LINUX_FIRMWARE_NAME:=ath10k-firmware
+PKG_ATH10K_LINUX_FIRMWARE_VERSION:=5fdb16e
+PKG_ATH10K_LINUX_FIRMWARE_BRANCH:=master
+PKG_ATH10K_LINUX_FIRMWARE_SOURCE:=$(PKG_ATH10K_LINUX_FIRMWARE_NAME)-$(PKG_ATH10K_LINUX_FIRMWARE_VERSION).tar.bz2
+PKG_ATH10K_LINUX_FIRMWARE_PROTO:=git
+PKG_ATH10K_LINUX_FIRMWARE_SOURCE_URL:=https://github.com/kvalo/ath10k-firmware.git
+PKG_ATH10K_LINUX_FIRMWARE_SUBDIR:=$(PKG_ATH10K_LINUX_FIRMWARE_NAME)-$(PKG_ATH10K_LINUX_FIRMWARE_VERSION)
+
+define Download/qca-ath10k-firmware
+  FILE:=$(PKG_ATH10K_LINUX_FIRMWARE_SOURCE)
+  URL:=$(PKG_ATH10K_LINUX_FIRMWARE_SOURCE_URL)
+  PROTO:=$(PKG_ATH10K_LINUX_FIRMWARE_PROTO)
+  VERSION:=$(PKG_ATH10K_LINUX_FIRMWARE_VERSION)
+  SUBDIR:=$(PKG_ATH10K_LINUX_FIRMWARE_SUBDIR)
+  #MIRROR_MD5SUM:=$(PKG_ATH10K_LINUX_FIRMWARE_MIRROR_MD5SUM)
+endef
+$(eval $(call Download,qca-ath10k-firmware))
+
 ifneq ($(CONFIG_KERNEL_GIT_CLONE_URI),)
 # --reference option doesn't work on git trees synced with "repo", so instead
 # we're manually using clone & fetch to speed up sync time
@@ -264,15 +302,27 @@ This module adds support for wireless adapters based on
 QCA USB AR9271 and AR7010 family of chipsets.
 endef
 
+define KernelPackage/qca-ath10k/config
+  if PACKAGE_kmod-qca-ath10k
+	config ATH10K_AP_FIRMWARE
+		bool "Use firmware optimized for AP operation"
+		default n
+		help
+		  Say Y, if you intend to use ath10k in AP mode and
+		  want to use the 10.x firmware.
+  endif
+endef
+
 define KernelPackage/qca-ath10k
   $(call KernelPackage/qca-mac80211/Default)
   TITLE:=QCA 802.11ac wireless cards support
   URL:=http://wireless.kernel.org/en/users/Drivers/ath10k
-  DEPENDS+= @PCI_SUPPORT +kmod-qca-ath +@DRIVER_11N_SUPPORT +ath10k-firmware
+  DEPENDS+= @PCI_SUPPORT +kmod-qca-ath +@DRIVER_11N_SUPPORT
   FILES:= \
 	$(PKG_BUILD_DIR)/drivers/net/wireless/ath/ath10k/ath10k_core.ko \
 	$(PKG_BUILD_DIR)/drivers/net/wireless/ath/ath10k/ath10k_pci.ko
   AUTOLOAD:=$(call AutoProbe,ath10k_core ath10k_pci)
+  MENU:=1
 endef
 
 define KernelPackage/qca-ath10k/description
@@ -376,6 +426,8 @@ define Build/Prepare
 	mkdir -p $(PKG_BUILD_DIR)
 	$(PKG_UNPACK)
 	$(Build/Patch)
+	$(TAR) -C $(PKG_BUILD_DIR) -xjf $(DL_DIR)/$(PKG_LINUX_FIRMWARE_SOURCE)
+	$(TAR) -C $(PKG_BUILD_DIR) -xjf $(DL_DIR)/$(PKG_ATH10K_LINUX_FIRMWARE_SOURCE)
 	rm -rf \
 		$(PKG_BUILD_DIR)/include/linux/ssb \
 		$(PKG_BUILD_DIR)/include/linux/bcma \
@@ -436,6 +488,26 @@ define KernelPackage/qca-ath9k-htc/install
 		$(PKG_BUILD_DIR)/$(PKG_LINUX_FIRMWARE_SUBDIR)/htc_7010.fw \
 		$(1)/lib/firmware/
 endef
+
+ifeq ($(CONFIG_ATH10K_AP_FIRMWARE),y)
+  define KernelPackage/qca-ath10k/install
+	$(INSTALL_DIR) $(1)/lib/firmware/ath10k/QCA988X/hw2.0
+	$(INSTALL_DATA) \
+		$(PKG_BUILD_DIR)/$(PKG_ATH10K_LINUX_FIRMWARE_SUBDIR)/ath10k/QCA988X/hw2.0/board.bin \
+		$(1)/lib/firmware/ath10k/QCA988X/hw2.0/
+	$(INSTALL_DATA) \
+		$(PKG_BUILD_DIR)/$(PKG_ATH10K_LINUX_FIRMWARE_SUBDIR)/10.2.4/firmware-4.bin_10.2.4.20-1 \
+		$(1)/lib/firmware/ath10k/QCA988X/hw2.0/firmware-4.bin
+  endef
+else
+  define KernelPackage/qca-ath10k/install
+	$(INSTALL_DIR) $(1)/lib/firmware/ath10k/QCA988X/hw2.0
+	$(INSTALL_DATA) \
+		$(PKG_BUILD_DIR)/$(PKG_ATH10K_LINUX_FIRMWARE_SUBDIR)/ath10k/QCA988X/hw2.0/board.bin \
+		$(PKG_BUILD_DIR)/$(PKG_ATH10K_LINUX_FIRMWARE_SUBDIR)/ath10k/QCA988X/hw2.0/firmware-2.bin \
+		$(1)/lib/firmware/ath10k/QCA988X/hw2.0/
+  endef
+endif
 
 $(eval $(call KernelPackage,qca-cfg80211))
 $(eval $(call KernelPackage,qca-mac80211))
