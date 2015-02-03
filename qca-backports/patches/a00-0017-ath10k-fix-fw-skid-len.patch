@@ -1,11 +1,6 @@
-diff --git a/.kernel_config_md5_f697f797637e20b76983bd007c234580 b/.kernel_config_md5_f697f797637e20b76983bd007c234580
-deleted file mode 100644
-index e69de29..0000000
-diff --git a/drivers/net/wireless/ath/ath10k/hw.h b/drivers/net/wireless/ath/ath10k/hw.h
-index 7b771ae..321ecfe 100644
 --- a/drivers/net/wireless/ath/ath10k/hw.h
 +++ b/drivers/net/wireless/ath/ath10k/hw.h
-@@ -185,6 +185,7 @@ struct ath10k_pktlog_hdr {
+@@ -253,6 +253,7 @@ struct ath10k_pktlog_hdr {
  
  /* 10.2 parameters */
  #define TARGET_10_2_DMA_BURST_SIZE		1
@@ -13,11 +8,9 @@ index 7b771ae..321ecfe 100644
  
  /* Target specific defines for WMI-TLV firmware */
  #define TARGET_TLV_NUM_VDEVS			3
-diff --git a/drivers/net/wireless/ath/ath10k/wmi.c b/drivers/net/wireless/ath/ath10k/wmi.c
-index bad8ac7..5247804 100644
 --- a/drivers/net/wireless/ath/ath10k/wmi.c
 +++ b/drivers/net/wireless/ath/ath10k/wmi.c
-@@ -3717,7 +3717,7 @@ static struct sk_buff *ath10k_wmi_10_2_op_gen_init(struct ath10k *ar)
+@@ -3823,7 +3823,7 @@ static struct sk_buff *ath10k_wmi_10_1_o
  	config.num_peers = __cpu_to_le32(TARGET_10X_NUM_PEERS);
  	config.num_peer_keys = __cpu_to_le32(TARGET_10X_NUM_PEER_KEYS);
  	config.num_tids = __cpu_to_le32(TARGET_10X_NUM_TIDS);

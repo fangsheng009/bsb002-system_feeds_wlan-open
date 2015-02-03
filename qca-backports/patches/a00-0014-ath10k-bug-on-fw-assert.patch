@@ -20,7 +20,7 @@
  
  static const struct ath10k_hw_params ath10k_hw_params_list[] = {
  	{
-@@ -840,6 +843,7 @@ static void ath10k_core_restart(struct w
+@@ -868,6 +871,7 @@ static void ath10k_core_restart(struct w
  	 */
  	barrier();
  

@@ -1,8 +1,6 @@
-diff --git a/drivers/net/wireless/ath/ath10k/core.h b/drivers/net/wireless/ath/ath10k/core.h
-index fe95957..f97cfc0 100644
 --- a/drivers/net/wireless/ath/ath10k/core.h
 +++ b/drivers/net/wireless/ath/ath10k/core.h
-@@ -271,10 +271,8 @@ struct ath10k_vif {
+@@ -285,10 +285,8 @@ struct ath10k_vif {
  	u32 aid;
  	u8 bssid[ETH_ALEN];
  
@@ -14,8 +12,6 @@ index fe95957..f97cfc0 100644
  
  	u16 tx_seq_no;
  
-diff --git a/drivers/net/wireless/ath/ath10k/mac.c b/drivers/net/wireless/ath/ath10k/mac.c
-index dc8062a..2964074 100644
 --- a/drivers/net/wireless/ath/ath10k/mac.c
 +++ b/drivers/net/wireless/ath/ath10k/mac.c
 @@ -37,7 +37,7 @@
@@ -27,7 +23,7 @@ index dc8062a..2964074 100644
  {
  	struct ath10k *ar = arvif->ar;
  	struct wmi_vdev_install_key_arg arg = {
-@@ -75,6 +75,9 @@ static int ath10k_send_key(struct ath10k_vif *arvif,
+@@ -72,6 +72,9 @@ static int ath10k_send_key(struct ath10k
  		 * Otherwise pairwise key must be set */
  		if (memcmp(macaddr, arvif->vif->addr, ETH_ALEN))
  			arg.key_flags = WMI_KEY_PAIRWISE;
@@ -37,7 +33,7 @@ index dc8062a..2964074 100644
  		break;
  	default:
  		ath10k_warn(ar, "cipher %d is not supported\n", key->cipher);
-@@ -92,7 +95,7 @@ static int ath10k_send_key(struct ath10k_vif *arvif,
+@@ -89,7 +92,7 @@ static int ath10k_send_key(struct ath10k
  static int ath10k_install_key(struct ath10k_vif *arvif,
  			      struct ieee80211_key_conf *key,
  			      enum set_key_cmd cmd,
@@ -46,7 +42,7 @@ index dc8062a..2964074 100644
  {
  	struct ath10k *ar = arvif->ar;
  	int ret;
-@@ -101,7 +104,7 @@ static int ath10k_install_key(struct ath10k_vif *arvif,
+@@ -98,7 +101,7 @@ static int ath10k_install_key(struct ath
  
  	reinit_completion(&ar->install_key_done);
  
@@ -55,7 +51,7 @@ index dc8062a..2964074 100644
  	if (ret)
  		return ret;
  
-@@ -119,6 +122,7 @@ static int ath10k_install_peer_wep_keys(struct ath10k_vif *arvif,
+@@ -116,6 +119,7 @@ static int ath10k_install_peer_wep_keys(
  	struct ath10k_peer *peer;
  	int ret;
  	int i;
@@ -63,7 +59,7 @@ index dc8062a..2964074 100644
  
  	lockdep_assert_held(&ar->conf_mutex);
  
-@@ -132,9 +136,14 @@ static int ath10k_install_peer_wep_keys(struct ath10k_vif *arvif,
+@@ -129,9 +133,14 @@ static int ath10k_install_peer_wep_keys(
  	for (i = 0; i < ARRAY_SIZE(arvif->wep_keys); i++) {
  		if (arvif->wep_keys[i] == NULL)
  			continue;
@@ -79,7 +75,7 @@ index dc8062a..2964074 100644
  		if (ret)
  			return ret;
  
-@@ -168,8 +177,9 @@ static int ath10k_clear_peer_keys(struct ath10k_vif *arvif,
+@@ -165,8 +174,9 @@ static int ath10k_clear_peer_keys(struct
  		if (peer->keys[i] == NULL)
  			continue;
  
@@ -90,7 +86,7 @@ index dc8062a..2964074 100644
  		if (ret && first_errno == 0)
  			first_errno = ret;
  
-@@ -243,8 +253,8 @@ static int ath10k_clear_vdev_key(struct ath10k_vif *arvif,
+@@ -240,8 +250,8 @@ static int ath10k_clear_vdev_key(struct
  
  		if (i == ARRAY_SIZE(peer->keys))
  			break;
@@ -101,7 +97,7 @@ index dc8062a..2964074 100644
  		if (ret && first_errno == 0)
  			first_errno = ret;
  
-@@ -1831,7 +1841,8 @@ static void ath10k_bss_disassoc(struct ieee80211_hw *hw,
+@@ -1828,7 +1838,8 @@ static void ath10k_bss_disassoc(struct i
  		ath10k_warn(ar, "faield to down vdev %i: %d\n",
  			    arvif->vdev_id, ret);
  
@@ -111,7 +107,7 @@ index dc8062a..2964074 100644
  	arvif->is_up = false;
  }
  
-@@ -1890,11 +1901,14 @@ static int ath10k_station_assoc(struct ath10k *ar,
+@@ -1887,11 +1898,14 @@ static int ath10k_station_assoc(struct a
  			}
  		}
  
@@ -131,7 +127,7 @@ index dc8062a..2964074 100644
  		}
  	}
  
-@@ -2165,69 +2179,6 @@ static void ath10k_tx_h_nwifi(struct ieee80211_hw *hw, struct sk_buff *skb)
+@@ -2163,69 +2177,6 @@ static void ath10k_tx_h_nwifi(struct iee
  	}
  }
  
@@ -201,7 +197,7 @@ index dc8062a..2964074 100644
  static void ath10k_tx_h_add_p2p_noa_ie(struct ath10k *ar,
  				       struct ieee80211_vif *vif,
  				       struct sk_buff *skb)
-@@ -2588,7 +2539,6 @@ static void ath10k_tx(struct ieee80211_hw *hw,
+@@ -2586,7 +2537,6 @@ static void ath10k_tx(struct ieee80211_h
  	struct ath10k *ar = hw->priv;
  	struct ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
  	struct ieee80211_vif *vif = info->control.vif;
@@ -209,7 +205,7 @@ index dc8062a..2964074 100644
  	struct ieee80211_hdr *hdr = (struct ieee80211_hdr *)skb->data;
  
  	/* We should disable CCK RATE due to P2P */
-@@ -2602,7 +2552,6 @@ static void ath10k_tx(struct ieee80211_hw *hw,
+@@ -2600,7 +2550,6 @@ static void ath10k_tx(struct ieee80211_h
  	/* it makes no sense to process injected frames like that */
  	if (vif && vif->type != NL80211_IFTYPE_MONITOR) {
  		ath10k_tx_h_nwifi(hw, skb);
@@ -217,7 +213,7 @@ index dc8062a..2964074 100644
  		ath10k_tx_h_add_p2p_noa_ie(ar, vif, skb);
  		ath10k_tx_h_seq_no(vif, skb);
  	}
-@@ -3107,7 +3056,6 @@ static int ath10k_add_interface(struct ieee80211_hw *hw,
+@@ -3105,7 +3054,6 @@ static int ath10k_add_interface(struct i
  	arvif->ar = ar;
  	arvif->vif = vif;
  
@@ -225,7 +221,7 @@ index dc8062a..2964074 100644
  	INIT_LIST_HEAD(&arvif->list);
  
  	if (ar->free_vdev_map == 0) {
-@@ -3196,14 +3144,7 @@ static int ath10k_add_interface(struct ieee80211_hw *hw,
+@@ -3194,14 +3142,7 @@ static int ath10k_add_interface(struct i
  	ar->free_vdev_map &= ~(1LL << arvif->vdev_id);
  	list_add(&arvif->list, &ar->arvifs);
  
@@ -241,7 +237,7 @@ index dc8062a..2964074 100644
  
  	vdev_param = ar->wmi.vdev_param->tx_encap_type;
  	ret = ath10k_wmi_vdev_set_param(ar, arvif->vdev_id, vdev_param,
-@@ -3323,8 +3264,6 @@ static void ath10k_remove_interface(struct ieee80211_hw *hw,
+@@ -3321,8 +3262,6 @@ static void ath10k_remove_interface(stru
  	struct ath10k_vif *arvif = ath10k_vif_to_arvif(vif);
  	int ret;
  
@@ -250,7 +246,7 @@ index dc8062a..2964074 100644
  	mutex_lock(&ar->conf_mutex);
  
  	spin_lock_bh(&ar->data_lock);
-@@ -3696,6 +3635,7 @@ static int ath10k_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
+@@ -3694,6 +3633,7 @@ static int ath10k_set_key(struct ieee802
  	const u8 *peer_addr;
  	bool is_wep = key->cipher == WLAN_CIPHER_SUITE_WEP40 ||
  		      key->cipher == WLAN_CIPHER_SUITE_WEP104;
@@ -258,7 +254,7 @@ index dc8062a..2964074 100644
  	int ret = 0;
  
  	if (key->keyidx > WMI_MAX_KEY_INDEX)
-@@ -3741,7 +3681,14 @@ static int ath10k_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
+@@ -3739,7 +3679,14 @@ static int ath10k_set_key(struct ieee802
  			ath10k_clear_vdev_key(arvif, key);
  	}
  
@@ -274,7 +270,7 @@ index dc8062a..2964074 100644
  	if (ret) {
  		ath10k_warn(ar, "failed to install key for vdev %i peer %pM: %d\n",
  			    arvif->vdev_id, peer_addr, ret);
-@@ -3766,6 +3713,39 @@ exit:
+@@ -3764,6 +3711,39 @@ exit:
  	return ret;
  }
  
@@ -314,7 +310,7 @@ index dc8062a..2964074 100644
  static void ath10k_sta_rc_update_wk(struct work_struct *wk)
  {
  	struct ath10k *ar;
-@@ -4885,6 +4865,7 @@ static const struct ieee80211_ops ath10k_ops = {
+@@ -4916,6 +4896,7 @@ static const struct ieee80211_ops ath10k
  	.hw_scan			= ath10k_hw_scan,
  	.cancel_hw_scan			= ath10k_cancel_hw_scan,
  	.set_key			= ath10k_set_key,
