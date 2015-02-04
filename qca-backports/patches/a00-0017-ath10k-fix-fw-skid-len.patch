@@ -1,6 +1,6 @@
 --- a/drivers/net/wireless/ath/ath10k/hw.h
 +++ b/drivers/net/wireless/ath/ath10k/hw.h
-@@ -253,6 +253,7 @@ struct ath10k_pktlog_hdr {
+@@ -254,6 +254,7 @@ struct ath10k_pktlog_hdr {
  
  /* 10.2 parameters */
  #define TARGET_10_2_DMA_BURST_SIZE		1
@@ -10,7 +10,7 @@
  #define TARGET_TLV_NUM_VDEVS			3
 --- a/drivers/net/wireless/ath/ath10k/wmi.c
 +++ b/drivers/net/wireless/ath/ath10k/wmi.c
-@@ -3823,7 +3823,7 @@ static struct sk_buff *ath10k_wmi_10_1_o
+@@ -3854,7 +3854,7 @@ static struct sk_buff *ath10k_wmi_10_1_o
  	config.num_peers = __cpu_to_le32(TARGET_10X_NUM_PEERS);
  	config.num_peer_keys = __cpu_to_le32(TARGET_10X_NUM_PEER_KEYS);
  	config.num_tids = __cpu_to_le32(TARGET_10X_NUM_TIDS);

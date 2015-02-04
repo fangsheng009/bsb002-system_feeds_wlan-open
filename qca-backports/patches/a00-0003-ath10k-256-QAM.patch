@@ -1,45 +1,20 @@
 --- a/drivers/net/wireless/ath/ath10k/mac.c
 +++ b/drivers/net/wireless/ath/ath10k/mac.c
-@@ -1554,6 +1554,15 @@ static void ath10k_peer_assoc_h_vht(stru
- 		return;
+@@ -1601,8 +1601,13 @@ static void ath10k_peer_assoc_h_vht(stru
  
  	arg->peer_flags |= WMI_PEER_VHT;
-+
+ 
+-	if (ar->hw->conf.chandef.chan->band == IEEE80211_BAND_2GHZ)
 +	if (ar->hw->conf.chandef.chan->band == IEEE80211_BAND_2GHZ) {
-+		arg->peer_flags |= WMI_PEER_VHT_2G;
+ 		arg->peer_flags |= WMI_PEER_VHT_2G;
 +		if (INTEROP_2G_256QAM_CAPBILITY) {
 +			arg->peer_flags |= (WMI_PEER_DISABLE_AMSDU_REQ |
 +					    WMI_PEER_DISABLE_AMSDU_RESP);
 +		}
 +	}
-+
+ 
  	arg->peer_vht_caps = vht_cap->cap;
  
- 	ampdu_factor = (vht_cap->cap &
-@@ -1632,7 +1641,12 @@ static void ath10k_peer_assoc_h_phymode(
- 
- 	switch (ar->hw->conf.chandef.chan->band) {
- 	case IEEE80211_BAND_2GHZ:
--		if (sta->ht_cap.ht_supported) {
-+		if (sta->vht_cap.vht_supported) {
-+			if (sta->bandwidth == IEEE80211_STA_RX_BW_40)
-+				phymode = MODE_11AC_VHT40;
-+			else
-+				phymode = MODE_11AC_VHT20;
-+		} else if (sta->ht_cap.ht_supported) {
- 			if (sta->bandwidth == IEEE80211_STA_RX_BW_40)
- 				phymode = MODE_11NG_HT40;
- 			else
-@@ -5246,7 +5260,8 @@ int ath10k_mac_register(struct ath10k *a
- 		band->bitrates = ath10k_g_rates;
- 		band->ht_cap = ht_cap;
- 
--		/* vht is not supported in 2.4 GHz */
-+		/* Enable the VHT support at 2.4 GHz */
-+		band->vht_cap = vht_cap;
- 
- 		ar->hw->wiphy->bands[IEEE80211_BAND_2GHZ] = band;
- 	}
 --- a/drivers/net/wireless/ath/ath10k/mac.h
 +++ b/drivers/net/wireless/ath/ath10k/mac.h
 @@ -28,6 +28,8 @@ struct ath10k_generic_iter {
@@ -53,7 +28,7 @@
  int ath10k_mac_register(struct ath10k *ar);
 --- a/drivers/net/wireless/ath/ath10k/wmi.h
 +++ b/drivers/net/wireless/ath/ath10k/wmi.h
-@@ -4503,6 +4503,7 @@ struct wmi_peer_set_q_empty_callback_cmd
+@@ -4504,6 +4504,7 @@ struct wmi_peer_set_q_empty_callback_cmd
  #define WMI_PEER_QOS            0x00000002
  #define WMI_PEER_NEED_PTK_4_WAY 0x00000004
  #define WMI_PEER_NEED_GTK_2_WAY 0x00000010
@@ -61,12 +36,10 @@
  #define WMI_PEER_APSD           0x00000800
  #define WMI_PEER_HT             0x00001000
  #define WMI_PEER_40MHZ          0x00002000
-@@ -4513,7 +4514,8 @@ struct wmi_peer_set_q_empty_callback_cmd
- #define WMI_PEER_SPATIAL_MUX    0x00200000
+@@ -4515,6 +4516,7 @@ struct wmi_peer_set_q_empty_callback_cmd
  #define WMI_PEER_VHT            0x02000000
  #define WMI_PEER_80MHZ          0x04000000
--#define WMI_PEER_PMF            0x08000000
-+#define WMI_PEER_VHT_2G         0x08000000
+ #define WMI_PEER_VHT_2G         0x08000000
 +#define WMI_PEER_DISABLE_AMSDU_RESP 0x20000000
  
  /*

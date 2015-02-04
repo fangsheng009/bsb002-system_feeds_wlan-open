@@ -3,15 +3,15 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=qca-backports
 
-PKG_BACKPORTS_VERSION:=69e3442
+PKG_BACKPORTS_VERSION:=6c73549
 PKG_BACKPORTS_SOURCE_URL:=git://git.kernel.org/pub/scm/linux/kernel/git/backports/backports.git
 PKG_BACKPORTS_BRANCH:=master
 
-PKG_KERNEL_VERSION:=2e65b6f
+PKG_KERNEL_VERSION:=31daf7d
 PKG_KERNEL_SOURCE_URL:=https://github.com/kvalo/ath.git
 PKG_KERNEL_BRANCH:=ath-qca
 
-PKG_VERSION:=20150128
+PKG_VERSION:=20150204
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_RELEASE:=1

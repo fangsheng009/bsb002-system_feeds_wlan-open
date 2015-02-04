@@ -20,7 +20,7 @@
  
  static const struct ath10k_hw_params ath10k_hw_params_list[] = {
  	{
-@@ -868,6 +871,7 @@ static void ath10k_core_restart(struct w
+@@ -883,6 +886,7 @@ static void ath10k_core_restart(struct w
  	 */
  	barrier();
  
@@ -30,7 +30,7 @@
  	complete_all(&ar->scan.started);
 --- a/drivers/net/wireless/ath/ath10k/debug.c
 +++ b/drivers/net/wireless/ath/ath10k/debug.c
-@@ -2041,3 +2041,47 @@ void ath10k_dbg_dump(struct ath10k *ar,
+@@ -2055,3 +2055,47 @@ void ath10k_dbg_dump(struct ath10k *ar,
  EXPORT_SYMBOL(ath10k_dbg_dump);
  
  #endif /* CPTCFG_ATH10K_DEBUG */
