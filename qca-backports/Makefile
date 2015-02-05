@@ -271,16 +271,6 @@ This module adds support for wireless adapters based on
 QCA USB AR9271 and AR7010 family of chipsets.
 endef
 
-define KernelPackage/qca-ath10k/config
- if PACKAGE_kmod-qca-ath10k
-	config ATH10K_AP_FIRMWARE
-		bool "Use firmware optimized for AP operation"
-		default n
-		help
-			Say Y, if you intend to use ath10k in AP mode and want to use the 10.x firmware.
-	endif
-endef
-
 define KernelPackage/qca-ath10k
   $(call KernelPackage/qca-mac80211/Default)
   TITLE:=QCA 802.11ac wireless cards support
@@ -361,7 +351,7 @@ config-$(CONFIG_QCA_ATH_USER_REGD) += ATH_USER_REGD \
 config-$(call config_package,qca-ath9k-htc) += ATH9K_HTC
 config-$(call config_package,qca-ath10k) += ATH10K ATH10K_PCI
 config-$(call config_package,qca-wil6210) += WIL6210
-config-$(CONFIG_ATH10K_AP_FIRMWARE) += ATH10K_DFS_CERTIFIED
+config-$(CONFIG_PACKAGE_kmod-qca-ath10k) += ATH10K_DFS_CERTIFIED
 
 config-$(CONFIG_LEDS_TRIGGERS) += MAC80211_LEDS
 
