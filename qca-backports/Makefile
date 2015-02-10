@@ -154,6 +154,26 @@ define KernelPackage/qca-mac80211/description
 Generic IEEE 802.11 Networking Stack (mac80211)
 endef
 
+PKG_LINUX_FIRMWARE_NAME:=linux-firmware
+PKG_LINUX_FIRMWARE_VERSION:=b794c50
+PKG_LINUX_FIRMWARE_BRANCH:=master
+PKG_LINUX_FIRMWARE_SOURCE:=$(PKG_LINUX_FIRMWARE_NAME)-$(PKG_LINUX_FIRMWARE_VERSION).tar.bz2
+PKG_LINUX_FIRMWARE_PROTO:=git
+PKG_LINUX_FIRMWARE_SOURCE_URL:=git://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git
+PKG_LINUX_FIRMWARE_SUBDIR:=$(PKG_LINUX_FIRMWARE_NAME)-$(PKG_LINUX_FIRMWARE_VERSION)
+PKG_LINUX_FIRMWARE_MIRROR_MD5SUM:=837a1a9456c1ec8b428cc0b2b08a331b
+
+define Download/qca-linux-firmware
+  FILE:=$(PKG_LINUX_FIRMWARE_SOURCE)
+  URL:=$(PKG_LINUX_FIRMWARE_SOURCE_URL)
+  MD5SUM:=$(PKG_LINUX_FIRMWARE_MD5SUM)
+  PROTO:=$(PKG_LINUX_FIRMWARE_PROTO)
+  VERSION:=$(PKG_LINUX_FIRMWARE_VERSION)
+  SUBDIR:=$(PKG_LINUX_FIRMWARE_SUBDIR)
+  MIRROR_MD5SUM:=$(PKG_LINUX_FIRMWARE_MIRROR_MD5SUM)
+endef
+$(eval $(call Download,qca-linux-firmware))
+
 ifneq ($(CONFIG_KERNEL_GIT_CLONE_URI),)
 # --reference option doesn't work on git trees synced with "repo", so instead
 # we're manually using clone & fetch to speed up sync time
@@ -384,6 +404,7 @@ define Build/Prepare
 	mkdir -p $(PKG_BUILD_DIR)
 	$(PKG_UNPACK)
 	$(Build/Patch)
+	$(TAR) -C $(PKG_BUILD_DIR) -xjf $(DL_DIR)/$(PKG_LINUX_FIRMWARE_SOURCE)
 	rm -rf \
 		$(PKG_BUILD_DIR)/include/linux/ssb \
 		$(PKG_BUILD_DIR)/include/linux/bcma \
