@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
-PKG_NAME:=qca-backports
+PKG_NAME:=mac80211
 
 PKG_BACKPORTS_VERSION:=6c73549
 PKG_BACKPORTS_SOURCE_URL:=git://git.kernel.org/pub/scm/linux/kernel/git/backports/backports.git
@@ -12,38 +12,37 @@ PKG_KERNEL_SOURCE_URL:=https://github.com/kvalo/ath.git
 PKG_KERNEL_BRANCH:=ath-qca
 
 PKG_VERSION:=20150210
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
+PKG_SOURCE:=backports-$(PKG_VERSION).tar.bz2
+PKG_SUBDIR:=backports-$(PKG_VERSION)
 PKG_RELEASE:=1
 
-PKG_BUILD_DIR:=$(KERNEL_BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
+PKG_BUILD_DIR:=$(KERNEL_BUILD_DIR)/$(PKG_SUBDIR)
 PKG_BUILD_PARALLEL:=1
 
 PKG_DRIVERS = ath9k-common ath9k ath9k-htc ath10k ath
 
 PKG_CONFIG_DEPENDS:= \
-	CONFIG_PACKAGE_kmod-qca-mac80211 \
-	$(patsubst %,CONFIG_PACKAGE_kmod-qca-%,$(PKG_DRIVERS)) \
-	CONFIG_PACKAGE_QCA_MAC80211_MESSAGE_TRACING \
-	CONFIG_PACKAGE_QCA_MAC80211_DEBUGFS \
-	CONFIG_PACKAGE_QCA_MAC80211_MESH \
-	CONFIG_PACKAGE_QCA_ATH_DEBUG \
-	CONFIG_QCA_ATH_USER_REGD \
+	CONFIG_PACKAGE_kmod-mac80211 \
+	$(patsubst %,CONFIG_PACKAGE_kmod-%,$(PKG_DRIVERS)) \
+	CONFIG_PACKAGE_MAC80211_MESSAGE_TRACING \
+	CONFIG_PACKAGE_MAC80211_DEBUGFS \
+	CONFIG_PACKAGE_MAC80211_MESH \
+	CONFIG_PACKAGE_ATH_DEBUG \
+	CONFIG_ATH_USER_REGD \
 
 include $(INCLUDE_DIR)/package.mk
 
-WMENU:=QCA mac80211 Wireless Drivers
+WMENU:=Wireless Drivers
 
-define KernelPackage/qca-mac80211/Default
+define KernelPackage/mac80211/Default
   SUBMENU:=$(WMENU)
-  SECTION:=QCA
   URL:=http://www.qca.qualcomm.com
   MAINTAINER:=Qualcomm Atheros
   DEPENDS:=@(!(TARGET_avr32||TARGET_ps3||TARGET_pxcab)||BROKEN)
 endef
 
-define KernelPackage/qca-cfg80211
-  $(call KernelPackage/qca-mac80211/Default)
+define KernelPackage/cfg80211
+  $(call KernelPackage/mac80211/Default)
   TITLE:=cfg80211 - wireless configuration API
   DEPENDS+= +iw +kmod-crypto-core +kmod-crypto-manager
   FILES:= \
@@ -51,94 +50,94 @@ define KernelPackage/qca-cfg80211
 	$(PKG_BUILD_DIR)/net/wireless/cfg80211.ko
 endef
 
-define KernelPackage/qca-cfg80211/description
+define KernelPackage/cfg80211/description
 cfg80211 is the Linux wireless LAN (802.11) configuration API.
 endef
 
-define KernelPackage/qca-mac80211
-  $(call KernelPackage/qca-mac80211/Default)
+define KernelPackage/mac80211
+  $(call KernelPackage/mac80211/Default)
   TITLE:=Linux 802.11 Wireless Networking Stack
-  DEPENDS+= +kmod-crypto-arc4 +kmod-crypto-aes +kmod-qca-cfg80211 +hostapd-common
+  DEPENDS+= +kmod-crypto-arc4 +kmod-crypto-aes +kmod-cfg80211 +hostapd-common
   KCONFIG:=\
 	CONFIG_AVERAGE=y
   FILES:= $(PKG_BUILD_DIR)/net/mac80211/mac80211.ko
   MENU:=1
 endef
 
-define KernelPackage/qca-mac80211/config
-  if PACKAGE_kmod-qca-mac80211
+define KernelPackage/mac80211/config
+  if PACKAGE_kmod-mac80211
 
-	config PACKAGE_QCA_MAC80211_NSS_SUPPORT
+	config PACKAGE_MAC80211_NSS_SUPPORT
 		bool "Enable NSS support for IPQ platform"
 		default n
 		help
 		  This option enables support for NSS in boards
 		  like AP148.
 
-	config PACKAGE_QCA_MAC80211_DEBUGFS
+	config PACKAGE_MAC80211_DEBUGFS
 		bool "Export mac80211 internals in DebugFS"
 		select KERNEL_DEBUG_FS
-		select KERNEL_RELAY if PACKAGE_kmod-qca-ath9k-common
+		select KERNEL_RELAY if PACKAGE_kmod-ath9k-common
 		default y
 		help
 		  Select this to see extensive information about
 		  the internal state of mac80211 in debugfs.
 
-	config PACKAGE_QCA_MAC80211_MESH
+	config PACKAGE_MAC80211_MESH
 		bool "Enable 802.11s mesh support"
 		default y
 
-	config PACKAGE_QCA_MAC80211_MESSAGE_TRACING
+	config PACKAGE_MAC80211_MESSAGE_TRACING
 		bool "Enable mac80211 message tracing"
 		default n
 		help
 		  Select this option to enable tracing.
 
-	config PACKAGE_QCA_MAC80211_DEBUG_MENU
+	config PACKAGE_MAC80211_DEBUG_MENU
 		bool "Select mac80211 debugging features"
 		default n
 		help
 		  This option collects various mac80211 debug settings.
 
 	menu "mac80211 debugging features"
-		depends on PACKAGE_QCA_MAC80211_DEBUG_MENU
+		depends on PACKAGE_MAC80211_DEBUG_MENU
 
-	config PACKAGE_QCA_MAC80211_VERBOSE_DEBUG
+	config PACKAGE_MAC80211_VERBOSE_DEBUG
 		bool "Verbose debugging output"
 		default n
 		help
 		  Selecting this option causes mac80211 to print out
 		  many debugging messages.
 
-	config PACKAGE_QCA_MAC80211_MLME_DEBUG
+	config PACKAGE_MAC80211_MLME_DEBUG
 		bool "Verbose managed MLME output"
 		default n
 		help
 		  Selecting this option causes mac80211 to print out
 		  debugging messages for the managed-mode MLME.
 
-	config PACKAGE_QCA_MAC80211_STA_DEBUG
+	config PACKAGE_MAC80211_STA_DEBUG
 		bool "Verbose station debugging"
 		default n
 		help
 		  Selecting this option causes mac80211 to print out
 		  debugging messages for station addition/removal.
 
-	config PACKAGE_QCA_MAC80211_HT_DEBUG
+	config PACKAGE_MAC80211_HT_DEBUG
 		bool "Verbose HT debugging"
 		default n
 		help
 		  This option enables 802.11n High Throughput features
 		  debug tracing output.
 
-	config PACKAGE_QCA_MAC80211_IBSS_DEBUG
+	config PACKAGE_MAC80211_IBSS_DEBUG
 		bool "Verbose IBSS debugging"
 		default n
 		help
 		  Selecting this option causes mac80211 to print out
 		  very verbose IBSS debugging messages.
 
-	config PACKAGE_QCA_MAC80211_PS_DEBUG
+	config PACKAGE_MAC80211_PS_DEBUG
 		bool "Verbose powersave mode debugging"
 		default n
 		help
@@ -150,7 +149,7 @@ define KernelPackage/qca-mac80211/config
   endif
 endef
 
-define KernelPackage/qca-mac80211/description
+define KernelPackage/mac80211/description
 Generic IEEE 802.11 Networking Stack (mac80211)
 endef
 
@@ -163,7 +162,7 @@ PKG_LINUX_FIRMWARE_SOURCE_URL:=git://git.kernel.org/pub/scm/linux/kernel/git/fir
 PKG_LINUX_FIRMWARE_SUBDIR:=$(PKG_LINUX_FIRMWARE_NAME)-$(PKG_LINUX_FIRMWARE_VERSION)
 PKG_LINUX_FIRMWARE_MIRROR_MD5SUM:=837a1a9456c1ec8b428cc0b2b08a331b
 
-define Download/qca-linux-firmware
+define Download/linux-firmware
   FILE:=$(PKG_LINUX_FIRMWARE_SOURCE)
   URL:=$(PKG_LINUX_FIRMWARE_SOURCE_URL)
   MD5SUM:=$(PKG_LINUX_FIRMWARE_MD5SUM)
@@ -172,7 +171,7 @@ define Download/qca-linux-firmware
   SUBDIR:=$(PKG_LINUX_FIRMWARE_SUBDIR)
   MIRROR_MD5SUM:=$(PKG_LINUX_FIRMWARE_MIRROR_MD5SUM)
 endef
-$(eval $(call Download,qca-linux-firmware))
+$(eval $(call Download,linux-firmware))
 
 ifneq ($(CONFIG_KERNEL_GIT_CLONE_URI),)
 # --reference option doesn't work on git trees synced with "repo", so instead
@@ -218,9 +217,9 @@ define Download/backports
 endef
 $(eval $(call DownloadBackports,backports))
 
-define KernelPackage/qca-ath/config
-  if PACKAGE_kmod-qca-ath
-	config QCA_ATH_USER_REGD
+define KernelPackage/ath/config
+  if PACKAGE_kmod-ath
+	config ATH_USER_REGD
 		bool "Force Atheros drivers to respect the user's regdomain settings"
 		help
 		  Atheros' idea of regulatory handling is that the EEPROM of the card defines
@@ -231,7 +230,7 @@ define KernelPackage/qca-ath/config
 		  Select this option if you want the driver to respect the user's decision about
 		  regulatory settings.
 
-	config PACKAGE_QCA_ATH_DEBUG
+	config PACKAGE_ATH_DEBUG
 		bool "Atheros wireless debugging"
 		help
 		  Say Y, if you want to debug atheros wireless drivers.
@@ -239,85 +238,85 @@ define KernelPackage/qca-ath/config
   endif
 endef
 
-define KernelPackage/qca-ath
-  $(call KernelPackage/qca-mac80211/Default)
+define KernelPackage/ath
+  $(call KernelPackage/mac80211/Default)
   TITLE:=QCA common driver part
-  DEPENDS+= @PCI_SUPPORT||USB_SUPPORT||TARGET_ar71xx||TARGET_atheros +kmod-qca-mac80211
+  DEPENDS+= @PCI_SUPPORT||USB_SUPPORT||TARGET_ar71xx||TARGET_atheros +kmod-mac80211
   FILES:=$(PKG_BUILD_DIR)/drivers/net/wireless/ath/ath.ko
   MENU:=1
 endef
 
-define KernelPackage/qca-ath/description
+define KernelPackage/ath/description
  This module contains some common parts needed by QCA Wireless drivers.
 endef
 
-define KernelPackage/qca-ath9k-common
-  $(call KernelPackage/qca-mac80211/Default)
+define KernelPackage/ath9k-common
+  $(call KernelPackage/mac80211/Default)
   TITLE:=QCA 802.11n wireless devices (common code for ath9k and ath9k_htc)
   URL:=http://linuxwireless.org/en/users/Drivers/ath9k
-  DEPENDS+= @PCI_SUPPORT||USB_SUPPORT||TARGET_ar71xx +kmod-qca-ath +@DRIVER_11N_SUPPORT
+  DEPENDS+= @PCI_SUPPORT||USB_SUPPORT||TARGET_ar71xx +kmod-ath +@DRIVER_11N_SUPPORT
   FILES:= \
 	$(PKG_BUILD_DIR)/drivers/net/wireless/ath/ath9k/ath9k_common.ko \
 	$(PKG_BUILD_DIR)/drivers/net/wireless/ath/ath9k/ath9k_hw.ko
 endef
 
-define KernelPackage/qca-ath9k
-  $(call KernelPackage/qca-mac80211/Default)
+define KernelPackage/ath9k
+  $(call KernelPackage/mac80211/Default)
   TITLE:=QCA 802.11n PCI wireless cards support
   URL:=http://linuxwireless.org/en/users/Drivers/ath9k
-  DEPENDS+= @PCI_SUPPORT||TARGET_ar71xx +kmod-qca-ath9k-common
+  DEPENDS+= @PCI_SUPPORT||TARGET_ar71xx +kmod-ath9k-common
   FILES:= \
 	$(PKG_BUILD_DIR)/drivers/net/wireless/ath/ath9k/ath9k.ko
   AUTOLOAD:=$(call AutoProbe,ath9k)
 endef
 
-define KernelPackage/qca-ath9k/description
+define KernelPackage/ath9k/description
 This module adds support for wireless adapters based on
 QCA IEEE 802.11n AR5008, AR9001,AR9002, AR9003, AR9004 family of chipsets.
 endef
 
-define KernelPackage/qca-ath9k-htc
-  $(call KernelPackage/qca-mac80211/Default)
+define KernelPackage/ath9k-htc
+  $(call KernelPackage/mac80211/Default)
   TITLE:=QCA 802.11n USB device support
   URL:=http://linuxwireless.org/en/users/Drivers/ath9k
-  DEPENDS+= @USB_SUPPORT +kmod-qca-ath9k-common +kmod-usb-core
+  DEPENDS+= @USB_SUPPORT +kmod-ath9k-common +kmod-usb-core
   FILES:= \
 	$(PKG_BUILD_DIR)/drivers/net/wireless/ath/ath9k/ath9k_htc.ko
   AUTOLOAD:=$(call AutoProbe,ath9k_htc)
 endef
 
-define KernelPackage/qca-ath9k-htc/description
+define KernelPackage/ath9k-htc/description
 This module adds support for wireless adapters based on
 QCA USB AR9271 and AR7010 family of chipsets.
 endef
 
-define KernelPackage/qca-ath10k
-  $(call KernelPackage/qca-mac80211/Default)
+define KernelPackage/ath10k
+  $(call KernelPackage/mac80211/Default)
   TITLE:=QCA 802.11ac wireless cards support
   URL:=http://wireless.kernel.org/en/users/Drivers/ath10k
-  DEPENDS+= @PCI_SUPPORT +kmod-qca-ath +@DRIVER_11N_SUPPORT +ath10k-firmware
+  DEPENDS+= @PCI_SUPPORT +kmod-ath +@DRIVER_11N_SUPPORT +ath10k-firmware
   FILES:= \
 	$(PKG_BUILD_DIR)/drivers/net/wireless/ath/ath10k/ath10k_core.ko \
 	$(PKG_BUILD_DIR)/drivers/net/wireless/ath/ath10k/ath10k_pci.ko
   AUTOLOAD:=$(call AutoProbe,ath10k_core ath10k_pci)
 endef
 
-define KernelPackage/qca-ath10k/description
+define KernelPackage/ath10k/description
 This module adds support for wireless adapters based on
 QCA IEEE 802.11ac family of chipsets. For now only
 PCI is supported.
 endef
 
-define KernelPackage/qca-wil6210
-  $(call KernelPackage/qca-mac80211/Default)
+define KernelPackage/wil6210
+  $(call KernelPackage/mac80211/Default)
   TITLE:=QCA 802.11ad wireless cards support
-  DEPENDS+= @PCI_SUPPORT +kmod-qca-ath
+  DEPENDS+= @PCI_SUPPORT +kmod-ath
   FILES:= \
 	$(PKG_BUILD_DIR)/drivers/net/wireless/ath/wil6210/wil6210.ko
   AUTOLOAD:=$(call AutoProbe,wil6210)
 endef
 
-define KernelPackage/qca-wil6210/description
+define KernelPackage/wil6210/description
 This module adds support for wireless adapters based on
 60GHz QCA Wilocity family of chipsets. These support 802.11d.
 endef
@@ -334,11 +333,11 @@ config-y:= \
 	MAC80211_RC_MINSTREL_HT \
 	MAC80211_RC_DEFAULT_MINSTREL \
 
-config-$(call config_package,qca-cfg80211) += CFG80211
+config-$(call config_package,cfg80211) += CFG80211
 
-config-$(call config_package,qca-mac80211) += MAC80211
-config-$(CONFIG_PACKAGE_QCA_MAC80211_MESH) += MAC80211_MESH
-ifdef CONFIG_PACKAGE_QCA_MAC80211_DEBUGFS
+config-$(call config_package,mac80211) += MAC80211
+config-$(CONFIG_PACKAGE_MAC80211_MESH) += MAC80211_MESH
+ifdef CONFIG_PACKAGE_MAC80211_DEBUGFS
   config-y += \
 	CFG80211_DEBUGFS \
 	MAC80211_DEBUGFS \
@@ -347,31 +346,31 @@ ifdef CONFIG_PACKAGE_QCA_MAC80211_DEBUGFS
 	ATH10K_DEBUGFS
 endif
 
-config-$(CONFIG_PACKAGE_QCA_MAC80211_NSS_SUPPORT) += MAC80211_NSS_SUPPORT
-config-$(CONFIG_PACKAGE_QCA_MAC80211_MESSAGE_TRACING) += MAC80211_MESSAGE_TRACING ATH10K_TRACING
-config-$(CONFIG_PACKAGE_QCA_MAC80211_DEBUG_MENU) += MAC80211_DEBUG_MENU
-config-$(CONFIG_PACKAGE_QCA_MAC80211_VERBOSE_DEBUG) += MAC80211_VERBOSE_DEBUG
-config-$(CONFIG_PACKAGE_QCA_MAC80211_MLME_DEBUG) += MAC80211_MLME_DEBUG
-config-$(CONFIG_PACKAGE_QCA_MAC80211_STA_DEBUG) += MAC80211_STA_DEBUG
-config-$(CONFIG_PACKAGE_QCA_MAC80211_HT_DEBUG) += MAC80211_HT_DEBUG
-config-$(CONFIG_PACKAGE_QCA_MAC80211_IBSS_DEBUG) += MAC80211_IBSS_DEBUG
-config-$(CONFIG_PACKAGE_QCA_MAC80211_PS_DEBUG) += MAC80211_PS_DEBUG
+config-$(CONFIG_PACKAGE_MAC80211_NSS_SUPPORT) += MAC80211_NSS_SUPPORT
+config-$(CONFIG_PACKAGE_MAC80211_MESSAGE_TRACING) += MAC80211_MESSAGE_TRACING ATH10K_TRACING
+config-$(CONFIG_PACKAGE_MAC80211_DEBUG_MENU) += MAC80211_DEBUG_MENU
+config-$(CONFIG_PACKAGE_MAC80211_VERBOSE_DEBUG) += MAC80211_VERBOSE_DEBUG
+config-$(CONFIG_PACKAGE_MAC80211_MLME_DEBUG) += MAC80211_MLME_DEBUG
+config-$(CONFIG_PACKAGE_MAC80211_STA_DEBUG) += MAC80211_STA_DEBUG
+config-$(CONFIG_PACKAGE_MAC80211_HT_DEBUG) += MAC80211_HT_DEBUG
+config-$(CONFIG_PACKAGE_MAC80211_IBSS_DEBUG) += MAC80211_IBSS_DEBUG
+config-$(CONFIG_PACKAGE_MAC80211_PS_DEBUG) += MAC80211_PS_DEBUG
 
-config-$(call config_package,qca-ath) += ATH_CARDS ATH_COMMON
-config-$(CONFIG_PACKAGE_QCA_ATH_DEBUG) += ATH_DEBUG ATH10K_DEBUG
+config-$(call config_package,ath) += ATH_CARDS ATH_COMMON
+config-$(CONFIG_PACKAGE_ATH_DEBUG) += ATH_DEBUG ATH10K_DEBUG
 
-config-$(call config_package,qca-ath9k) += ATH9K
-config-$(call config_package,qca-ath9k-common) += ATH9K_COMMON
+config-$(call config_package,ath9k) += ATH9K
+config-$(call config_package,ath9k-common) += ATH9K_COMMON
 config-$(CONFIG_TARGET_ar71xx) += ATH9K_AHB
 config-$(CONFIG_PCI) += ATH9K_PCI
-config-$(CONFIG_QCA_ATH_USER_REGD) += ATH_USER_REGD \
+config-$(CONFIG_ATH_USER_REGD) += ATH_USER_REGD \
 				      ATH_REG_DYNAMIC_USER_REG_HINTS \
 				      ATH_REG_DYNAMIC_USER_CERT_TESTING
 
-config-$(call config_package,qca-ath9k-htc) += ATH9K_HTC
-config-$(call config_package,qca-ath10k) += ATH10K ATH10K_PCI
-config-$(call config_package,qca-wil6210) += WIL6210
-config-$(CONFIG_PACKAGE_kmod-qca-ath10k) += ATH10K_DFS_CERTIFIED
+config-$(call config_package,ath9k-htc) += ATH9K_HTC
+config-$(call config_package,ath10k) += ATH10K ATH10K_PCI
+config-$(call config_package,wil6210) += WIL6210
+config-$(CONFIG_PACKAGE_kmod-ath10k) += ATH10K_DFS_CERTIFIED
 
 config-$(CONFIG_LEDS_TRIGGERS) += MAC80211_LEDS
 
@@ -422,7 +421,7 @@ define Build/Prepare
 	$(CP) ./files/regdb.txt $(PKG_BUILD_DIR)/net/wireless/db.txt
 endef
 
-ifneq ($(CONFIG_PACKAGE_kmod-qca-cfg80211)$(CONFIG_PACKAGE_kmod-lib80211),)
+ifneq ($(CONFIG_PACKAGE_kmod-cfg80211)$(CONFIG_PACKAGE_kmod-lib80211),)
  define Build/Compile/kmod
 	rm -rf $(PKG_BUILD_DIR)/modules
 	+$(MAKE) $(PKG_JOBS) $(MAKE_OPTS) modules
@@ -451,14 +450,14 @@ define Build/InstallDev
 	$(CP) $(PKG_BUILD_DIR)/drivers/net/wireless/ath/*.h $(1)/usr/include/mac80211/ath/
 endef
 
-define KernelPackage/qca-cfg80211/install
+define KernelPackage/cfg80211/install
 	$(INSTALL_DIR) $(1)/lib/wifi
 	$(INSTALL_DIR) $(1)/lib/wifi $(1)/lib/netifd/wireless
 	$(INSTALL_DATA) ./files/lib/wifi/mac80211.sh $(1)/lib/wifi
 	$(INSTALL_BIN) ./files/lib/netifd/wireless/mac80211.sh $(1)/lib/netifd/wireless
 endef
 
-define KernelPackage/qca-ath9k-htc/install
+define KernelPackage/ath9k-htc/install
 	$(INSTALL_DIR) $(1)/lib/firmware
 	$(INSTALL_DATA) \
 		$(PKG_BUILD_DIR)/$(PKG_LINUX_FIRMWARE_SUBDIR)/htc_9271.fw \
@@ -466,11 +465,11 @@ define KernelPackage/qca-ath9k-htc/install
 		$(1)/lib/firmware/
 endef
 
-$(eval $(call KernelPackage,qca-cfg80211))
-$(eval $(call KernelPackage,qca-mac80211))
-$(eval $(call KernelPackage,qca-ath9k-common))
-$(eval $(call KernelPackage,qca-ath9k))
-$(eval $(call KernelPackage,qca-ath9k-htc))
-$(eval $(call KernelPackage,qca-ath10k))
-$(eval $(call KernelPackage,qca-ath))
-$(eval $(call KernelPackage,qca-wil6210))
+$(eval $(call KernelPackage,cfg80211))
+$(eval $(call KernelPackage,mac80211))
+$(eval $(call KernelPackage,ath9k-common))
+$(eval $(call KernelPackage,ath9k))
+$(eval $(call KernelPackage,ath9k-htc))
+$(eval $(call KernelPackage,ath10k))
+$(eval $(call KernelPackage,ath))
+$(eval $(call KernelPackage,wil6210))
