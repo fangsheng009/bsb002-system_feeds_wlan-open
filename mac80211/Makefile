@@ -70,7 +70,7 @@ define KernelPackage/mac80211/config
 
 	config PACKAGE_MAC80211_NSS_SUPPORT
 		bool "Enable NSS support for IPQ platform"
-		default n
+		default y
 		help
 		  This option enables support for NSS in boards
 		  like AP148.
