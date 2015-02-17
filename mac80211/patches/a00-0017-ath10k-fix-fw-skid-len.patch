@@ -1,21 +1,13 @@
+diff --git a/drivers/net/wireless/ath/ath10k/hw.h b/drivers/net/wireless/ath/ath10k/hw.h
+index 460771f..7f04645 100644
 --- a/drivers/net/wireless/ath/ath10k/hw.h
 +++ b/drivers/net/wireless/ath/ath10k/hw.h
-@@ -254,6 +254,7 @@ struct ath10k_pktlog_hdr {
- 
- /* 10.2 parameters */
- #define TARGET_10_2_DMA_BURST_SIZE		1
-+#define TARGET_10_2_AST_SKID_LIMIT		128
- 
- /* Target specific defines for WMI-TLV firmware */
- #define TARGET_TLV_NUM_VDEVS			3
---- a/drivers/net/wireless/ath/ath10k/wmi.c
-+++ b/drivers/net/wireless/ath/ath10k/wmi.c
-@@ -3854,7 +3854,7 @@ static struct sk_buff *ath10k_wmi_10_1_o
- 	config.num_peers = __cpu_to_le32(TARGET_10X_NUM_PEERS);
- 	config.num_peer_keys = __cpu_to_le32(TARGET_10X_NUM_PEER_KEYS);
- 	config.num_tids = __cpu_to_le32(TARGET_10X_NUM_TIDS);
--	config.ast_skid_limit = __cpu_to_le32(TARGET_10X_AST_SKID_LIMIT);
-+	config.ast_skid_limit = __cpu_to_le32(TARGET_10_2_AST_SKID_LIMIT);
- 	config.tx_chain_mask = __cpu_to_le32(TARGET_10X_TX_CHAIN_MASK);
- 	config.rx_chain_mask = __cpu_to_le32(TARGET_10X_RX_CHAIN_MASK);
- 	config.rx_timeout_pri_vo = __cpu_to_le32(TARGET_10X_RX_TIMEOUT_LO_PRI);
+@@ -223,7 +223,7 @@ struct ath10k_pktlog_hdr {
+ #define TARGET_10X_NUM_WDS_ENTRIES		32
+ #define TARGET_10X_DMA_BURST_SIZE		0
+ #define TARGET_10X_MAC_AGGR_DELIM		0
+-#define TARGET_10X_AST_SKID_LIMIT		16
++#define TARGET_10X_AST_SKID_LIMIT		128
+ #define TARGET_10X_NUM_STATIONS			128
+ #define TARGET_10X_NUM_PEERS			((TARGET_10X_NUM_STATIONS) + \
+ 						 (TARGET_10X_NUM_VDEVS))
