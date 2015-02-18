@@ -13,8 +13,6 @@ Subject: [PATCH 2/2] smart antenna debugfs patch
  6 files changed, 631 insertions(+), 4 deletions(-)
  create mode 100644 drivers/net/wireless/ath/ath10k/debug_smart_ant.c
 
-diff --git a/drivers/net/wireless/ath/ath10k/Makefile b/drivers/net/wireless/ath/ath10k/Makefile
-index 1b6a572..6baf833 100644
 --- a/drivers/net/wireless/ath/ath10k/Makefile
 +++ b/drivers/net/wireless/ath/ath10k/Makefile
 @@ -11,7 +11,8 @@ ath10k_core-y += mac.o \
@@ -27,8 +25,6 @@ index 1b6a572..6baf833 100644
  
  ath10k_core-$(CPTCFG_ATH10K_DEBUGFS) += spectral.o
  ath10k_core-$(CPTCFG_NL80211_TESTMODE) += testmode.o
-diff --git a/drivers/net/wireless/ath/ath10k/core.h b/drivers/net/wireless/ath/ath10k/core.h
-index 2ac872d..8318fc8 100644
 --- a/drivers/net/wireless/ath/ath10k/core.h
 +++ b/drivers/net/wireless/ath/ath10k/core.h
 @@ -491,6 +491,14 @@ struct ath10k_peer_ratecode_list {
@@ -55,11 +51,9 @@ index 2ac872d..8318fc8 100644
  	/* must be last */
  	u8 drv_priv[0] __aligned(sizeof(void *));
  };
-diff --git a/drivers/net/wireless/ath/ath10k/debug.c b/drivers/net/wireless/ath/ath10k/debug.c
-index 977cba6..293e1e4 100644
 --- a/drivers/net/wireless/ath/ath10k/debug.c
 +++ b/drivers/net/wireless/ath/ath10k/debug.c
-@@ -1992,6 +1992,8 @@ int ath10k_debug_register(struct ath10k *ar)
+@@ -1992,6 +1992,8 @@ int ath10k_debug_register(struct ath10k
  			    ar->debug.debugfs_phy, ar, &fops_pktlog_filter);
  	ath10k_init_pktlog(ar);
  
@@ -68,8 +62,6 @@ index 977cba6..293e1e4 100644
  	return 0;
  }
  
-diff --git a/drivers/net/wireless/ath/ath10k/debug.h b/drivers/net/wireless/ath/ath10k/debug.h
-index 6c54203..eb3a0e5 100644
 --- a/drivers/net/wireless/ath/ath10k/debug.h
 +++ b/drivers/net/wireless/ath/ath10k/debug.h
 @@ -36,6 +36,7 @@ enum ath10k_debug_mask {
@@ -80,7 +72,7 @@ index 6c54203..eb3a0e5 100644
  	ATH10K_DBG_ANY		= 0xffffffff,
  };
  
-@@ -85,6 +86,7 @@ int ath10k_debug_get_et_sset_count(struct ieee80211_hw *hw,
+@@ -85,6 +86,7 @@ int ath10k_debug_get_et_sset_count(struc
  void ath10k_debug_get_et_stats(struct ieee80211_hw *hw,
  			       struct ieee80211_vif *vif,
  			       struct ethtool_stats *stats, u64 *data);
@@ -88,7 +80,7 @@ index 6c54203..eb3a0e5 100644
  #else
  static inline int ath10k_debug_start(struct ath10k *ar)
  {
-@@ -134,6 +136,7 @@ ath10k_debug_get_new_fw_crash_data(struct ath10k *ar)
+@@ -134,6 +136,7 @@ ath10k_debug_get_new_fw_crash_data(struc
  #define ath10k_debug_get_et_strings NULL
  #define ath10k_debug_get_et_sset_count NULL
  #define ath10k_debug_get_et_stats NULL
@@ -96,9 +88,6 @@ index 6c54203..eb3a0e5 100644
  
  #endif /* CPTCFG_ATH10K_DEBUGFS */
  #ifdef CPTCFG_MAC80211_DEBUGFS
-diff --git a/drivers/net/wireless/ath/ath10k/debug_smart_ant.c b/drivers/net/wireless/ath/ath10k/debug_smart_ant.c
-new file mode 100644
-index 0000000..5c760a1
 --- /dev/null
 +++ b/drivers/net/wireless/ath/ath10k/debug_smart_ant.c
 @@ -0,0 +1,344 @@
@@ -446,8 +435,6 @@ index 0000000..5c760a1
 +	debugfs_create_file("smart_ant_train_info", S_IWUSR,
 +			    ar->debug.debugfs_phy, ar, &fops_sa_train_info_ops);
 +}
-diff --git a/drivers/net/wireless/ath/ath10k/smart_ant.h b/drivers/net/wireless/ath/ath10k/smart_ant.h
-index 78830de..4bb9308 100644
 --- a/drivers/net/wireless/ath/ath10k/smart_ant.h
 +++ b/drivers/net/wireless/ath/ath10k/smart_ant.h
 @@ -14,18 +14,153 @@
@@ -607,7 +594,7 @@ index 78830de..4bb9308 100644
  }
  
  /* This API is to process tx feedback information such as tx rate
-@@ -40,6 +175,84 @@ ath10k_smart_ant_proc_rx_feedback(struct ath10k *ar,
+@@ -40,6 +175,84 @@ ath10k_smart_ant_proc_rx_feedback(struct
  static inline void
  ath10k_smart_ant_proc_tx_feedback(struct ath10k *ar, u8 *data)
  {
@@ -692,7 +679,7 @@ index 78830de..4bb9308 100644
  }
  
  /* In AP mode, this API notifies of disassociation of a station.
-@@ -49,6 +262,11 @@ ath10k_smart_ant_proc_tx_feedback(struct ath10k *ar, u8 *data)
+@@ -49,6 +262,11 @@ ath10k_smart_ant_proc_tx_feedback(struct
  static inline void
  ath10k_smart_ant_sta_disconnect(struct ath10k *ar, struct ieee80211_sta *sta)
  {
@@ -760,6 +747,3 @@ index 78830de..4bb9308 100644
  	return 0;
  }
  
--- 
-2.2.2
-
