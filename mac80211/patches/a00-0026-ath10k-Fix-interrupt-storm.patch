@@ -1,8 +1,6 @@
-diff --git a/drivers/net/wireless/ath/ath10k/mac.c b/drivers/net/wireless/ath/ath10k/mac.c
-index d6d2f0f..e2b7d26 100644
 --- a/drivers/net/wireless/ath/ath10k/mac.c
 +++ b/drivers/net/wireless/ath/ath10k/mac.c
-@@ -872,6 +872,39 @@ static void ath10k_recalc_radar_detection(struct ath10k *ar)
+@@ -869,6 +869,39 @@ static void ath10k_recalc_radar_detectio
  	}
  }
  
@@ -42,7 +40,7 @@ index d6d2f0f..e2b7d26 100644
  static int ath10k_vdev_start_restart(struct ath10k_vif *arvif, bool restart)
  {
  	struct ath10k *ar = arvif->ar;
-@@ -935,6 +968,15 @@ static int ath10k_vdev_start_restart(struct ath10k_vif *arvif, bool restart)
+@@ -932,6 +965,15 @@ static int ath10k_vdev_start_restart(str
  	ar->num_started_vdevs++;
  	ath10k_recalc_radar_detection(ar);
  
@@ -58,7 +56,7 @@ index d6d2f0f..e2b7d26 100644
  	return ret;
  }
  
-@@ -948,39 +990,6 @@ static int ath10k_vdev_restart(struct ath10k_vif *arvif)
+@@ -945,39 +987,6 @@ static int ath10k_vdev_restart(struct at
  	return ath10k_vdev_start_restart(arvif, true);
  }
  
@@ -98,7 +96,7 @@ index d6d2f0f..e2b7d26 100644
  static int ath10k_mac_setup_bcn_p2p_ie(struct ath10k_vif *arvif,
  				       struct sk_buff *bcn)
  {
-@@ -3369,6 +3378,13 @@ static void ath10k_configure_filter(struct ieee80211_hw *hw,
+@@ -3369,6 +3378,13 @@ static void ath10k_configure_filter(stru
  
  	changed_flags &= SUPPORTED_FILTERS;
  	*total_flags &= SUPPORTED_FILTERS;
@@ -112,6 +110,3 @@ index d6d2f0f..e2b7d26 100644
  	ar->filter_flags = *total_flags;
  
  	ret = ath10k_monitor_recalc(ar);
--- 
-1.7.9.5
-
