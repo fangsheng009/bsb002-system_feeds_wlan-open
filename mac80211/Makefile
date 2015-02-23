@@ -28,7 +28,7 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_PACKAGE_MAC80211_DEBUGFS \
 	CONFIG_PACKAGE_MAC80211_MESH \
 	CONFIG_PACKAGE_ATH_DEBUG \
-	CONFIG_QCA_ATH_USER_REGD \
+	CONFIG_ATH_USER_REGD \
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -220,7 +220,7 @@ $(eval $(call DownloadBackports,backports))
 
 define KernelPackage/ath/config
   if PACKAGE_kmod-ath
-	config QCA_ATH_USER_REGD
+	config ATH_USER_REGD
 		bool "Force Atheros drivers to respect the user's regdomain settings"
 		help
 		  Atheros' idea of regulatory handling is that the EEPROM of the card defines
@@ -365,7 +365,7 @@ config-$(call config_package,ath9k) += ATH9K
 config-$(call config_package,ath9k-common) += ATH9K_COMMON
 config-$(CONFIG_TARGET_ar71xx) += ATH9K_AHB
 config-$(CONFIG_PCI) += ATH9K_PCI
-config-$(CONFIG_QCA_ATH_USER_REGD) += ATH_USER_REGD \
+config-$(CONFIG_ATH_USER_REGD) += ATH_USER_REGD \
 				      ATH_REG_DYNAMIC_USER_REG_HINTS \
 				      ATH_REG_DYNAMIC_USER_CERT_TESTING
 
