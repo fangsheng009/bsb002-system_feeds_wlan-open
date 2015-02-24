@@ -1,0 +1,13 @@
+diff --git a/drivers/net/wireless/ath/ath10k/thermal.h b/drivers/net/wireless/ath/ath10k/thermal.h
+index bccc17a..5e87d9a 100644
+--- a/drivers/net/wireless/ath/ath10k/thermal.h
++++ b/drivers/net/wireless/ath/ath10k/thermal.h
+@@ -19,7 +19,7 @@
+ #define ATH10K_QUIET_PERIOD_DEFAULT     100
+ #define ATH10K_QUIET_PERIOD_MIN         25
+ #define ATH10K_QUIET_START_OFFSET       10
+-#define ATH10K_QUIET_DUTY_CYCLE_MAX     70
++#define ATH10K_QUIET_DUTY_CYCLE_MAX     100
+ #define ATH10K_HWMON_NAME_LEN           15
+ #define ATH10K_THERMAL_SYNC_TIMEOUT_HZ (5*HZ)
+ 
