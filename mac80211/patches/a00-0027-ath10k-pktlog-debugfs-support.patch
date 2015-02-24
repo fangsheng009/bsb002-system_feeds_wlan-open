@@ -697,7 +697,7 @@
 +		break;
 +	case ATH_PKTLOG_TYPE_TX_VIRT_ADDR: {
 +		u32 virt_addr = *((u32 *)(hdr->payload));
-+		struct sk_buff *skb = (struct sk_buff *)&virt_addr;
++		struct sk_buff *skb = (struct sk_buff *)virt_addr;
 +		if (skb)
 +			ath_pktlog_frame_header(skb->data);
 +		break;
