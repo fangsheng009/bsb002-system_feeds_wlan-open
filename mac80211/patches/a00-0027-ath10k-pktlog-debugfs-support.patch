@@ -100,7 +100,7 @@
 +++ b/drivers/net/wireless/ath/ath10k/pktlog.c
 @@ -0,0 +1,655 @@
 +/*
-+ * Copyright (c) 2014 Qualcomm Atheros, Inc.
++ * Copyright (c) 2015, The Linux Foundation. All rights reserved.
 + *
 + * Permission to use, copy, modify, and/or distribute this software for any
 + * purpose with or without fee is hereby granted, provided that the above
@@ -758,7 +758,7 @@
 +++ b/drivers/net/wireless/ath/ath10k/pktlog.h
 @@ -0,0 +1,149 @@
 +/*
-+ * Copyright (c) 2014 Qualcomm Atheros, Inc.
++ * Copyright (c) 2015, The Linux Foundation. All rights reserved.
 + *
 + * Permission to use, copy, modify, and/or distribute this software for any
 + * purpose with or without fee is hereby granted, provided that the above
