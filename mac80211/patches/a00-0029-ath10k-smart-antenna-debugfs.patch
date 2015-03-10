@@ -90,7 +90,7 @@ Subject: [PATCH 2/2] smart antenna debugfs patch
  #ifdef CPTCFG_MAC80211_DEBUGFS
 --- /dev/null
 +++ b/drivers/net/wireless/ath/ath10k/debug_smart_ant.c
-@@ -0,0 +1,344 @@
+@@ -0,0 +1,346 @@
 +/*
 + * Copyright (c) 2015, The Linux Foundation. All rights reserved.
 + *
@@ -127,7 +127,7 @@ Subject: [PATCH 2/2] smart antenna debugfs patch
 +		return -EINVAL;
 +
 +	if (ar->smart_ant_info.enabled == enable)
-+		return 0;
++		return count;
 +
 +	mutex_lock(&ar->conf_mutex);
 +	if (enable) {
@@ -399,6 +399,8 @@ Subject: [PATCH 2/2] smart antenna debugfs patch
 +
 +	rcu_read_unlock();
 +
++	ath10k_dbg(ar, ATH10K_DBG_SMART_ANT, "Training for peer %pM num_pkts:%d\n",
++		   mac_addr, arg.num_pkts);
 +	for (i = 0; i < WMI_SMART_ANT_RATE_SERIES_MAX; i++) {
 +		ath10k_dbg(ar, ATH10K_DBG_SMART_ANT, "rate[%d] 0x%x antenna[%d] %d\n",
 +			   i, arg.rates[i], i, arg.antennas[i]);
