@@ -3,15 +3,15 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=mac80211
 
-PKG_BACKPORTS_VERSION:=6c73549
+PKG_BACKPORTS_VERSION:=dd4a670
 PKG_BACKPORTS_SOURCE_URL:=git://git.kernel.org/pub/scm/linux/kernel/git/backports/backports.git
 PKG_BACKPORTS_BRANCH:=master
 
-PKG_KERNEL_VERSION:=31daf7d
+PKG_KERNEL_VERSION:=1ca2760
 PKG_KERNEL_SOURCE_URL:=https://github.com/kvalo/ath.git
 PKG_KERNEL_BRANCH:=ath-qca
 
-PKG_VERSION:=20150210
+PKG_VERSION:=20150317
 PKG_SOURCE:=backports-$(PKG_VERSION).tar.bz2
 PKG_SUBDIR:=backports-$(PKG_VERSION)
 PKG_RELEASE:=1
@@ -370,7 +370,7 @@ config-$(CONFIG_ATH_USER_REGD) += ATH_USER_REGD \
 				      ATH_REG_DYNAMIC_USER_CERT_TESTING
 
 config-$(call config_package,ath9k-htc) += ATH9K_HTC
-config-$(call config_package,ath10k) += ATH10K ATH10K_PCI
+config-$(call config_package,ath10k) += ATH10K ATH10K_PCI HWMON
 config-$(call config_package,wil6210) += WIL6210
 config-$(CONFIG_PACKAGE_kmod-ath10k) += ATH10K_DFS_CERTIFIED
 

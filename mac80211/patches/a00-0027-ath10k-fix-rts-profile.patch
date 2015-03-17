@@ -13,7 +13,7 @@
   * Use insanely high numbers to make sure that the firmware implementation
 --- a/drivers/net/wireless/ath/ath10k/mac.c
 +++ b/drivers/net/wireless/ath/ath10k/mac.c
-@@ -796,12 +796,14 @@ static int ath10k_recalc_rtscts_prot(str
+@@ -799,12 +799,14 @@ static int ath10k_recalc_rtscts_prot(str
  
  	vdev_param = ar->wmi.vdev_param->enable_rtscts;
  

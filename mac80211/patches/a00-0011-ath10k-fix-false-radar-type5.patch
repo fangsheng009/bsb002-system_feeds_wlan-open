@@ -90,7 +90,7 @@
  static const struct radar_types jp_radar_types = {
 --- a/drivers/net/wireless/ath/ath10k/wmi.c
 +++ b/drivers/net/wireless/ath/ath10k/wmi.c
-@@ -2581,6 +2581,7 @@ static void ath10k_dfs_radar_report(stru
+@@ -2601,6 +2601,7 @@ static void ath10k_dfs_radar_report(stru
  	pe.freq = ar->hw->conf.chandef.chan->center_freq;
  	pe.width = width;
  	pe.rssi = rssi;

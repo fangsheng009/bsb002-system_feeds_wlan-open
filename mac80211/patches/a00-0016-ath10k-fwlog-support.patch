@@ -40,7 +40,7 @@
  
 --- a/drivers/net/wireless/ath/ath10k/core.h
 +++ b/drivers/net/wireless/ath/ath10k/core.h
-@@ -660,6 +660,9 @@ struct ath10k {
+@@ -687,6 +687,9 @@ struct ath10k {
  
  	struct ath10k_thermal thermal;
  
@@ -889,7 +889,7 @@
  
  /* MAIN WMI cmd track */
  static struct wmi_cmd_map wmi_cmd_map = {
-@@ -1696,7 +1697,7 @@ int ath10k_wmi_event_debug_mesg(struct a
+@@ -1716,7 +1717,7 @@ int ath10k_wmi_event_debug_mesg(struct a
  		   skb->len);
  
  	trace_ath10k_wmi_dbglog(ar, skb->data, skb->len);
@@ -898,7 +898,7 @@
  	return 0;
  }
  
-@@ -3276,7 +3277,7 @@ static void ath10k_wmi_op_rx(struct ath1
+@@ -3296,7 +3297,7 @@ static void ath10k_wmi_op_rx(struct ath1
  		break;
  	case WMI_DEBUG_MESG_EVENTID:
  		ath10k_wmi_event_debug_mesg(ar, skb);
@@ -907,7 +907,7 @@
  	case WMI_UPDATE_STATS_EVENTID:
  		ath10k_wmi_event_update_stats(ar, skb);
  		break;
-@@ -3405,7 +3406,7 @@ static void ath10k_wmi_10_1_op_rx(struct
+@@ -3425,7 +3426,7 @@ static void ath10k_wmi_10_1_op_rx(struct
  		break;
  	case WMI_10X_DEBUG_MESG_EVENTID:
  		ath10k_wmi_event_debug_mesg(ar, skb);
@@ -916,7 +916,7 @@
  	case WMI_10X_UPDATE_STATS_EVENTID:
  		ath10k_wmi_event_update_stats(ar, skb);
  		break;
-@@ -3516,7 +3517,7 @@ static void ath10k_wmi_10_2_op_rx(struct
+@@ -3536,7 +3537,7 @@ static void ath10k_wmi_10_2_op_rx(struct
  		break;
  	case WMI_10_2_DEBUG_MESG_EVENTID:
  		ath10k_wmi_event_debug_mesg(ar, skb);

@@ -27,7 +27,7 @@ Subject: [PATCH 2/2] smart antenna debugfs patch
  ath10k_core-$(CPTCFG_NL80211_TESTMODE) += testmode.o
 --- a/drivers/net/wireless/ath/ath10k/core.h
 +++ b/drivers/net/wireless/ath/ath10k/core.h
-@@ -491,6 +491,14 @@ struct ath10k_peer_ratecode_list {
+@@ -518,6 +518,14 @@ struct ath10k_peer_ratecode_list {
  	u8 rt_count[WMI_RATE_COUNT_MAX];
  };
  
@@ -42,7 +42,7 @@ Subject: [PATCH 2/2] smart antenna debugfs patch
  struct ath10k {
  	struct ath_common ath_common;
  	struct ieee80211_hw *hw;
-@@ -689,6 +697,8 @@ struct ath10k {
+@@ -716,6 +724,8 @@ struct ath10k {
  	 */
  	struct ath10k_peer_ratecode_list ratecode_list;
  
@@ -53,7 +53,7 @@ Subject: [PATCH 2/2] smart antenna debugfs patch
  };
 --- a/drivers/net/wireless/ath/ath10k/debug.c
 +++ b/drivers/net/wireless/ath/ath10k/debug.c
-@@ -1992,6 +1992,8 @@ int ath10k_debug_register(struct ath10k
+@@ -2091,6 +2091,8 @@ int ath10k_debug_register(struct ath10k
  			    ar->debug.debugfs_phy, ar, &fops_pktlog_filter);
  	ath10k_init_pktlog(ar);
  
