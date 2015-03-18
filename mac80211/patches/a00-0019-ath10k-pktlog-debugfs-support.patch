@@ -1,6 +1,6 @@
 --- a/.local-symbols
 +++ b/.local-symbols
-@@ -124,3 +124,4 @@ ATH10K_DEBUG=
+@@ -123,3 +123,4 @@ ATH10K_DEBUG=
  ATH10K_DEBUGFS=
  ATH10K_TRACING=
  ATH10K_DFS_CERTIFIED=
@@ -40,7 +40,7 @@
  
  #define MS(_v, _f) (((_v) & _f##_MASK) >> _f##_LSB)
  #define SM(_v, _f) (((_v) << _f##_LSB) & _f##_MASK)
-@@ -359,6 +360,11 @@ struct ath10k_debug {
+@@ -380,6 +381,11 @@ struct ath10k_debug {
  	u8 htt_max_ampdu;
  
  	struct ath10k_fw_crash_data *fw_crash_data;
@@ -54,7 +54,7 @@
  enum ath10k_state {
 --- a/drivers/net/wireless/ath/ath10k/debug.c
 +++ b/drivers/net/wireless/ath/ath10k/debug.c
-@@ -1912,6 +1912,7 @@ void ath10k_debug_destroy(struct ath10k
+@@ -2011,6 +2011,7 @@ void ath10k_debug_destroy(struct ath10k
  	ar->debug.fw_crash_data = NULL;
  
  	ath10k_debug_fw_stats_reset(ar);
@@ -62,7 +62,7 @@
  }
  
  int ath10k_debug_register(struct ath10k *ar)
-@@ -1989,6 +1990,7 @@ int ath10k_debug_register(struct ath10k
+@@ -2088,6 +2089,7 @@ int ath10k_debug_register(struct ath10k
  
  	debugfs_create_file("pktlog_filter", S_IRUGO | S_IWUSR,
  			    ar->debug.debugfs_phy, ar, &fops_pktlog_filter);
@@ -70,7 +70,7 @@
  
  	return 0;
  }
-@@ -1996,6 +1998,7 @@ int ath10k_debug_register(struct ath10k
+@@ -2095,6 +2097,7 @@ int ath10k_debug_register(struct ath10k
  void ath10k_debug_unregister(struct ath10k *ar)
  {
  	cancel_delayed_work_sync(&ar->debug.htt_stats_dwork);

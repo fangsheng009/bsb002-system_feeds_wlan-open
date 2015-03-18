@@ -30,7 +30,7 @@
  	complete_all(&ar->scan.started);
 --- a/drivers/net/wireless/ath/ath10k/debug.c
 +++ b/drivers/net/wireless/ath/ath10k/debug.c
-@@ -2055,3 +2055,47 @@ void ath10k_dbg_dump(struct ath10k *ar,
+@@ -2154,3 +2154,47 @@ void ath10k_dbg_dump(struct ath10k *ar,
  EXPORT_SYMBOL(ath10k_dbg_dump);
  
  #endif /* CPTCFG_ATH10K_DEBUG */

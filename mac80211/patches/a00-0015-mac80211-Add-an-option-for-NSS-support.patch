@@ -1,6 +1,6 @@
 --- a/net/mac80211/Kconfig
 +++ b/net/mac80211/Kconfig
-@@ -17,6 +17,13 @@ comment "CFG80211 needs to be enabled fo
+@@ -18,6 +18,13 @@ comment "CFG80211 needs to be enabled fo
  
  if MAC80211 != n
  
@@ -40,7 +40,7 @@
  };
 --- a/net/mac80211/iface.c
 +++ b/net/mac80211/iface.c
-@@ -707,6 +707,13 @@ int ieee80211_do_open(struct wireless_de
+@@ -708,6 +708,13 @@ int ieee80211_do_open(struct wireless_de
  
  	ieee80211_recalc_ps(local, -1);
  
@@ -54,7 +54,7 @@
  	if (sdata->vif.type == NL80211_IFTYPE_MONITOR ||
  	    sdata->vif.type == NL80211_IFTYPE_AP_VLAN) {
  		/* XXX: for AP_VLAN, actually track AP queues */
-@@ -1030,6 +1037,12 @@ static int ieee80211_stop(struct net_dev
+@@ -1031,6 +1038,12 @@ static int ieee80211_stop(struct net_dev
  {
  	struct ieee80211_sub_if_data *sdata = IEEE80211_DEV_TO_SUB_IF(dev);
  
@@ -117,7 +117,7 @@
  /*
   * monitor mode reception
   *
-@@ -2082,10 +2123,15 @@ ieee80211_deliver_skb(struct ieee80211_r
+@@ -2105,10 +2146,15 @@ ieee80211_deliver_skb(struct ieee80211_r
  		/* deliver to local stack */
  		skb->protocol = eth_type_trans(skb, dev);
  		memset(skb->cb, 0, sizeof(skb->cb));

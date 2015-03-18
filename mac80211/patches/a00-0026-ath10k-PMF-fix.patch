@@ -1,8 +1,6 @@
-diff --git a/drivers/net/wireless/ath/ath10k/htt_tx.c b/drivers/net/wireless/ath/ath10k/htt_tx.c
-index cbd2bc9..d6107b1 100644
 --- a/drivers/net/wireless/ath/ath10k/htt_tx.c
 +++ b/drivers/net/wireless/ath/ath10k/htt_tx.c
-@@ -345,6 +345,8 @@ int ath10k_htt_mgmt_tx(struct ath10k_htt *htt, struct sk_buff *msdu)
+@@ -345,6 +345,8 @@ int ath10k_htt_mgmt_tx(struct ath10k_htt
  	int len = 0;
  	int msdu_id = -1;
  	int res;
@@ -11,7 +9,7 @@ index cbd2bc9..d6107b1 100644
  
  	res = ath10k_htt_tx_inc_pending(htt);
  	if (res)
-@@ -362,6 +364,12 @@ int ath10k_htt_mgmt_tx(struct ath10k_htt *htt, struct sk_buff *msdu)
+@@ -362,6 +364,12 @@ int ath10k_htt_mgmt_tx(struct ath10k_htt
  	msdu_id = res;
  	spin_unlock_bh(&htt->tx_lock);
  
@@ -24,11 +22,9 @@ index cbd2bc9..d6107b1 100644
  	txdesc = ath10k_htc_alloc_skb(ar, len);
  	if (!txdesc) {
  		res = -ENOMEM;
-diff --git a/drivers/net/wireless/ath/ath10k/mac.c b/drivers/net/wireless/ath/ath10k/mac.c
-index 025bb0d..aa6b3ca 100644
 --- a/drivers/net/wireless/ath/ath10k/mac.c
 +++ b/drivers/net/wireless/ath/ath10k/mac.c
-@@ -1763,6 +1763,9 @@ static int ath10k_peer_assoc_prepare(struct ath10k *ar,
+@@ -1792,6 +1792,9 @@ static int ath10k_peer_assoc_prepare(str
  	ath10k_peer_assoc_h_qos(ar, vif, sta, arg);
  	ath10k_peer_assoc_h_phymode(ar, vif, sta, arg);
  
@@ -38,11 +34,9 @@ index 025bb0d..aa6b3ca 100644
  	return 0;
  }
  
-diff --git a/drivers/net/wireless/ath/ath10k/wmi.h b/drivers/net/wireless/ath/ath10k/wmi.h
-index 7f9b9d8..9638ba4 100644
 --- a/drivers/net/wireless/ath/ath10k/wmi.h
 +++ b/drivers/net/wireless/ath/ath10k/wmi.h
-@@ -4521,6 +4521,7 @@ struct wmi_peer_set_q_empty_callback_cmd {
+@@ -4531,6 +4531,7 @@ struct wmi_peer_set_q_empty_callback_cmd
  #define WMI_PEER_VHT            0x02000000
  #define WMI_PEER_80MHZ          0x04000000
  #define WMI_PEER_VHT_2G         0x08000000
@@ -50,11 +44,9 @@ index 7f9b9d8..9638ba4 100644
  #define WMI_PEER_DISABLE_AMSDU_RESP 0x20000000
  
  /*
-diff --git a/include/net/mac80211.h b/include/net/mac80211.h
-index 0911ac9..2166317 100644
 --- a/include/net/mac80211.h
 +++ b/include/net/mac80211.h
-@@ -1490,6 +1490,7 @@ struct ieee80211_sta {
+@@ -1504,6 +1504,7 @@ struct ieee80211_sta {
  	struct ieee80211_sta_rates __rcu *rates;
  	bool tdls;
  	bool tdls_initiator;
@@ -62,11 +54,9 @@ index 0911ac9..2166317 100644
  
  	/* must be last */
  	u8 drv_priv[0] __aligned(sizeof(void *));
-diff --git a/net/mac80211/cfg.c b/net/mac80211/cfg.c
-index 6e1e689..aed2325 100644
 --- a/net/mac80211/cfg.c
 +++ b/net/mac80211/cfg.c
-@@ -1029,6 +1029,7 @@ static int sta_apply_parameters(struct ieee80211_local *local,
+@@ -1068,6 +1068,7 @@ static int sta_apply_parameters(struct i
  		sta->sta.wme = set & BIT(NL80211_STA_FLAG_WME);
  
  	if (mask & BIT(NL80211_STA_FLAG_MFP)) {
@@ -74,11 +64,9 @@ index 6e1e689..aed2325 100644
  		if (set & BIT(NL80211_STA_FLAG_MFP))
  			set_sta_flag(sta, WLAN_STA_MFP);
  		else
-diff --git a/net/mac80211/mlme.c b/net/mac80211/mlme.c
-index 2c36c47..c787d49 100644
 --- a/net/mac80211/mlme.c
 +++ b/net/mac80211/mlme.c
-@@ -2945,6 +2945,7 @@ static bool ieee80211_assoc_success(struct ieee80211_sub_if_data *sdata,
+@@ -2973,6 +2973,7 @@ static bool ieee80211_assoc_success(stru
  		set_sta_flag(sta, WLAN_STA_MFP);
  
  	sta->sta.wme = elems.wmm_param;
