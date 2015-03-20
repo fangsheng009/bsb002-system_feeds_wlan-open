@@ -1219,7 +1219,7 @@ country TG: DFS-ETSI
 	(5590 - 5650 @ 40), (27), (600000), DFS, AUTO-BW
 	(5650 - 5710 @ 40), (27), DFS, AUTO-BW
 
-country TW: DFS-JP
+country TW: DFS-FCC
 	(2402 - 2472 @ 40), (30)
 	(5270 - 5330 @ 40), (17), DFS
 	(5490 - 5590 @ 80), (30), DFS
