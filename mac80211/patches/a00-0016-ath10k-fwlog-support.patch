@@ -1,11 +1,11 @@
 --- a/drivers/net/wireless/ath/ath10k/Makefile
 +++ b/drivers/net/wireless/ath/ath10k/Makefile
-@@ -10,7 +10,8 @@ ath10k_core-y += mac.o \
- 		 wmi.o \
+@@ -11,7 +11,8 @@ ath10k_core-y += mac.o \
  		 wmi-tlv.o \
  		 bmi.o \
--		 hw.o
-+		 hw.o \
+ 		 hw.o \
+-		 p2p.o
++		 p2p.o \
 +		 fwlog.o
  
  ath10k_core-$(CPTCFG_ATH10K_DEBUGFS) += spectral.o
@@ -40,7 +40,7 @@
  
 --- a/drivers/net/wireless/ath/ath10k/core.h
 +++ b/drivers/net/wireless/ath/ath10k/core.h
-@@ -687,6 +687,9 @@ struct ath10k {
+@@ -692,6 +692,9 @@ struct ath10k {
  
  	struct ath10k_thermal thermal;
  
@@ -881,15 +881,15 @@
 +
 --- a/drivers/net/wireless/ath/ath10k/wmi.c
 +++ b/drivers/net/wireless/ath/ath10k/wmi.c
-@@ -26,6 +26,7 @@
- #include "mac.h"
+@@ -27,6 +27,7 @@
  #include "testmode.h"
  #include "wmi-ops.h"
+ #include "p2p.h"
 +#include "fwlog.h"
  
  /* MAIN WMI cmd track */
  static struct wmi_cmd_map wmi_cmd_map = {
-@@ -1716,7 +1717,7 @@ int ath10k_wmi_event_debug_mesg(struct a
+@@ -1720,7 +1721,7 @@ int ath10k_wmi_event_debug_mesg(struct a
  		   skb->len);
  
  	trace_ath10k_wmi_dbglog(ar, skb->data, skb->len);
@@ -898,7 +898,7 @@
  	return 0;
  }
  
-@@ -3296,7 +3297,7 @@ static void ath10k_wmi_op_rx(struct ath1
+@@ -3266,7 +3267,7 @@ static void ath10k_wmi_op_rx(struct ath1
  		break;
  	case WMI_DEBUG_MESG_EVENTID:
  		ath10k_wmi_event_debug_mesg(ar, skb);
@@ -907,7 +907,7 @@
  	case WMI_UPDATE_STATS_EVENTID:
  		ath10k_wmi_event_update_stats(ar, skb);
  		break;
-@@ -3425,7 +3426,7 @@ static void ath10k_wmi_10_1_op_rx(struct
+@@ -3395,7 +3396,7 @@ static void ath10k_wmi_10_1_op_rx(struct
  		break;
  	case WMI_10X_DEBUG_MESG_EVENTID:
  		ath10k_wmi_event_debug_mesg(ar, skb);
@@ -916,7 +916,7 @@
  	case WMI_10X_UPDATE_STATS_EVENTID:
  		ath10k_wmi_event_update_stats(ar, skb);
  		break;
-@@ -3536,7 +3537,7 @@ static void ath10k_wmi_10_2_op_rx(struct
+@@ -3506,7 +3507,7 @@ static void ath10k_wmi_10_2_op_rx(struct
  		break;
  	case WMI_10_2_DEBUG_MESG_EVENTID:
  		ath10k_wmi_event_debug_mesg(ar, skb);

@@ -12,16 +12,16 @@
 +	This option enables smart antenna algorithm.
 --- a/drivers/net/wireless/ath/ath10k/Makefile
 +++ b/drivers/net/wireless/ath/ath10k/Makefile
-@@ -11,15 +11,16 @@ ath10k_core-y += mac.o \
- 		 wmi-tlv.o \
+@@ -12,15 +12,15 @@ ath10k_core-y += mac.o \
  		 bmi.o \
  		 hw.o \
+ 		 p2p.o \
 -		 fwlog.o \
 -		 debug_smart_ant.o
 +		 fwlog.o
  
+-ath10k_core-$(CPTCFG_ATH10K_DEBUGFS) += spectral.o
 +ath10k_core-$(CPTCFG_ATH10K_DEBUGFS) += spectral.o debug_smart_ant.o
- ath10k_core-$(CPTCFG_ATH10K_DEBUGFS) += spectral.o
  ath10k_core-$(CPTCFG_NL80211_TESTMODE) += testmode.o
  ath10k_core-$(CPTCFG_ATH10K_TRACING) += trace.o
  ath10k_core-$(CONFIG_THERMAL) += thermal.o
@@ -60,7 +60,7 @@
  
  #define MS(_v, _f) (((_v) & _f##_MASK) >> _f##_LSB)
  #define SM(_v, _f) (((_v) << _f##_LSB) & _f##_MASK)
-@@ -279,6 +280,7 @@ struct ath10k_sta {
+@@ -280,6 +281,7 @@ struct ath10k_sta {
  	/* protected by conf_mutex */
  	bool aggr_mode;
  #endif
@@ -68,7 +68,7 @@
  };
  
  #define ATH10K_VDEV_SETUP_TIMEOUT_HZ (5*HZ)
-@@ -509,23 +511,6 @@ static inline const char *ath10k_scan_st
+@@ -512,23 +514,6 @@ static inline const char *ath10k_scan_st
  
  #define ATH10K_RATECODE_LIST_TIMEOUT	100 /* msecs */
  
@@ -2660,7 +2660,7 @@
 +#endif /* _SMART_ANT_ALG_ */
 --- a/drivers/net/wireless/ath/ath10k/wmi.c
 +++ b/drivers/net/wireless/ath/ath10k/wmi.c
-@@ -4022,11 +4022,13 @@ static struct sk_buff *ath10k_wmi_10_2_o
+@@ -3992,11 +3992,13 @@ static struct sk_buff *ath10k_wmi_10_2_o
  		config.num_peers =
  			__cpu_to_le32(min(TARGET_10_2_SMART_ANT_NUM_PEERS,
  					  TARGET_10X_NUM_PEERS));
@@ -2714,7 +2714,7 @@
  
 --- a/drivers/net/wireless/ath/ath10k/debug.c
 +++ b/drivers/net/wireless/ath/ath10k/debug.c
-@@ -1845,8 +1845,8 @@ void ath10k_debug_stop(struct ath10k *ar
+@@ -1900,8 +1900,8 @@ void ath10k_debug_stop(struct ath10k *ar
  
  	ar->debug.htt_max_amsdu = 0;
  	ar->debug.htt_max_ampdu = 0;
@@ -2725,7 +2725,7 @@
  }
  
  static ssize_t ath10k_write_simulate_radar(struct file *file,
-@@ -1942,6 +1942,9 @@ static ssize_t ath10k_write_pktlog_filte
+@@ -1997,6 +1997,9 @@ static ssize_t ath10k_write_pktlog_filte
  
  	mutex_lock(&ar->conf_mutex);
  
@@ -2735,7 +2735,7 @@
  	if (ar->state != ATH10K_STATE_ON) {
  		ar->debug.pktlog_filter = filter;
  		ret = count;
-@@ -1956,10 +1959,18 @@ static ssize_t ath10k_write_pktlog_filte
+@@ -2011,10 +2014,18 @@ static ssize_t ath10k_write_pktlog_filte
  			goto out;
  		}
  	} else {

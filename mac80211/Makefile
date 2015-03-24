@@ -7,11 +7,11 @@ PKG_BACKPORTS_VERSION:=dd4a670
 PKG_BACKPORTS_SOURCE_URL:=git://git.kernel.org/pub/scm/linux/kernel/git/backports/backports.git
 PKG_BACKPORTS_BRANCH:=master
 
-PKG_KERNEL_VERSION:=1ca2760
+PKG_KERNEL_VERSION:=b3e71d7
 PKG_KERNEL_SOURCE_URL:=https://github.com/kvalo/ath.git
 PKG_KERNEL_BRANCH:=ath-qca
 
-PKG_VERSION:=20150317
+PKG_VERSION:=20150324
 PKG_SOURCE:=backports-$(PKG_VERSION).tar.bz2
 PKG_SUBDIR:=backports-$(PKG_VERSION)
 PKG_RELEASE:=1
@@ -359,7 +359,7 @@ config-$(CONFIG_PACKAGE_MAC80211_IBSS_DEBUG) += MAC80211_IBSS_DEBUG
 config-$(CONFIG_PACKAGE_MAC80211_PS_DEBUG) += MAC80211_PS_DEBUG
 
 config-$(call config_package,ath) += ATH_CARDS ATH_COMMON
-config-$(CONFIG_PACKAGE_ATH_DEBUG) += ATH_DEBUG ATH10K_DEBUG
+config-$(CONFIG_PACKAGE_ATH_DEBUG) += ATH_DEBUG ATH10K_DEBUG HWMON
 
 config-$(call config_package,ath9k) += ATH9K
 config-$(call config_package,ath9k-common) += ATH9K_COMMON
@@ -370,7 +370,7 @@ config-$(CONFIG_ATH_USER_REGD) += ATH_USER_REGD \
 				      ATH_REG_DYNAMIC_USER_CERT_TESTING
 
 config-$(call config_package,ath9k-htc) += ATH9K_HTC
-config-$(call config_package,ath10k) += ATH10K ATH10K_PCI HWMON
+config-$(call config_package,ath10k) += ATH10K ATH10K_PCI
 config-$(call config_package,wil6210) += WIL6210
 config-$(CONFIG_PACKAGE_kmod-ath10k) += ATH10K_DFS_CERTIFIED ATH10K_SMART_ANT_ALG
 

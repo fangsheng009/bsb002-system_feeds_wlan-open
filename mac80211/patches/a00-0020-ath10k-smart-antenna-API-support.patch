@@ -33,7 +33,7 @@
  
 --- a/drivers/net/wireless/ath/ath10k/core.h
 +++ b/drivers/net/wireless/ath/ath10k/core.h
-@@ -446,6 +446,9 @@ enum ath10k_fw_features {
+@@ -449,6 +449,9 @@ enum ath10k_fw_features {
  	 */
  	ATH10K_FW_FEATURE_MULTI_VIF_PS_SUPPORT = 5,
  
@@ -43,7 +43,7 @@
  	/* keep last */
  	ATH10K_FW_FEATURE_COUNT,
  };
-@@ -504,6 +507,17 @@ static inline const char *ath10k_scan_st
+@@ -507,6 +510,17 @@ static inline const char *ath10k_scan_st
  	return "unknown";
  }
  
@@ -61,7 +61,7 @@
  struct ath10k {
  	struct ath_common ath_common;
  	struct ieee80211_hw *hw;
-@@ -696,10 +710,34 @@ struct ath10k {
+@@ -701,10 +715,34 @@ struct ath10k {
  	struct work_struct fwlog_tx_work;
  	struct sk_buff_head fwlog_tx_queue;
  
@@ -175,7 +175,7 @@
  
  /**********/
  /* Crypto */
-@@ -3419,6 +3420,21 @@ static int ath10k_add_interface(struct i
+@@ -3654,6 +3655,21 @@ static int ath10k_add_interface(struct i
  		goto err_peer_delete;
  	}
  
@@ -197,7 +197,7 @@
  	mutex_unlock(&ar->conf_mutex);
  	return 0;
  
-@@ -3452,6 +3468,8 @@ static void ath10k_remove_interface(stru
+@@ -3690,6 +3706,8 @@ static void ath10k_remove_interface(stru
  
  	mutex_lock(&ar->conf_mutex);
  
@@ -206,7 +206,7 @@
  	spin_lock_bh(&ar->data_lock);
  	ath10k_mac_vif_beacon_cleanup(arvif);
  	spin_unlock_bh(&ar->data_lock);
-@@ -4164,10 +4182,40 @@ static int ath10k_sta_state(struct ieee8
+@@ -4447,10 +4465,40 @@ static int ath10k_sta_state(struct ieee8
  		ath10k_dbg(ar, ATH10K_DBG_MAC, "mac sta %pM associated\n",
  			   sta->addr);
  
@@ -248,7 +248,7 @@
  	} else if (old_state == IEEE80211_STA_ASSOC &&
  		   new_state == IEEE80211_STA_AUTH &&
  		   (vif->type == NL80211_IFTYPE_AP ||
-@@ -4178,6 +4226,8 @@ static int ath10k_sta_state(struct ieee8
+@@ -4461,6 +4509,8 @@ static int ath10k_sta_state(struct ieee8
  		ath10k_dbg(ar, ATH10K_DBG_MAC, "mac sta %pM disassociated\n",
  			   sta->addr);
  
@@ -355,7 +355,7 @@
 +#endif
 --- a/drivers/net/wireless/ath/ath10k/wmi-ops.h
 +++ b/drivers/net/wireless/ath/ath10k/wmi-ops.h
-@@ -148,6 +148,23 @@ struct wmi_ops {
+@@ -150,6 +150,23 @@ struct wmi_ops {
  					      u32 num_ac);
  	struct sk_buff *(*gen_sta_keepalive)(struct ath10k *ar,
  					     const struct wmi_sta_keepalive_arg *arg);
@@ -379,7 +379,7 @@
  };
  
  int ath10k_wmi_cmd_send(struct ath10k *ar, struct sk_buff *skb, u32 cmd_id);
-@@ -1060,4 +1077,108 @@ ath10k_wmi_sta_keepalive(struct ath10k *
+@@ -1072,4 +1089,108 @@ ath10k_wmi_sta_keepalive(struct ath10k *
  	return ath10k_wmi_cmd_send(ar, skb, cmd_id);
  }
  
@@ -490,7 +490,7 @@
  #endif
 --- a/drivers/net/wireless/ath/ath10k/wmi.c
 +++ b/drivers/net/wireless/ath/ath10k/wmi.c
-@@ -147,6 +147,11 @@ static struct wmi_cmd_map wmi_cmd_map =
+@@ -148,6 +148,11 @@ static struct wmi_cmd_map wmi_cmd_map =
  	.gpio_config_cmdid = WMI_GPIO_CONFIG_CMDID,
  	.gpio_output_cmdid = WMI_GPIO_OUTPUT_CMDID,
  	.pdev_get_temperature_cmdid = WMI_CMD_UNSUPPORTED,
@@ -502,7 +502,7 @@
  };
  
  /* 10.X WMI cmd track */
-@@ -270,6 +275,11 @@ static struct wmi_cmd_map wmi_10x_cmd_ma
+@@ -271,6 +276,11 @@ static struct wmi_cmd_map wmi_10x_cmd_ma
  	.gpio_config_cmdid = WMI_10X_GPIO_CONFIG_CMDID,
  	.gpio_output_cmdid = WMI_10X_GPIO_OUTPUT_CMDID,
  	.pdev_get_temperature_cmdid = WMI_CMD_UNSUPPORTED,
@@ -514,7 +514,7 @@
  };
  
  /* 10.2.4 WMI cmd track */
-@@ -392,6 +402,14 @@ static struct wmi_cmd_map wmi_10_2_4_cmd
+@@ -393,6 +403,14 @@ static struct wmi_cmd_map wmi_10_2_4_cmd
  	.gpio_config_cmdid = WMI_10_2_GPIO_CONFIG_CMDID,
  	.gpio_output_cmdid = WMI_10_2_GPIO_OUTPUT_CMDID,
  	.pdev_get_temperature_cmdid = WMI_10_2_PDEV_GET_TEMPERATURE_CMDID,
@@ -529,7 +529,7 @@
  };
  
  /* MAIN WMI VDEV param map */
-@@ -848,6 +866,14 @@ static struct wmi_cmd_map wmi_10_2_cmd_m
+@@ -849,6 +867,14 @@ static struct wmi_cmd_map wmi_10_2_cmd_m
  	.gpio_config_cmdid = WMI_10_2_GPIO_CONFIG_CMDID,
  	.gpio_output_cmdid = WMI_10_2_GPIO_OUTPUT_CMDID,
  	.pdev_get_temperature_cmdid = WMI_CMD_UNSUPPORTED,
@@ -544,7 +544,7 @@
  };
  
  void ath10k_wmi_put_wmi_channel(struct wmi_channel *ch,
-@@ -3268,6 +3294,57 @@ static int ath10k_wmi_event_temperature(
+@@ -3238,6 +3264,57 @@ static int ath10k_wmi_event_temperature(
  	return 0;
  }
  
@@ -602,7 +602,7 @@
  static void ath10k_wmi_op_rx(struct ath10k *ar, struct sk_buff *skb)
  {
  	struct wmi_cmd_hdr *cmd_hdr;
-@@ -3610,9 +3687,11 @@ static void ath10k_wmi_10_2_op_rx(struct
+@@ -3580,9 +3657,11 @@ static void ath10k_wmi_10_2_op_rx(struct
  	case WMI_10_2_PDEV_TEMPERATURE_EVENTID:
  		ath10k_wmi_event_temperature(ar, skb);
  		break;
@@ -615,7 +615,7 @@
  	case WMI_10_2_GENERIC_BUFFER_EVENTID:
  	case WMI_10_2_MCAST_BUF_RELEASE_EVENTID:
  	case WMI_10_2_MCAST_LIST_AGEOUT_EVENTID:
-@@ -3939,7 +4018,13 @@ static struct sk_buff *ath10k_wmi_10_2_o
+@@ -3909,7 +3988,13 @@ static struct sk_buff *ath10k_wmi_10_2_o
  	u32 len, val, features;
  
  	config.num_vdevs = __cpu_to_le32(TARGET_10X_NUM_VDEVS);
@@ -630,7 +630,7 @@
  	config.num_peer_keys = __cpu_to_le32(TARGET_10X_NUM_PEER_KEYS);
  	config.num_tids = __cpu_to_le32(TARGET_10X_NUM_TIDS);
  	config.ast_skid_limit = __cpu_to_le32(TARGET_10X_AST_SKID_LIMIT);
-@@ -3993,6 +4078,11 @@ static struct sk_buff *ath10k_wmi_10_2_o
+@@ -3963,6 +4048,11 @@ static struct sk_buff *ath10k_wmi_10_2_o
  	features = WMI_10_2_RX_BATCH_MODE;
  	cmd->resource_config.feature_mask = __cpu_to_le32(features);
  
@@ -642,7 +642,7 @@
  	memcpy(&cmd->resource_config.common, &config, sizeof(config));
  	ath10k_wmi_put_host_mem_chunks(ar, &cmd->mem_chunks);
  
-@@ -5211,6 +5301,212 @@ ath10k_wmi_op_gen_delba_send(struct ath1
+@@ -5181,6 +5271,212 @@ ath10k_wmi_op_gen_delba_send(struct ath1
  	return skb;
  }
  
@@ -855,7 +855,7 @@
  static const struct wmi_ops wmi_ops = {
  	.rx = ath10k_wmi_op_rx,
  	.map_svc = wmi_main_svc_map,
-@@ -5270,6 +5566,12 @@ static const struct wmi_ops wmi_ops = {
+@@ -5241,6 +5537,12 @@ static const struct wmi_ops wmi_ops = {
  	/* .gen_bcn_tmpl not implemented */
  	/* .gen_prb_tmpl not implemented */
  	/* .gen_p2p_go_bcn_ie not implemented */
@@ -868,7 +868,7 @@
  };
  
  static const struct wmi_ops wmi_10_1_ops = {
-@@ -5332,6 +5634,12 @@ static const struct wmi_ops wmi_10_1_ops
+@@ -5304,6 +5606,12 @@ static const struct wmi_ops wmi_10_1_ops
  	/* .gen_bcn_tmpl not implemented */
  	/* .gen_prb_tmpl not implemented */
  	/* .gen_p2p_go_bcn_ie not implemented */
@@ -881,7 +881,7 @@
  };
  
  static const struct wmi_ops wmi_10_2_ops = {
-@@ -5392,6 +5700,13 @@ static const struct wmi_ops wmi_10_2_ops
+@@ -5365,6 +5673,13 @@ static const struct wmi_ops wmi_10_2_ops
  	.gen_addba_send = ath10k_wmi_op_gen_addba_send,
  	.gen_addba_set_resp = ath10k_wmi_op_gen_addba_set_resp,
  	.gen_delba_send = ath10k_wmi_op_gen_delba_send,
@@ -895,7 +895,7 @@
  };
  
  static const struct wmi_ops wmi_10_2_4_ops = {
-@@ -5454,6 +5769,13 @@ static const struct wmi_ops wmi_10_2_4_o
+@@ -5428,6 +5743,13 @@ static const struct wmi_ops wmi_10_2_4_o
  	/* .gen_bcn_tmpl not implemented */
  	/* .gen_prb_tmpl not implemented */
  	/* .gen_p2p_go_bcn_ie not implemented */
@@ -923,7 +923,7 @@
  };
  
  /*
-@@ -4864,6 +4869,95 @@ struct wmi_pdev_temperature_event {
+@@ -4886,6 +4891,95 @@ struct wmi_pdev_temperature_event {
  	__le32 temperature;
  } __packed;
  
