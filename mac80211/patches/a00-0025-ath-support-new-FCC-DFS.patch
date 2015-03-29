@@ -91,15 +91,7 @@
  }
  
  static void pri_detector_exit(struct pri_detector *de)
-@@ -393,6 +415,7 @@ static struct pri_sequence *pri_detector
- 	/* radar detector spec needs chirp, but not detected */
- 	if (rs->chirp && rs->chirp != event->chirp)
- 		return NULL;
-+
- 	de->last_ts = ts;
- 
- 	max_updated_seq = pseq_handler_add_to_existing_seqs(de, ts);
-@@ -410,7 +433,7 @@ static struct pri_sequence *pri_detector
+@@ -411,7 +433,7 @@ static struct pri_sequence *pri_detector
  	return ps;
  }
  
@@ -108,7 +100,7 @@
  {
  	struct pri_detector *de;
  
-@@ -423,8 +446,9 @@ struct pri_detector *pri_detector_init(c
+@@ -424,8 +446,9 @@ struct pri_detector *pri_detector_init(c
  
  	INIT_LIST_HEAD(&de->sequences);
  	INIT_LIST_HEAD(&de->pulses);

@@ -22,7 +22,7 @@
 +	frame filters can be alterted by debugfs entries.
 --- a/drivers/net/wireless/ath/ath10k/Makefile
 +++ b/drivers/net/wireless/ath/ath10k/Makefile
-@@ -18,6 +18,7 @@ ath10k_core-$(CPTCFG_NL80211_TESTMODE) +
+@@ -19,6 +19,7 @@ ath10k_core-$(CPTCFG_NL80211_TESTMODE) +
  ath10k_core-$(CPTCFG_ATH10K_TRACING) += trace.o
  ath10k_core-$(CONFIG_THERMAL) += thermal.o
  ath10k_core-$(CPTCFG_MAC80211_DEBUGFS) += debugfs_sta.o
@@ -40,7 +40,7 @@
  
  #define MS(_v, _f) (((_v) & _f##_MASK) >> _f##_LSB)
  #define SM(_v, _f) (((_v) << _f##_LSB) & _f##_MASK)
-@@ -380,6 +381,11 @@ struct ath10k_debug {
+@@ -383,6 +384,11 @@ struct ath10k_debug {
  	u8 htt_max_ampdu;
  
  	struct ath10k_fw_crash_data *fw_crash_data;
@@ -54,7 +54,7 @@
  enum ath10k_state {
 --- a/drivers/net/wireless/ath/ath10k/debug.c
 +++ b/drivers/net/wireless/ath/ath10k/debug.c
-@@ -2011,6 +2011,7 @@ void ath10k_debug_destroy(struct ath10k
+@@ -2110,6 +2110,7 @@ void ath10k_debug_destroy(struct ath10k
  	ar->debug.fw_crash_data = NULL;
  
  	ath10k_debug_fw_stats_reset(ar);
@@ -62,15 +62,15 @@
  }
  
  int ath10k_debug_register(struct ath10k *ar)
-@@ -2088,6 +2089,7 @@ int ath10k_debug_register(struct ath10k
+@@ -2190,6 +2191,7 @@ int ath10k_debug_register(struct ath10k
  
  	debugfs_create_file("pktlog_filter", S_IRUGO | S_IWUSR,
  			    ar->debug.debugfs_phy, ar, &fops_pktlog_filter);
 +	ath10k_init_pktlog(ar);
  
- 	return 0;
- }
-@@ -2095,6 +2097,7 @@ int ath10k_debug_register(struct ath10k
+ 	debugfs_create_file("quiet_period", S_IRUGO | S_IWUSR,
+ 			    ar->debug.debugfs_phy, ar, &fops_quiet_period);
+@@ -2200,6 +2202,7 @@ int ath10k_debug_register(struct ath10k
  void ath10k_debug_unregister(struct ath10k *ar)
  {
  	cancel_delayed_work_sync(&ar->debug.htt_stats_dwork);
