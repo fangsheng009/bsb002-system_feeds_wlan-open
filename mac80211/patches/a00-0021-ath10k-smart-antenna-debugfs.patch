@@ -1,16 +1,16 @@
-From 26ec4d78cff911d0b4f33816570d260e460d72b2 Mon Sep 17 00:00:00 2001
+From 2bcb6148efec2e5f31ca849dfb60d6546bb4de23 Mon Sep 17 00:00:00 2001
 From: Vasanthakumar Thiagarajan <vthiagar@codeaurora.org>
 Date: Fri, 13 Feb 2015 21:13:29 +0530
-Subject: [PATCH 2/2] smart antenna debugfs patch
+Subject: [PATCH] smart antenna debugfs patch
 
 ---
  drivers/net/wireless/ath/ath10k/Makefile          |   3 +-
  drivers/net/wireless/ath/ath10k/core.h            |  10 +
  drivers/net/wireless/ath/ath10k/debug.c           |   2 +
  drivers/net/wireless/ath/ath10k/debug.h           |   3 +
- drivers/net/wireless/ath/ath10k/debug_smart_ant.c | 344 ++++++++++++++++++++++
+ drivers/net/wireless/ath/ath10k/debug_smart_ant.c | 356 ++++++++++++++++++++++
  drivers/net/wireless/ath/ath10k/smart_ant.h       | 273 ++++++++++++++++-
- 6 files changed, 631 insertions(+), 4 deletions(-)
+ 6 files changed, 643 insertions(+), 4 deletions(-)
  create mode 100644 drivers/net/wireless/ath/ath10k/debug_smart_ant.c
 
 --- a/drivers/net/wireless/ath/ath10k/Makefile
@@ -53,7 +53,7 @@ Subject: [PATCH 2/2] smart antenna debugfs patch
  };
 --- a/drivers/net/wireless/ath/ath10k/debug.c
 +++ b/drivers/net/wireless/ath/ath10k/debug.c
-@@ -2101,6 +2101,8 @@ int ath10k_debug_create(struct ath10k *a
+@@ -2101,6 +2101,8 @@ int ath10k_debug_create(struct ath10k *ar)
  	INIT_LIST_HEAD(&ar->debug.fw_stats.vdevs);
  	INIT_LIST_HEAD(&ar->debug.fw_stats.peers);
  
@@ -72,7 +72,7 @@ Subject: [PATCH 2/2] smart antenna debugfs patch
  	ATH10K_DBG_ANY		= 0xffffffff,
  };
  
-@@ -85,6 +86,7 @@ int ath10k_debug_get_et_sset_count(struc
+@@ -85,6 +86,7 @@ int ath10k_debug_get_et_sset_count(struct ieee80211_hw *hw,
  void ath10k_debug_get_et_stats(struct ieee80211_hw *hw,
  			       struct ieee80211_vif *vif,
  			       struct ethtool_stats *stats, u64 *data);
@@ -80,7 +80,7 @@ Subject: [PATCH 2/2] smart antenna debugfs patch
  #else
  static inline int ath10k_debug_start(struct ath10k *ar)
  {
-@@ -134,6 +136,7 @@ ath10k_debug_get_new_fw_crash_data(struc
+@@ -134,6 +136,7 @@ ath10k_debug_get_new_fw_crash_data(struct ath10k *ar)
  #define ath10k_debug_get_et_strings NULL
  #define ath10k_debug_get_et_sset_count NULL
  #define ath10k_debug_get_et_stats NULL
@@ -90,7 +90,7 @@ Subject: [PATCH 2/2] smart antenna debugfs patch
  #ifdef CPTCFG_MAC80211_DEBUGFS
 --- /dev/null
 +++ b/drivers/net/wireless/ath/ath10k/debug_smart_ant.c
-@@ -0,0 +1,346 @@
+@@ -0,0 +1,356 @@
 +/*
 + * Copyright (c) 2015, The Linux Foundation. All rights reserved.
 + *
@@ -332,6 +332,7 @@ Subject: [PATCH 2/2] smart antenna debugfs patch
 +	struct ath10k_sta *arsta;
 +	struct wmi_peer_sant_set_train_arg arg;
 +	int ret, i, vdev_id, len;
++	u32 rate_mask = 0;
 +	char *token, *sptr;
 +	char buf[128];
 +
@@ -390,6 +391,15 @@ Subject: [PATCH 2/2] smart antenna debugfs patch
 +	sta = ieee80211_find_sta_by_ifaddr(ar->hw, mac_addr, NULL);
 +	if (!sta) {
 +		ath10k_err(ar, "Sta entry not found\n");
++		rcu_read_unlock();
++		return -EINVAL;
++	}
++
++	for (i=0; i < sta->bandwidth; i++)
++		rate_mask |= (0xff << (8*i));
++
++	if ((arg.rates[0] & rate_mask) != arg.rates[0]) {
++		ath10k_err(ar, "Invalid rates for training\n");
 +		rcu_read_unlock();
 +		return -EINVAL;
 +	}
@@ -596,7 +606,7 @@ Subject: [PATCH 2/2] smart antenna debugfs patch
  }
  
  /* This API is to process tx feedback information such as tx rate
-@@ -40,6 +175,84 @@ ath10k_smart_ant_proc_rx_feedback(struct
+@@ -40,6 +175,84 @@ ath10k_smart_ant_proc_rx_feedback(struct ath10k *ar,
  static inline void
  ath10k_smart_ant_proc_tx_feedback(struct ath10k *ar, u8 *data)
  {
@@ -681,7 +691,7 @@ Subject: [PATCH 2/2] smart antenna debugfs patch
  }
  
  /* In AP mode, this API notifies of disassociation of a station.
-@@ -49,6 +262,11 @@ ath10k_smart_ant_proc_tx_feedback(struct
+@@ -49,6 +262,11 @@ ath10k_smart_ant_proc_tx_feedback(struct ath10k *ar, u8 *data)
  static inline void
  ath10k_smart_ant_sta_disconnect(struct ath10k *ar, struct ieee80211_sta *sta)
  {
@@ -748,4 +758,4 @@ Subject: [PATCH 2/2] smart antenna debugfs patch
 +	}
  	return 0;
  }
- 
+
