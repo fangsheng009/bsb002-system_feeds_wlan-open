@@ -546,8 +546,6 @@
 +{
 +	int i;
 +
-+	ath10k_dbg(ar, ATH10K_DBG_SMART_ANT, "Tx feedback\n");
-+
 +	if (fb->num_comb_fb) {
 +		for (i = 0; i < fb->num_comb_fb; i++) {
 +			ath10k_dbg(ar, ATH10K_DBG_SMART_ANT,
@@ -1845,11 +1843,13 @@
 +
 +		arsta = (struct ath10k_sta *)sta->drv_priv;
 +
-+		memset(&feed_back, 0, sizeof(feed_back));
-+		smart_ant_alg_tx_fb_fill(ar, tx_ctrl_desc, &feed_back);
-+
 +		if (!arsta->smart_ant_sta)
 +			goto exit;
++
++		memset(&feed_back, 0, sizeof(feed_back));
++		ath10k_dbg(ar, ATH10K_DBG_SMART_ANT, "Tx feedback from sta :%pM\n",
++			   peer_mac);
++		smart_ant_alg_tx_fb_fill(ar, tx_ctrl_desc, &feed_back);
 +
 +		smart_ant_alg_tx_stats_update(ar, arsta->smart_ant_sta,
 +					  &feed_back, &action);
