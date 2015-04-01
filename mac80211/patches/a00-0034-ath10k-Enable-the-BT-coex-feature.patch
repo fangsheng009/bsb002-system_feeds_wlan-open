@@ -1,0 +1,63 @@
+Index: backports-20150324/drivers/net/wireless/ath/ath10k/wmi.c
+===================================================================
+--- backports-20150324.orig/drivers/net/wireless/ath/ath10k/wmi.c	2015-03-31 16:21:31.549592747 -0700
++++ backports-20150324/drivers/net/wireless/ath/ath10k/wmi.c	2015-03-31 16:23:51.341592730 -0700
+@@ -4048,6 +4048,8 @@
+ 	cmd = (struct wmi_init_cmd_10_2 *)buf->data;
+ 
+ 	features = WMI_10_2_RX_BATCH_MODE;
++	if (test_bit(WMI_SERVICE_COEX_GPIO, ar->wmi.svc_map))
++		features |= WMI_10_2_COEX_GPIO;
+ 	cmd->resource_config.feature_mask = __cpu_to_le32(features);
+ 
+ 	if (ath10k_smart_ant_enabled(ar)) {
+Index: backports-20150324/drivers/net/wireless/ath/ath10k/wmi.h
+===================================================================
+--- backports-20150324.orig/drivers/net/wireless/ath/ath10k/wmi.h	2015-03-31 16:21:31.517592747 -0700
++++ backports-20150324/drivers/net/wireless/ath/ath10k/wmi.h	2015-03-31 16:23:51.341592730 -0700
+@@ -148,6 +148,8 @@
+ 	WMI_SERVICE_STA_RX_IPA_OFFLOAD_SUPPORT,
+ 	WMI_SERVICE_MDNS_OFFLOAD,
+ 	WMI_SERVICE_SAP_AUTH_OFFLOAD,
++	WMI_SERVICE_ATF,
++	WMI_SERVICE_COEX_GPIO,
+ 
+ 	/* keep last */
+ 	WMI_SERVICE_MAX,
+@@ -177,6 +179,8 @@
+ 	WMI_10X_SERVICE_SMART_ANTENNA_SW_SUPPORT,
+ 	WMI_10X_SERVICE_FORCE_FW_HANG,
+ 	WMI_10X_SERVICE_SMART_ANTENNA_HW_SUPPORT,
++	WMI_10X_SERVICE_ATF,
++	WMI_10X_SERVICE_COEX_GPIO,
+ };
+ 
+ enum wmi_main_service {
+@@ -293,6 +297,8 @@
+ 	SVCSTR(WMI_SERVICE_STA_RX_IPA_OFFLOAD_SUPPORT);
+ 	SVCSTR(WMI_SERVICE_MDNS_OFFLOAD);
+ 	SVCSTR(WMI_SERVICE_SAP_AUTH_OFFLOAD);
++	SVCSTR(WMI_SERVICE_ATF);
++	SVCSTR(WMI_SERVICE_COEX_GPIO);
+ 	default:
+ 		return NULL;
+ 	}
+@@ -356,6 +362,10 @@
+ 	       WMI_SERVICE_FORCE_FW_HANG, len);
+ 	SVCMAP(WMI_10X_SERVICE_SMART_ANTENNA_HW_SUPPORT,
+ 	       WMI_SERVICE_SMART_ANTENNA_HW_SUPPORT, len);
++	SVCMAP(WMI_10X_SERVICE_ATF,
++	       WMI_SERVICE_ATF, len);
++	SVCMAP(WMI_10X_SERVICE_COEX_GPIO,
++	       WMI_SERVICE_COEX_GPIO, len);
+ }
+ 
+ static inline void wmi_main_svc_map(const __le32 *in, unsigned long *out,
+@@ -1957,6 +1967,7 @@
+ enum wmi_10_2_feature_mask {
+ 	WMI_10_2_RX_BATCH_MODE = BIT(0),
+ 	WMI_10_2_ATF_CONFIG    = BIT(1),
++	WMI_10_2_COEX_GPIO     = BIT(3),
+ };
+ 
+ struct wmi_resource_config_10_2 {
