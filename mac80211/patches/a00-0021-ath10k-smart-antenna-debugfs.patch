@@ -1,4 +1,4 @@
-From 2bcb6148efec2e5f31ca849dfb60d6546bb4de23 Mon Sep 17 00:00:00 2001
+From 78c786c0d77868abd3f05760d5b0fdd71fb3ffec Mon Sep 17 00:00:00 2001
 From: Vasanthakumar Thiagarajan <vthiagar@codeaurora.org>
 Date: Fri, 13 Feb 2015 21:13:29 +0530
 Subject: [PATCH] smart antenna debugfs patch
@@ -6,11 +6,11 @@ Subject: [PATCH] smart antenna debugfs patch
 ---
  drivers/net/wireless/ath/ath10k/Makefile          |   3 +-
  drivers/net/wireless/ath/ath10k/core.h            |  10 +
- drivers/net/wireless/ath/ath10k/debug.c           |   2 +
+ drivers/net/wireless/ath/ath10k/debug.c           |   3 +
  drivers/net/wireless/ath/ath10k/debug.h           |   3 +
  drivers/net/wireless/ath/ath10k/debug_smart_ant.c | 356 ++++++++++++++++++++++
  drivers/net/wireless/ath/ath10k/smart_ant.h       | 273 ++++++++++++++++-
- 6 files changed, 643 insertions(+), 4 deletions(-)
+ 6 files changed, 644 insertions(+), 4 deletions(-)
  create mode 100644 drivers/net/wireless/ath/ath10k/debug_smart_ant.c
 
 --- a/drivers/net/wireless/ath/ath10k/Makefile
@@ -53,15 +53,16 @@ Subject: [PATCH] smart antenna debugfs patch
  };
 --- a/drivers/net/wireless/ath/ath10k/debug.c
 +++ b/drivers/net/wireless/ath/ath10k/debug.c
-@@ -2101,6 +2101,8 @@ int ath10k_debug_create(struct ath10k *ar)
- 	INIT_LIST_HEAD(&ar->debug.fw_stats.vdevs);
- 	INIT_LIST_HEAD(&ar->debug.fw_stats.peers);
+@@ -2191,6 +2191,9 @@ int ath10k_debug_register(struct ath10k *ar)
  
+ 	debugfs_create_file("pktlog_filter", S_IRUGO | S_IWUSR,
+ 			    ar->debug.debugfs_phy, ar, &fops_pktlog_filter);
++
 +	ath10k_smart_ant_debugfs_init(ar);
 +
- 	return 0;
- }
+ 	ath10k_init_pktlog(ar);
  
+ 	debugfs_create_file("quiet_period", S_IRUGO | S_IWUSR,
 --- a/drivers/net/wireless/ath/ath10k/debug.h
 +++ b/drivers/net/wireless/ath/ath10k/debug.h
 @@ -36,6 +36,7 @@ enum ath10k_debug_mask {
