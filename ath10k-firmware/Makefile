@@ -5,7 +5,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ath10k-firmware
-PKG_FW_VERSION:=10.2.4.54-1
+PKG_FW_VERSION:=10.2.4.55-1
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
 PKG_RELEASE:=1
 
