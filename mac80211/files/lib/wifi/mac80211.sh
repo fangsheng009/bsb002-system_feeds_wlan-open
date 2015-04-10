@@ -133,3 +133,14 @@ EOF
 	done
 }
 
+post_mac80211() {
+
+	config_get enable_smp_affinity mac80211 enable_smp_affinity
+
+	if [ "$enable_smp_affinity" -eq 1 ]; then
+		[ -f "/lib/update_smp_affinity.sh" ] && {
+			. /lib/update_smp_affinity.sh
+			enable_smp_affinity_wifi
+		}
+	fi
+}
