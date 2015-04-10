@@ -1,15 +1,22 @@
 include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
-PKG_NAME:=qca_backports
+PKG_NAME:=qca-backports
 
-PKG_VERSION:=20140117
+PKG_BACKPORTS_VERSION:=dd4a670
+PKG_BACKPORTS_SOURCE_URL:=git://git.kernel.org/pub/scm/linux/kernel/git/backports/backports.git
+PKG_BACKPORTS_BRANCH:=master
+
+PKG_KERNEL_VERSION:=6905b03
+PKG_KERNEL_SOURCE_URL:=https://github.com/kvalo/ath.git
+PKG_KERNEL_BRANCH:=ath-qca
+
+PKG_VERSION:=20150326
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
+PKG_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_RELEASE:=1
-PKG_SOURCE_URL:=https://www.kernel.org/pub/linux/kernel/projects/backports/2014/01/17
-PKG_BACKPORT_VERSION:=
-PKG_MD5SUM:=913e78a2c42488cd419e8cefa86434db
-PKG_SOURCE:=backports-$(PKG_VERSION).tar.gz
-PKG_BUILD_DIR:=$(KERNEL_BUILD_DIR)/backports-$(PKG_VERSION)
+
+PKG_BUILD_DIR:=$(KERNEL_BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_BUILD_PARALLEL:=1
 
 PKG_DRIVERS = ath9k-common ath9k ath9k-htc ath10k ath
@@ -17,10 +24,11 @@ PKG_DRIVERS = ath9k-common ath9k ath9k-htc ath10k ath
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_PACKAGE_kmod-qca-mac80211 \
 	$(patsubst %,CONFIG_PACKAGE_kmod-qca-%,$(PKG_DRIVERS)) \
+	CONFIG_PACKAGE_QCA_MAC80211_MESSAGE_TRACING \
 	CONFIG_PACKAGE_QCA_MAC80211_DEBUGFS \
 	CONFIG_PACKAGE_QCA_MAC80211_MESH \
 	CONFIG_PACKAGE_QCA_ATH_DEBUG \
-	CONFIG_QCA_ATH_USER_REGD \
+	CONFIG_QCA_ATH_USER_REGD
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -37,7 +45,7 @@ endef
 define KernelPackage/qca-cfg80211
   $(call KernelPackage/qca-mac80211/Default)
   TITLE:=cfg80211 - wireless configuration API
-  DEPENDS+= +iw
+  DEPENDS+= +iw +kmod-crypto-core +kmod-crypto-manager +kmod-crypto-aead2
   FILES:= \
 	$(PKG_BUILD_DIR)/compat/compat.ko \
 	$(PKG_BUILD_DIR)/net/wireless/cfg80211.ko
@@ -51,7 +59,8 @@ endef
 define KernelPackage/qca-mac80211
   $(call KernelPackage/qca-mac80211/Default)
   TITLE:=Linux 802.11 Wireless Networking Stack
-  DEPENDS+= +kmod-crypto-core +kmod-crypto-arc4 +kmod-crypto-aes +kmod-qca-cfg80211
+  DEPENDS+= +kmod-crypto-arc4 +kmod-crypto-aes +kmod-qca-cfg80211 +hostapd-common \
+	    +kmod-crypto-gcm
   KCONFIG:=\
 	CONFIG_AVERAGE=y
   FILES:= $(PKG_BUILD_DIR)/net/mac80211/mac80211.ko
@@ -75,6 +84,65 @@ define KernelPackage/qca-mac80211/config
 		bool "Enable 802.11s mesh support"
 		default y
 
+	config PACKAGE_QCA_MAC80211_MESSAGE_TRACING
+		bool "Enable mac80211 message tracing"
+		default n
+		help
+		  Select this option to enable tracing.
+
+	config PACKAGE_QCA_MAC80211_DEBUG_MENU
+		bool "Select mac80211 debugging features"
+		default n
+		help
+		  This option collects various mac80211 debug settings.
+
+	menu "mac80211 debugging features"
+		depends on PACKAGE_QCA_MAC80211_DEBUG_MENU
+
+	config PACKAGE_QCA_MAC80211_VERBOSE_DEBUG
+		bool "Verbose debugging output"
+		default n
+		help
+		  Selecting this option causes mac80211 to print out
+		  many debugging messages.
+
+	config PACKAGE_QCA_MAC80211_MLME_DEBUG
+		bool "Verbose managed MLME output"
+		default n
+		help
+		  Selecting this option causes mac80211 to print out
+		  debugging messages for the managed-mode MLME.
+
+	config PACKAGE_QCA_MAC80211_STA_DEBUG
+		bool "Verbose station debugging"
+		default n
+		help
+		  Selecting this option causes mac80211 to print out
+		  debugging messages for station addition/removal.
+
+	config PACKAGE_QCA_MAC80211_HT_DEBUG
+		bool "Verbose HT debugging"
+		default n
+		help
+		  This option enables 802.11n High Throughput features
+		  debug tracing output.
+
+	config PACKAGE_QCA_MAC80211_IBSS_DEBUG
+		bool "Verbose IBSS debugging"
+		default n
+		help
+		  Selecting this option causes mac80211 to print out
+		  very verbose IBSS debugging messages.
+
+	config PACKAGE_QCA_MAC80211_PS_DEBUG
+		bool "Verbose powersave mode debugging"
+		default n
+		help
+		  Selecting this option causes mac80211 to print out very
+		  verbose power save mode debugging messages (when mac80211
+		  is an AP and has power saving stations.)
+
+	endmenu
   endif
 endef
 
@@ -83,7 +151,8 @@ Generic IEEE 802.11 Networking Stack (mac80211)
 endef
 
 PKG_LINUX_FIRMWARE_NAME:=linux-firmware
-PKG_LINUX_FIRMWARE_VERSION:=7d0c7a8cfd78388d90cc784a185b19dcbdbce824
+PKG_LINUX_FIRMWARE_VERSION:=f404336
+PKG_LINUX_FIRMWARE_BRANCH:=master
 PKG_LINUX_FIRMWARE_SOURCE:=$(PKG_LINUX_FIRMWARE_NAME)-$(PKG_LINUX_FIRMWARE_VERSION).tar.bz2
 PKG_LINUX_FIRMWARE_PROTO:=git
 PKG_LINUX_FIRMWARE_SOURCE_URL:=git://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git
@@ -101,23 +170,48 @@ define Download/qca-linux-firmware
 endef
 $(eval $(call Download,qca-linux-firmware))
 
-PKG_ATH10K_LINUX_FIRMWARE_NAME:=ath10k-firmware
-PKG_ATH10K_LINUX_FIRMWARE_VERSION:=6523c3dd29b525354470785c210e9c368060f09d
-PKG_ATH10K_LINUX_FIRMWARE_SOURCE:=$(PKG_ATH10K_LINUX_FIRMWARE_NAME)-$(PKG_ATH10K_LINUX_FIRMWARE_VERSION).tar.bz2
-PKG_ATH10K_LINUX_FIRMWARE_PROTO:=git
-PKG_ATH10K_LINUX_FIRMWARE_SOURCE_URL:=https://github.com/kvalo/ath10k-firmware.git
-PKG_ATH10K_LINUX_FIRMWARE_SUBDIR:=$(PKG_ATH10K_LINUX_FIRMWARE_NAME)-$(PKG_ATH10K_LINUX_FIRMWARE_VERSION)
-#PKG_ATH10K_LINUX_FIRMWARE_MIRROR_MD5SUM:=?
+ifneq ($(call qstrip,$(CONFIG_KERNEL_GIT_CLONE_URI)),)
+# --reference option doesn't work on git trees synced with "repo", so instead
+# we're manually using clone & fetch to speed up sync time
+  define FastCloneKernel
+	git clone $(CONFIG_KERNEL_GIT_CLONE_URI) $(2)
+	(cd $(2); git remote add src $(1); git fetch src)
+  endef
+else
+  define FastCloneKernel
+	git clone $(1) $(2)
+  endef
+endif
 
-define Download/qca-ath10k-firmware
-  FILE:=$(PKG_ATH10K_LINUX_FIRMWARE_SOURCE)
-  URL:=$(PKG_ATH10K_LINUX_FIRMWARE_SOURCE_URL)
-  PROTO:=$(PKG_ATH10K_LINUX_FIRMWARE_PROTO)
-  VERSION:=$(PKG_ATH10K_LINUX_FIRMWARE_VERSION)
-  SUBDIR:=$(PKG_ATH10K_LINUX_FIRMWARE_SUBDIR)
-  #MIRROR_MD5SUM:=$(PKG_ATH10K_LINUX_FIRMWARE_MIRROR_MD5SUM)
+define DownloadBackports
+  $(eval $(Download/Defaults))
+  $(eval $(Download/backports))
+
+  $(foreach dep,$(DOWNLOAD_RDEP),
+    $(dep): $(DL_DIR)/$(FILE)
+  )
+  download: $(DL_DIR)/$(FILE)
+
+  $(DL_DIR)/$(FILE):
+	mkdir -p $(TMP_DIR)/dl/$(PKG_NAME)-$(PKG_VERSION)
+	$(call FastCloneKernel,$(PKG_KERNEL_SOURCE_URL),$(TMP_DIR)/dl/$(PKG_NAME)-kernel)
+	(cd $(TMP_DIR)/dl/$(PKG_NAME)-kernel && git checkout $(PKG_KERNEL_VERSION))
+	git clone $(PKG_BACKPORTS_SOURCE_URL) $(TMP_DIR)/dl/$(PKG_NAME)-source
+	cp files/copy-list.hwsim $(TMP_DIR)/dl/$(PKG_NAME)-source
+	(cd $(TMP_DIR)/dl/$(PKG_NAME)-source && git checkout $(PKG_BACKPORTS_VERSION) && \
+	./gentree.py --clean --copy-list ./copy-list.hwsim \
+		$(TMP_DIR)/dl/$(PKG_NAME)-kernel $(TMP_DIR)/dl/$(SUBDIR))
+	(cd $(TMP_DIR)/dl; $(call dl_pack,$(TMP_DIR)/dl/$(FILE),$(SUBDIR)))
+	mv $(TMP_DIR)/dl/$(FILE) $(DL_DIR)
+	rm -rf $(TMP_DIR)/dl/$(PKG_NAME)-kernel $(TMP_DIR)/dl/$(PKG_NAME)-source
+
 endef
-$(eval $(call Download,qca-ath10k-firmware))
+
+define Download/backports
+  FILE:=$(PKG_SOURCE)
+  SUBDIR:=$(PKG_SUBDIR)
+endef
+$(eval $(call DownloadBackports,backports))
 
 define KernelPackage/qca-ath/config
   if PACKAGE_kmod-qca-ath
@@ -194,17 +288,6 @@ This module adds support for wireless adapters based on
 QCA USB AR9271 and AR7010 family of chipsets.
 endef
 
-define KernelPackage/qca-ath10k/config
-  if PACKAGE_kmod-qca-ath10k
-	config ATH10K_AP_FIRMWARE
-		bool "Use firmware optimized for AP operation"
-		default n
-		help
-		  Say Y, if you intend to use ath10k in AP mode and
-		  want to use the 10.x firmware.
-  endif
-endef
-
 define KernelPackage/qca-ath10k
   $(call KernelPackage/qca-mac80211/Default)
   TITLE:=QCA 802.11ac wireless cards support
@@ -214,13 +297,26 @@ define KernelPackage/qca-ath10k
 	$(PKG_BUILD_DIR)/drivers/net/wireless/ath/ath10k/ath10k_core.ko \
 	$(PKG_BUILD_DIR)/drivers/net/wireless/ath/ath10k/ath10k_pci.ko
   AUTOLOAD:=$(call AutoLoad,55,ath10k_core ath10k_pci)
-  MENU:=1
 endef
 
 define KernelPackage/qca-ath10k/description
 This module adds support for wireless adapters based on
 QCA IEEE 802.11ac family of chipsets. For now only
 PCI is supported.
+endef
+
+define KernelPackage/qca-wil6210
+  $(call KernelPackage/qca-mac80211/Default)
+  TITLE:=QCA 802.11ad wireless cards support
+  DEPENDS+= @PCI_SUPPORT +kmod-qca-cfg80211
+  FILES:= \
+	$(PKG_BUILD_DIR)/drivers/net/wireless/ath/wil6210/wil6210.ko
+  AUTOLOAD:=$(call AutoProbe,wil6210)
+endef
+
+define KernelPackage/qca-wil6210/description
+This module adds support for wireless adapters based on
+60GHz QCA Wilocity family of chipsets. These support 802.11d.
 endef
 
 config_package=$(if $(CONFIG_PACKAGE_kmod-$(1)),m)
@@ -230,9 +326,10 @@ config-y:= \
 	NL80211_TESTMODE \
 	CFG80211_WEXT \
 	CFG80211_INTERNAL_REGDB \
+	CFG80211_CERTIFICATION_ONUS \
 	MAC80211_RC_MINSTREL \
 	MAC80211_RC_MINSTREL_HT \
-	MAC80211_RC_DEFAULT_MINSTREL \
+	MAC80211_RC_DEFAULT_MINSTREL
 
 config-$(call config_package,qca-cfg80211) += CFG80211
 
@@ -247,6 +344,15 @@ ifdef CONFIG_PACKAGE_QCA_MAC80211_DEBUGFS
 	ATH10K_DEBUGFS
 endif
 
+config-$(CONFIG_PACKAGE_QCA_MAC80211_MESSAGE_TRACING) += MAC80211_MESSAGE_TRACING ATH10K_TRACING
+config-$(CONFIG_PACKAGE_QCA_MAC80211_DEBUG_MENU) += MAC80211_DEBUG_MENU
+config-$(CONFIG_PACKAGE_QCA_MAC80211_VERBOSE_DEBUG) += MAC80211_VERBOSE_DEBUG
+config-$(CONFIG_PACKAGE_QCA_MAC80211_MLME_DEBUG) += MAC80211_MLME_DEBUG
+config-$(CONFIG_PACKAGE_QCA_MAC80211_STA_DEBUG) += MAC80211_STA_DEBUG
+config-$(CONFIG_PACKAGE_QCA_MAC80211_HT_DEBUG) += MAC80211_HT_DEBUG
+config-$(CONFIG_PACKAGE_QCA_MAC80211_IBSS_DEBUG) += MAC80211_IBSS_DEBUG
+config-$(CONFIG_PACKAGE_QCA_MAC80211_PS_DEBUG) += MAC80211_PS_DEBUG
+
 config-$(call config_package,qca-ath) += ATH_CARDS ATH_COMMON
 config-$(CONFIG_PACKAGE_QCA_ATH_DEBUG) += ATH_DEBUG ATH10K_DEBUG
 
@@ -254,17 +360,26 @@ config-$(call config_package,qca-ath9k) += ATH9K
 config-$(call config_package,qca-ath9k-common) += ATH9K_COMMON
 config-$(CONFIG_TARGET_ar71xx) += ATH9K_AHB
 config-$(CONFIG_PCI) += ATH9K_PCI
-config-$(CONFIG_QCA_ATH_USER_REGD) += ATH_USER_REGD
+config-$(CONFIG_QCA_ATH_USER_REGD) += ATH_USER_REGD \
+				      ATH_REG_DYNAMIC_USER_REG_HINTS \
+				      ATH_REG_DYNAMIC_USER_CERT_TESTING
 
 config-$(call config_package,qca-ath9k-htc) += ATH9K_HTC
-config-$(call config_package,qca-ath10k) += ATH10K ATH10K_PCI
+config-$(call config_package,qca-ath10k) += ATH10K ATH10K_PCI ATH10K_DFS_CERTIFIED
+config-$(call config_package,qca-wil6210) += ATH_CARDS WIL6210
 
 config-$(CONFIG_LEDS_TRIGGERS) += MAC80211_LEDS
+
+EXTRA_KCONFIG:= CONFIG_COMMON_CLK=y
+
+EXTRA_CFLAGS:= \
+	$(patsubst CONFIG_%, -DCONFIG_%=1, $(patsubst %=m,%,$(filter %=m,$(EXTRA_KCONFIG)))) \
+	$(patsubst CONFIG_%, -DCONFIG_%=1, $(patsubst %=y,%,$(filter %=y,$(EXTRA_KCONFIG))))
 
 MAKE_OPTS:= -C "$(PKG_BUILD_DIR)" \
 	CROSS_COMPILE="$(KERNEL_CROSS)" \
 	ARCH="$(LINUX_KARCH)" \
-	EXTRA_CFLAGS="-I$(PKG_BUILD_DIR)/include" \
+	EXTRA_CFLAGS="-I$(PKG_BUILD_DIR)/include $(EXTRA_CFLAGS)" \
 	KLIB_BUILD="$(LINUX_DIR)" \
 	MODPROBE=true \
 	KLIB=$(TARGET_MODULES_DIR) \
@@ -291,7 +406,6 @@ define Build/Prepare
 	$(PKG_UNPACK)
 	$(Build/Patch)
 	$(TAR) -C $(PKG_BUILD_DIR) -xjf $(DL_DIR)/$(PKG_LINUX_FIRMWARE_SOURCE)
-	$(TAR) -C $(PKG_BUILD_DIR) -xjf $(DL_DIR)/$(PKG_ATH10K_LINUX_FIRMWARE_SOURCE)
 	rm -rf \
 		$(PKG_BUILD_DIR)/include/linux/ssb \
 		$(PKG_BUILD_DIR)/include/linux/bcma \
@@ -316,19 +430,13 @@ ifneq ($(CONFIG_PACKAGE_kmod-qca-cfg80211)$(CONFIG_PACKAGE_kmod-lib80211),)
  endef
 endif
 
-ifeq ($(CONFIG_TARGET_ipq806x),y)
-  define Build/Configure
-	cmp $(PKG_BUILD_DIR)/include/linux/ath9k_platform.h $(LINUX_DIR)/source/include/linux/ath9k_platform.h
-  endef
-else
-  define Build/Configure
-	cmp $(PKG_BUILD_DIR)/include/linux/ath9k_platform.h $(LINUX_DIR)/include/linux/ath9k_platform.h
-  endef
-endif
+define Build/Configure
+	cmp $(PKG_BUILD_DIR)/include/linux/ath9k_platform.h $(LINUX_SRC_DIR)/include/linux/ath9k_platform.h
+endef
 
 define Build/Compile
 	$(SH_FUNC) var2file "$(call shvar,mac80211_config)" $(PKG_BUILD_DIR)/.config
-	$(MAKE) $(MAKE_OPTS) allnoconfig
+	$(MAKE) $(MAKE_OPTS) olddefconfig
 	$(call Build/Compile/kmod)
 endef
 
@@ -357,25 +465,12 @@ define KernelPackage/qca-ath9k-htc/install
 		$(1)/lib/firmware/
 endef
 
-ifeq ($(CONFIG_ATH10K_AP_FIRMWARE),y)
-  define KernelPackage/qca-ath10k/install
+define KernelPackage/qca-ath10k/install
 	$(INSTALL_DIR) $(1)/lib/firmware/ath10k/QCA988X/hw2.0
 	$(INSTALL_DATA) \
-		$(PKG_BUILD_DIR)/$(PKG_ATH10K_LINUX_FIRMWARE_SUBDIR)/ath10k/QCA988X/hw2.0/board.bin \
-		$(1)/lib/firmware/ath10k/QCA988X/hw2.0/
-	$(INSTALL_DATA) \
-		$(PKG_BUILD_DIR)/$(PKG_ATH10K_LINUX_FIRMWARE_SUBDIR)/ap/firmware-2.bin_10.1.467.1-1 \
-		$(1)/lib/firmware/ath10k/QCA988X/hw2.0/firmware-2.bin
-  endef
-else
-  define KernelPackage/qca-ath10k/install
-	$(INSTALL_DIR) $(1)/lib/firmware/ath10k/QCA988X/hw2.0
-	$(INSTALL_DATA) \
-		$(PKG_BUILD_DIR)/$(PKG_ATH10K_LINUX_FIRMWARE_SUBDIR)/ath10k/QCA988X/hw2.0/board.bin \
-		$(PKG_BUILD_DIR)/$(PKG_ATH10K_LINUX_FIRMWARE_SUBDIR)/ath10k/QCA988X/hw2.0/firmware-2.bin \
-		$(1)/lib/firmware/ath10k/QCA988X/hw2.0/
-  endef
-endif
+		$(PKG_BUILD_DIR)/$(PKG_LINUX_FIRMWARE_SUBDIR)/ath10k/QCA988X/hw2.0/firmware-4.bin \
+		$(1)/lib/firmware/ath10k/QCA988X/hw2.0/firmware-4.bin
+endef
 
 $(eval $(call KernelPackage,qca-cfg80211))
 $(eval $(call KernelPackage,qca-mac80211))
@@ -384,3 +479,4 @@ $(eval $(call KernelPackage,qca-ath9k))
 $(eval $(call KernelPackage,qca-ath9k-htc))
 $(eval $(call KernelPackage,qca-ath10k))
 $(eval $(call KernelPackage,qca-ath))
+$(eval $(call KernelPackage,qca-wil6210))
