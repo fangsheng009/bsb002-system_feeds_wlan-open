@@ -1,4 +1,4 @@
-From 78c786c0d77868abd3f05760d5b0fdd71fb3ffec Mon Sep 17 00:00:00 2001
+From 3eb02f55ee680baeb88c28362b53a8605212bf8d Mon Sep 17 00:00:00 2001
 From: Vasanthakumar Thiagarajan <vthiagar@codeaurora.org>
 Date: Fri, 13 Feb 2015 21:13:29 +0530
 Subject: [PATCH] smart antenna debugfs patch
@@ -53,7 +53,7 @@ Subject: [PATCH] smart antenna debugfs patch
  };
 --- a/drivers/net/wireless/ath/ath10k/debug.c
 +++ b/drivers/net/wireless/ath/ath10k/debug.c
-@@ -2191,6 +2191,9 @@ int ath10k_debug_register(struct ath10k *ar)
+@@ -2191,6 +2191,9 @@ int ath10k_debug_register(struct ath10k
  
  	debugfs_create_file("pktlog_filter", S_IRUGO | S_IWUSR,
  			    ar->debug.debugfs_phy, ar, &fops_pktlog_filter);
@@ -73,7 +73,7 @@ Subject: [PATCH] smart antenna debugfs patch
  	ATH10K_DBG_ANY		= 0xffffffff,
  };
  
-@@ -85,6 +86,7 @@ int ath10k_debug_get_et_sset_count(struct ieee80211_hw *hw,
+@@ -85,6 +86,7 @@ int ath10k_debug_get_et_sset_count(struc
  void ath10k_debug_get_et_stats(struct ieee80211_hw *hw,
  			       struct ieee80211_vif *vif,
  			       struct ethtool_stats *stats, u64 *data);
@@ -81,7 +81,7 @@ Subject: [PATCH] smart antenna debugfs patch
  #else
  static inline int ath10k_debug_start(struct ath10k *ar)
  {
-@@ -134,6 +136,7 @@ ath10k_debug_get_new_fw_crash_data(struct ath10k *ar)
+@@ -134,6 +136,7 @@ ath10k_debug_get_new_fw_crash_data(struc
  #define ath10k_debug_get_et_strings NULL
  #define ath10k_debug_get_et_sset_count NULL
  #define ath10k_debug_get_et_stats NULL
@@ -396,8 +396,8 @@ Subject: [PATCH] smart antenna debugfs patch
 +		return -EINVAL;
 +	}
 +
-+	for (i=0; i < sta->bandwidth; i++)
-+		rate_mask |= (0xff << (8*i));
++	for (i = 0; i <= sta->bandwidth; i++)
++		rate_mask |= (0xff << (8 * i));
 +
 +	if ((arg.rates[0] & rate_mask) != arg.rates[0]) {
 +		ath10k_err(ar, "Invalid rates for training\n");
@@ -607,7 +607,7 @@ Subject: [PATCH] smart antenna debugfs patch
  }
  
  /* This API is to process tx feedback information such as tx rate
-@@ -40,6 +175,84 @@ ath10k_smart_ant_proc_rx_feedback(struct ath10k *ar,
+@@ -40,6 +175,84 @@ ath10k_smart_ant_proc_rx_feedback(struct
  static inline void
  ath10k_smart_ant_proc_tx_feedback(struct ath10k *ar, u8 *data)
  {
@@ -692,7 +692,7 @@ Subject: [PATCH] smart antenna debugfs patch
  }
  
  /* In AP mode, this API notifies of disassociation of a station.
-@@ -49,6 +262,11 @@ ath10k_smart_ant_proc_tx_feedback(struct ath10k *ar, u8 *data)
+@@ -49,6 +262,11 @@ ath10k_smart_ant_proc_tx_feedback(struct
  static inline void
  ath10k_smart_ant_sta_disconnect(struct ath10k *ar, struct ieee80211_sta *sta)
  {
@@ -759,4 +759,4 @@ Subject: [PATCH] smart antenna debugfs patch
 +	}
  	return 0;
  }
-
+ 
