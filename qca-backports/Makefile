@@ -170,20 +170,6 @@ define Download/qca-linux-firmware
 endef
 $(eval $(call Download,qca-linux-firmware))
 
-PKG_WIL6210_FIRMWARE_NAME:=wil6210
-PKG_WIL6210_FIRMWARE_VERSION:=5883
-PKG_WIL6210_FIRMWARE_SOURCE:=$(PKG_WIL6210_FIRMWARE_NAME).tar.bz2
-PKG_WIL6210_FIRMWARE_SOURCE_URL:=http://tritium.qca.qualcomm.com/software/NBU/11AD-FW/$(PKG_WIL6210_FIRMWARE_VERSION)
-PKG_WIL6210_FIRMWARE_SUBDIR:=$(PKG_WIL6210_FIRMWARE_NAME)-$(PKG_WIL6210_FIRMWARE_VERSION)
-
-define Download/qca-wil6210-firmware
-  FILE:=$(PKG_WIL6210_FIRMWARE_SOURCE)
-  URL:=$(PKG_WIL6210_FIRMWARE_SOURCE_URL)
-  VERSION:=$(PKG_WIL6210_FIRMWARE_VERSION)
-  SUBDIR:=$(PKG_WIL6210_FIRMWARE_SUBDIR)
-endef
-$(eval $(call Download,qca-wil6210-firmware))
-
 ifneq ($(call qstrip,$(CONFIG_KERNEL_GIT_CLONE_URI)),)
 # --reference option doesn't work on git trees synced with "repo", so instead
 # we're manually using clone & fetch to speed up sync time
@@ -322,7 +308,7 @@ endef
 define KernelPackage/qca-wil6210
   $(call KernelPackage/qca-mac80211/Default)
   TITLE:=QCA 802.11ad wireless cards support
-  DEPENDS+= @PCI_SUPPORT +kmod-qca-cfg80211
+  DEPENDS+= @PCI_SUPPORT +kmod-qca-cfg80211 +wigig-firmware
   FILES:= \
 	$(PKG_BUILD_DIR)/drivers/net/wireless/ath/wil6210/wil6210.ko
   AUTOLOAD:=$(call AutoLoad,21,wil6210)
@@ -417,11 +403,9 @@ $(eval $(call shexport,mac80211_config))
 define Build/Prepare
 	rm -rf $(PKG_BUILD_DIR)
 	mkdir -p $(PKG_BUILD_DIR)
-	mkdir -p $(PKG_BUILD_DIR)/$(PKG_WIL6210_FIRMWARE_SUBDIR)
 	$(PKG_UNPACK)
 	$(Build/Patch)
 	$(TAR) -C $(PKG_BUILD_DIR) -xjf $(DL_DIR)/$(PKG_LINUX_FIRMWARE_SOURCE)
-	$(TAR) -C $(PKG_BUILD_DIR)/$(PKG_WIL6210_FIRMWARE_SUBDIR) -xjf $(DL_DIR)/$(PKG_WIL6210_FIRMWARE_SOURCE)
 	rm -rf \
 		$(PKG_BUILD_DIR)/include/linux/ssb \
 		$(PKG_BUILD_DIR)/include/linux/bcma \
@@ -486,14 +470,6 @@ define KernelPackage/qca-ath10k/install
 	$(INSTALL_DATA) \
 		$(PKG_BUILD_DIR)/$(PKG_LINUX_FIRMWARE_SUBDIR)/ath10k/QCA988X/hw2.0/firmware-4.bin \
 		$(1)/lib/firmware/ath10k/QCA988X/hw2.0/firmware-4.bin
-endef
-
-define KernelPackage/qca-wil6210/install
-	$(INSTALL_DIR) $(1)/lib/firmware
-	$(INSTALL_DATA) \
-		$(PKG_BUILD_DIR)/$(PKG_WIL6210_FIRMWARE_SUBDIR)/wil6210.fw \
-		$(PKG_BUILD_DIR)/$(PKG_WIL6210_FIRMWARE_SUBDIR)/wil6210.board \
-		$(1)/lib/firmware
 endef
 
 $(eval $(call KernelPackage,qca-cfg80211))
