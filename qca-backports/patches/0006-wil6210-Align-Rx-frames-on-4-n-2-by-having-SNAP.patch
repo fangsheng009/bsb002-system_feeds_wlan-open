@@ -1,0 +1,100 @@
+--- a/drivers/net/wireless/ath/wil6210/txrx.c
++++ b/drivers/net/wireless/ath/wil6210/txrx.c
+@@ -33,6 +33,15 @@ module_param(rtap_include_phy_info, bool, S_IRUGO);
+ MODULE_PARM_DESC(rtap_include_phy_info,
+ 		 " Include PHY info in the radiotap header, default - no");
+ 
++bool rx_align_2;
++module_param(rx_align_2, bool, S_IRUGO);
++MODULE_PARM_DESC(rx_align_2, " align Rx buffers on 4*n+2, default - no");
++
++static inline uint wil_rx_snaplen(void)
++{
++	return rx_align_2 ? 6 : 0;
++}
++
+ static inline int wil_vring_is_empty(struct vring *vring)
+ {
+ 	return vring->swhead == vring->swtail;
+@@ -209,7 +218,7 @@ static int wil_vring_alloc_skb(struct wil6210_priv *wil, struct vring *vring,
+ 			       u32 i, int headroom)
+ {
+ 	struct device *dev = wil_to_dev(wil);
+-	unsigned int sz = mtu_max + ETH_HLEN;
++	unsigned int sz = mtu_max + ETH_HLEN + wil_rx_snaplen();
+ 	struct vring_rx_desc dd, *d = &dd;
+ 	volatile struct vring_rx_desc *_d = &vring->va[i].rx;
+ 	dma_addr_t pa;
+@@ -365,7 +374,8 @@ static struct sk_buff *wil_vring_reap_rx(struct wil6210_priv *wil,
+ 	struct vring_rx_desc *d;
+ 	struct sk_buff *skb;
+ 	dma_addr_t pa;
+-	unsigned int sz = mtu_max + ETH_HLEN;
++	unsigned int snaplen = wil_rx_snaplen();
++	unsigned int sz = mtu_max + ETH_HLEN + snaplen;
+ 	u16 dmalen;
+ 	u8 ftype;
+ 	int cid;
+@@ -438,7 +448,7 @@ static struct sk_buff *wil_vring_reap_rx(struct wil6210_priv *wil,
+ 		return NULL;
+ 	}
+ 
+-	if (unlikely(skb->len < ETH_HLEN)) {
++	if (unlikely(skb->len < ETH_HLEN + snaplen)) {
+ 		wil_err(wil, "Short frame, len = %d\n", skb->len);
+ 		/* TODO: process it (i.e. BAR) */
+ 		kfree_skb(skb);
+@@ -460,6 +470,17 @@ static struct sk_buff *wil_vring_reap_rx(struct wil6210_priv *wil,
+ 		 */
+ 	}
+ 
++	if (snaplen) {
++		/* Packet layout
++		 * +-------+-------+---------+------------+------+
++		 * | SA(6) | DA(6) | SNAP(6) | ETHTYPE(2) | DATA |
++		 * +-------+-------+---------+------------+------+
++		 * Need to remove SNAP, shifting SA and DA forward
++		 */
++		memmove(skb->data + snaplen, skb->data, 2 * ETH_ALEN);
++		skb_pull(skb, snaplen);
++	}
++
+ 	return skb;
+ }
+ 
+--- a/drivers/net/wireless/ath/wil6210/wil6210.h
++++ b/drivers/net/wireless/ath/wil6210/wil6210.h
+@@ -28,6 +28,7 @@ extern unsigned int mtu_max;
+ extern unsigned short rx_ring_overflow_thrsh;
+ extern int agg_wsize;
+ extern u32 vring_idle_trsh;
++extern bool rx_align_2;
+ 
+ #define WIL_NAME "wil6210"
+ #define WIL_FW_NAME "wil6210.fw" /* code */
+--- a/drivers/net/wireless/ath/wil6210/wmi.c
++++ b/drivers/net/wireless/ath/wil6210/wmi.c
+@@ -1109,6 +1109,11 @@ int wmi_rx_chain_add(struct wil6210_priv *wil, struct vring *vring)
+ 		 */
+ 		cmd.l3_l4_ctrl |= (1 << L3_L4_CTRL_TCPIP_CHECKSUM_EN_POS);
+ 	}
++
++	if (rx_align_2)
++		cmd.l2_802_3_offload_ctrl |=
++				L2_802_3_OFFLOAD_CTRL_SNAP_KEEP_MSK;
++
+ 	/* typical time for secure PCP is 840ms */
+ 	rc = wmi_call(wil, WMI_CFG_RX_CHAIN_CMDID, &cmd, sizeof(cmd),
+ 		      WMI_CFG_RX_CHAIN_DONE_EVENTID, &evt, sizeof(evt), 2000);
+--- a/drivers/net/wireless/ath/wil6210/wmi.h
++++ b/drivers/net/wireless/ath/wil6210/wmi.h
+@@ -687,6 +687,9 @@ struct wmi_cfg_rx_chain_cmd {
+ 	#define L2_802_3_OFFLOAD_CTRL_VLAN_TAG_INSERTION_POS (0)
+ 	#define L2_802_3_OFFLOAD_CTRL_VLAN_TAG_INSERTION_LEN (1)
+ 	#define L2_802_3_OFFLOAD_CTRL_VLAN_TAG_INSERTION_MSK (0x1)
++	#define L2_802_3_OFFLOAD_CTRL_SNAP_KEEP_POS (1)
++	#define L2_802_3_OFFLOAD_CTRL_SNAP_KEEP_LEN (1)
++	#define L2_802_3_OFFLOAD_CTRL_SNAP_KEEP_MSK (0x2)
+ 	u8 l2_802_3_offload_ctrl;
+ 
+ 	#define L2_NWIFI_OFFLOAD_CTRL_REMOVE_QOS_POS (0)
