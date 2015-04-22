@@ -57,7 +57,7 @@ endef
 define KernelPackage/mac80211
   $(call KernelPackage/mac80211/Default)
   TITLE:=Linux 802.11 Wireless Networking Stack
-  DEPENDS+= @TARGET_ipq806x +TARGET_ipq806x:kmod-qca-nss-drv \
+  DEPENDS+= @TARGET_ipq806x||TARGET_ar71xx +TARGET_ipq806x:kmod-qca-nss-drv \
 	+kmod-crypto-arc4 +kmod-crypto-aes +kmod-cfg80211 +hostapd-common
   KCONFIG:=\
 	CONFIG_AVERAGE=y
@@ -68,12 +68,14 @@ endef
 define KernelPackage/mac80211/config
   if PACKAGE_kmod-mac80211
 
+    if TARGET_ipq806x
 	config PACKAGE_MAC80211_NSS_SUPPORT
 		bool "Enable NSS support for IPQ platform"
 		default y
 		help
 		  This option enables support for NSS in boards
 		  like AP148.
+    endif
 
 	config PACKAGE_MAC80211_DEBUGFS
 		bool "Export mac80211 internals in DebugFS"
@@ -174,7 +176,7 @@ define Download/linux-firmware
 endef
 $(eval $(call Download,linux-firmware))
 
-ifneq ($(CONFIG_KERNEL_GIT_CLONE_URI),)
+ifneq ($(call qstrip,$(CONFIG_KERNEL_GIT_CLONE_URI)),)
 # --reference option doesn't work on git trees synced with "repo", so instead
 # we're manually using clone & fetch to speed up sync time
   define FastCloneKernel
