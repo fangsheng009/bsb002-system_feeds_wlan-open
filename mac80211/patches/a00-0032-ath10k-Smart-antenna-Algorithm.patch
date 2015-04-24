@@ -1306,7 +1306,7 @@
 +	cur_rate = ath10k_sant_get_rate(rate_code,
 +				rate_code & ATH10K_RATE_MODE_MASK,
 +				sa_sta->wmode == ATH10K_WIRELESS_MODE_VHT, bw);
-+	if (rate_dir > 1) {
++	if (rate_dir > 0) {
 +		while (i++ < num_rates - 1) {
 +			nxt_rate = ath10k_sant_get_rate(rt_tble[i],
 +				rate_code & ATH10K_RATE_MODE_MASK,
