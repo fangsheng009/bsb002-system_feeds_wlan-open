@@ -75,7 +75,15 @@
  };
  
  #define ATH10K_VDEV_SETUP_TIMEOUT_HZ (5*HZ)
-@@ -512,23 +514,6 @@ static inline const char *ath10k_scan_state_str(enum ath10k_scan_state state)
+@@ -389,6 +391,7 @@ struct ath10k_debug {
+ 	struct ath_pktlog pktlog;
+ 	bool is_pkt_logging;
+ #endif
++	struct dentry *debugfs_smartant;
+ };
+ 
+ enum ath10k_state {
+@@ -512,23 +515,6 @@ static inline const char *ath10k_scan_state_str(enum ath10k_scan_state state)
  
  #define ATH10K_RATECODE_LIST_TIMEOUT	100 /* msecs */
  
@@ -186,6 +194,178 @@
  	}
  	ar->smart_ant_info.enabled = enable;
  
+@@ -229,6 +239,137 @@ static const struct file_operations fops_sa_rx_ant_ops = {
+ 	.llseek = default_llseek,
+ };
+ 
++static ssize_t ath10k_read_sa_periodic_intvl_ops(struct file *file,
++                                                 char __user *ubuf,
++                                                 size_t count, loff_t *ppos)
++{
++       char buf[32];
++       struct ath10k *ar = file->private_data;
++       struct ath10k_smart_ant_params *sparams =
++					&ar->smart_ant_info.smart_ant_params;
++       int len = 0;
++
++       len = scnprintf(buf, sizeof(buf) - len, "%d seconds\n",
++		       (jiffies_to_msecs(sparams->retrain_interval))/1000);
++
++       return simple_read_from_buffer(ubuf, count, ppos, buf, len);
++}
++
++static ssize_t ath10k_write_sa_periodic_intvl_ops(struct file *file,
++                                                 const char __user *user_buf,
++                                                 size_t count, loff_t *ppos)
++{
++       struct ath10k *ar = file->private_data;
++       struct ath10k_smart_ant_params *sparams =
++					&ar->smart_ant_info.smart_ant_params;
++       u32 interval;
++
++       if (!ath10k_smart_ant_enabled(ar))
++               return -ENOTSUPP;
++
++       if (kstrtoint_from_user(user_buf, count, 0, &interval))
++               return -EINVAL;
++
++       sparams->retrain_interval = msecs_to_jiffies(interval * 1000);
++
++       return count;
++}
++
++static const struct file_operations fops_sa_periodic_intvl_ops = {
++       .read = ath10k_read_sa_periodic_intvl_ops,
++       .write = ath10k_write_sa_periodic_intvl_ops,
++       .open = simple_open,
++       .owner = THIS_MODULE,
++       .llseek = default_llseek,
++};
++
++static ssize_t ath10k_read_sa_perf_intvl_ops(struct file *file,
++                                                 char __user *ubuf,
++                                                 size_t count, loff_t *ppos)
++{
++       char buf[32];
++       struct ath10k *ar = file->private_data;
++       struct ath10k_smart_ant_params *sparams =
++					&ar->smart_ant_info.smart_ant_params;
++       int len = 0;
++
++       len = scnprintf(buf, sizeof(buf) - len, "%d seconds\n",
++		       (jiffies_to_msecs(sparams->perf_train_interval))/1000);
++
++       return simple_read_from_buffer(ubuf, count, ppos, buf, len);
++}
++
++static ssize_t ath10k_write_sa_perf_intvl_ops(struct file *file,
++                                                 const char __user *user_buf,
++                                                 size_t count, loff_t *ppos)
++{
++       struct ath10k *ar = file->private_data;
++       struct ath10k_smart_ant_params *sparams =
++					&ar->smart_ant_info.smart_ant_params;
++       u32 interval;
++
++       if (!ath10k_smart_ant_enabled(ar))
++               return -ENOTSUPP;
++
++       if (kstrtoint_from_user(user_buf, count, 0, &interval))
++               return -EINVAL;
++
++       sparams->perf_train_interval = msecs_to_jiffies(interval * 1000);
++
++       return count;
++}
++
++static const struct file_operations fops_sa_perf_intvl_ops = {
++       .read = ath10k_read_sa_perf_intvl_ops,
++       .write = ath10k_write_sa_perf_intvl_ops,
++       .open = simple_open,
++       .owner = THIS_MODULE,
++       .llseek = default_llseek,
++};
++static ssize_t ath10k_read_sa_perf_tput_delta_ops(struct file *file,
++                                                  char __user *ubuf,
++                                                  size_t count, loff_t *ppos)
++{
++       char buf[8];
++       struct ath10k *ar = file->private_data;
++       struct ath10k_smart_ant_params *sparams =
++					&ar->smart_ant_info.smart_ant_params;
++       int len = 0;
++
++       len = scnprintf(buf, sizeof(buf) - len, "%d %\n",
++		       sparams->max_perf_delta);
++
++       return simple_read_from_buffer(ubuf, count, ppos, buf, len);
++}
++
++static ssize_t ath10k_write_sa_perf_tput_delta_ops(struct file *file,
++                                                   const char __user *user_buf,
++                                                   size_t count, loff_t *ppos)
++{
++       struct ath10k *ar = file->private_data;
++       struct ath10k_smart_ant_params *sparams =
++					&ar->smart_ant_info.smart_ant_params;
++       u8 tput_percent_threshold;
++
++       if (!ath10k_smart_ant_enabled(ar))
++               return -ENOTSUPP;
++
++       if (kstrtou8_from_user(user_buf, count, 0, &tput_percent_threshold))
++               return -EINVAL;
++
++       sparams->max_perf_delta = tput_percent_threshold;
++
++       return count;
++}
++
++static const struct file_operations fops_sa_perf_tput_delta_ops = {
++       .read = ath10k_read_sa_perf_tput_delta_ops,
++       .write = ath10k_write_sa_perf_tput_delta_ops,
++       .open = simple_open,
++       .owner = THIS_MODULE,
++       .llseek = default_llseek,
++};
++
+ static ssize_t ath10k_write_sa_train_info_ops(struct file *file,
+ 					      const char __user *user_buf,
+ 					      size_t count, loff_t *ppos)
+@@ -342,15 +483,29 @@ static const struct file_operations fops_sa_train_info_ops = {
+ 
+ void ath10k_smart_ant_debugfs_init(struct ath10k *ar)
+ {
++	ar->debug.debugfs_smartant = debugfs_create_dir("smart_antenna",
++						      ar->debug.debugfs_phy);
+ 	debugfs_create_file("smart_ant_enable", S_IRUSR | S_IWUSR,
+-			    ar->debug.debugfs_phy, ar, &fops_sa_enable_ops);
++			    ar->debug.debugfs_smartant, ar, &fops_sa_enable_ops);
+ 
+ 	debugfs_create_file("smart_ant_tx_ant", S_IWUSR,
+-			    ar->debug.debugfs_phy, ar, &fops_sa_tx_ant_ops);
++			    ar->debug.debugfs_smartant, ar, &fops_sa_tx_ant_ops);
+ 
+ 	debugfs_create_file("smart_ant_rx_ant", S_IRUSR | S_IWUSR,
+-			    ar->debug.debugfs_phy, ar, &fops_sa_rx_ant_ops);
++			    ar->debug.debugfs_smartant, ar, &fops_sa_rx_ant_ops);
++
++	debugfs_create_file("smart_ant_periodic_intvl", S_IRUSR | S_IWUSR,
++			    ar->debug.debugfs_smartant, ar,
++			    &fops_sa_periodic_intvl_ops);
++
++	debugfs_create_file("smart_ant_performance_intvl", S_IRUSR | S_IWUSR,
++			    ar->debug.debugfs_smartant, ar,
++			    &fops_sa_perf_intvl_ops);
++
++	debugfs_create_file("smart_ant_perf_train_threshold", S_IRUSR | S_IWUSR,
++			    ar->debug.debugfs_smartant, ar,
++			    &fops_sa_perf_tput_delta_ops);
+ 
+ 	debugfs_create_file("smart_ant_train_info", S_IWUSR,
+-			    ar->debug.debugfs_phy, ar, &fops_sa_train_info_ops);
++			    ar->debug.debugfs_smartant, ar, &fops_sa_train_info_ops);
+ }
 --- a/drivers/net/wireless/ath/ath10k/hw.h
 +++ b/drivers/net/wireless/ath/ath10k/hw.h
 @@ -225,14 +225,19 @@ struct ath10k_pktlog_hdr {
@@ -1832,7 +2012,7 @@
 +
 +	sa_params->low_rate_threshold  	= ATH10K_SMART_ANT_PER_MIN_THRESHOLD;
 +	sa_params->hi_rate_threshold 	= ATH10K_SMART_ANT_PER_MAX_THRESHOLD;
-+	sa_params->per_diff_threshold	= ATH10K_SMART_ANT_PERF_DIFF_THRESHOLD;
++	sa_params->per_diff_threshold	= ATH10K_SMART_ANT_PER_DIFF_THRESHOLD;
 +	sa_params->num_train_pkts	= 0;
 +	sa_params->pkt_len		= ATH10K_SMART_ANT_PKT_LEN_DEFAULT;
 +	sa_params->num_tx_ant_comb	= 1 << smart_ant_alg_get_streams(ar);
@@ -2303,7 +2483,7 @@
 +
 +#define ATH10K_SMART_ANT_PER_MIN_THRESHOLD	20
 +#define ATH10K_SMART_ANT_PER_MAX_THRESHOLD	80
-+#define ATH10K_SMART_ANT_PERF_DIFF_THRESHOLD	3
++#define ATH10K_SMART_ANT_PER_DIFF_THRESHOLD	3
 +#define ATH10K_SMART_ANT_PKT_LEN_DEFAULT	1536
 +#define ATH10K_SMART_ANT_TPUT_DELTA_DEFAULT	10
 +#define ATH10K_SMART_ANT_RETRAIN_INTVL		(2 * 60000)	/* msecs */
