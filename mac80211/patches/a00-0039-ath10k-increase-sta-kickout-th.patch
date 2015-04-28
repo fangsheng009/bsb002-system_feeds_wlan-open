@@ -11,3 +11,15 @@
  
  /*
   * Use insanely high numbers to make sure that the firmware implementation
+--- a/net/mac80211/status.c
++++ b/net/mac80211/status.c
+@@ -588,7 +588,8 @@ static void ieee80211_tx_latency_end_msr
+  *  - on # of retransmissions
+  *  - current throughput (higher value for higher tpt)?
+  */
+-#define STA_LOST_PKT_THRESHOLD	50
++/* number of failed packets (104 packets with 16 sw reties each) */
++#define STA_LOST_PKT_THRESHOLD	(104 * 16)
+ #define STA_LOST_TDLS_PKT_THRESHOLD	10
+ #define STA_LOST_TDLS_PKT_TIME		(10*HZ) /* 10secs since last ACK */
+ 
