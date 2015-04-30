@@ -1,0 +1,92 @@
+--- a/drivers/net/wireless/ath/wil6210/netdev.c
++++ b/drivers/net/wireless/ath/wil6210/netdev.c
+@@ -17,6 +17,9 @@
+ #include <linux/etherdevice.h>
+ #include "wil6210.h"
+ #include "txrx.h"
++#if defined(WIL_USE_NSS)
++#include <nss_api_if.h>
++#endif
+ 
+ static int wil_open(struct net_device *ndev)
+ {
+@@ -180,7 +183,15 @@ void *wil_if_alloc(struct device *dev, void __iomem *csr)
+ 		       WIL6210_NAPI_BUDGET);
+ 
+ 	netif_tx_stop_all_queues(ndev);
+-
++#if defined(WIL_USE_NSS)
++	wil->nss_ctx = nss_create_virt_if(ndev);
++	if (!wil->nss_ctx) {
++		wil_err(wil, "Failed to register with NSS\n");
++		rc = -EINVAL;
++		goto out_priv;
++	}
++	wil_info(wil, "Registered with NSS\n");
++#endif
+ 	return wil;
+ 
+  out_priv:
+@@ -201,6 +212,9 @@ void wil_if_free(struct wil6210_priv *wil)
+ 	if (!ndev)
+ 		return;
+ 
++#if defined(WIL_USE_NSS)
++	nss_destroy_virt_if(wil->nss_ctx);
++#endif
+ 	wil_priv_deinit(wil);
+ 
+ 	wil_to_ndev(wil) = NULL;
+--- a/drivers/net/wireless/ath/wil6210/txrx.c
++++ b/drivers/net/wireless/ath/wil6210/txrx.c
+@@ -27,6 +27,9 @@
+ #include "wmi.h"
+ #include "txrx.h"
+ #include "trace.h"
++#if defined(WIL_USE_NSS)
++#include <nss_api_if.h>
++#endif
+ 
+ static bool rtap_include_phy_info;
+ module_param(rtap_include_phy_info, bool, S_IRUGO);
+@@ -576,9 +579,26 @@ void wil_netif_rx_any(struct sk_buff *skb, struct net_device *ndev)
+ 	}
+ 
+ 	if (skb) { /* deliver to local stack */
+-
+ 		skb->protocol = eth_type_trans(skb, ndev);
++#if defined(WIL_USE_NSS)
++		if (rx_align_2) {
++			int rc1 = nss_tx_virt_if_rxbuf(wil->nss_ctx,
++						       skb);
++			if (rc1) {
++				wil_err_ratelimited(wil,
++						    "NSS Rx error: %d\n",
++						    rc1);
++				rc = napi_gro_receive(&wil->napi_rx,
++						      skb);
++			} else {
++				rc = GRO_NORMAL;
++			}
++		} else {
++			rc = napi_gro_receive(&wil->napi_rx, skb);
++		}
++#else /* if defined(WIL_USE_NSS) */
+ 		rc = napi_gro_receive(&wil->napi_rx, skb);
++#endif
+ 		wil_dbg_txrx(wil, "Rx complete %d bytes => %s\n",
+ 			     len, gro_res_str[rc]);
+ 	}
+--- a/drivers/net/wireless/ath/wil6210/wil6210.h
++++ b/drivers/net/wireless/ath/wil6210/wil6210.h
+@@ -607,6 +607,9 @@ struct wil6210_priv {
+ 
+ 	void *platform_handle;
+ 	struct wil_platform_ops platform_ops;
++#if defined(WIL_USE_NSS)
++	void *nss_ctx;
++#endif
+ };
+ 
+ #define wil_to_wiphy(i) (i->wdev->wiphy)
+
