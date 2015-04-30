@@ -308,10 +308,10 @@ endef
 define KernelPackage/qca-wil6210
   $(call KernelPackage/qca-mac80211/Default)
   TITLE:=QCA 802.11ad wireless cards support
-  DEPENDS+= @PCI_SUPPORT +kmod-qca-cfg80211 +wigig-firmware
+  DEPENDS+= @PCI_SUPPORT +kmod-qca-cfg80211 +kmod-qca-nss-drv +wigig-firmware
   FILES:= \
 	$(PKG_BUILD_DIR)/drivers/net/wireless/ath/wil6210/wil6210.ko
-  AUTOLOAD:=$(call AutoLoad,21,wil6210)
+  AUTOLOAD:=$(call AutoLoad,33,wil6210)
 endef
 
 define KernelPackage/qca-wil6210/description
@@ -379,7 +379,7 @@ EXTRA_CFLAGS:= \
 MAKE_OPTS:= -C "$(PKG_BUILD_DIR)" \
 	CROSS_COMPILE="$(KERNEL_CROSS)" \
 	ARCH="$(LINUX_KARCH)" \
-	EXTRA_CFLAGS="-I$(PKG_BUILD_DIR)/include $(EXTRA_CFLAGS)" \
+	EXTRA_CFLAGS="-I$(PKG_BUILD_DIR)/include -I$(STAGING_DIR)/usr/include/qca-nss-drv -DWIL_USE_NSS $(EXTRA_CFLAGS)"  \
 	KLIB_BUILD="$(LINUX_DIR)" \
 	MODPROBE=true \
 	KLIB=$(TARGET_MODULES_DIR) \
