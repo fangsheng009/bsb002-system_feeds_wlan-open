@@ -1,0 +1,59 @@
+diff --git a/drivers/net/wireless/ath/ath10k/core.c b/drivers/net/wireless/ath/ath10k/core.c
+index 1961e42..2d64926 100644
+--- a/drivers/net/wireless/ath/ath10k/core.c
++++ b/drivers/net/wireless/ath/ath10k/core.c
+@@ -984,6 +984,8 @@ static int ath10k_core_init_firmware_features(struct ath10k *ar)
+ 		ar->max_num_stations = TARGET_NUM_STATIONS;
+ 		ar->max_num_vdevs = TARGET_NUM_VDEVS;
+ 		ar->htt.max_num_pending_tx = TARGET_NUM_MSDU_DESC;
++		ar->fw_stats_req_mask = WMI_STAT_PDEV | WMI_STAT_VDEV |
++			WMI_STAT_PEER;
+ 		break;
+ 	case ATH10K_FW_WMI_OP_VERSION_10_1:
+ 	case ATH10K_FW_WMI_OP_VERSION_10_2:
+@@ -998,6 +998,7 @@ static int ath10k_core_init_firmware_features(struct ath10k *ar)
+		}
+ 		ar->max_num_vdevs = TARGET_10X_NUM_VDEVS;
+ 		ar->htt.max_num_pending_tx = TARGET_10X_NUM_MSDU_DESC;
++		ar->fw_stats_req_mask = WMI_STAT_PEER;
+ 		break;
+ 	case ATH10K_FW_WMI_OP_VERSION_TLV:
+ 		ar->max_num_peers = TARGET_TLV_NUM_PEERS;
+@@ -1004,6 +1004,8 @@ static int ath10k_core_init_firmware_features(struct ath10k *ar)
+		ar->max_num_stations = TARGET_TLV_NUM_STATIONS;
+		ar->max_num_vdevs = TARGET_TLV_NUM_VDEVS;
+ 		ar->htt.max_num_pending_tx = TARGET_TLV_NUM_MSDU_DESC;
++		ar->fw_stats_req_mask = WMI_STAT_PDEV | WMI_STAT_VDEV |
++			WMI_STAT_PEER;
+ 		break;
+ 	case ATH10K_FW_WMI_OP_VERSION_UNSET:
+ 	case ATH10K_FW_WMI_OP_VERSION_MAX:
+diff --git a/drivers/net/wireless/ath/ath10k/core.h b/drivers/net/wireless/ath/ath10k/core.h
+index 30f6ade..b0e8905 100644
+--- a/drivers/net/wireless/ath/ath10k/core.h
++++ b/drivers/net/wireless/ath/ath10k/core.h
+@@ -528,6 +528,7 @@ struct ath10k {
+ 	u32 fw_version_minor;
+ 	u16 fw_version_release;
+ 	u16 fw_version_build;
++	u32 fw_stats_req_mask;
+ 	u32 phy_capability;
+ 	u32 hw_min_tx_power;
+ 	u32 hw_max_tx_power;
+diff --git a/drivers/net/wireless/ath/ath10k/debug.c b/drivers/net/wireless/ath/ath10k/debug.c
+index b0f87c3..1391f00 100644
+--- a/drivers/net/wireless/ath/ath10k/debug.c
++++ b/drivers/net/wireless/ath/ath10k/debug.c
+@@ -396,10 +396,7 @@ static int ath10k_debug_fw_stats_request(struct ath10k *ar)
+ 
+ 		reinit_completion(&ar->debug.fw_stats_complete);
+ 
+-		ret = ath10k_wmi_request_stats(ar,
+-					       WMI_STAT_PDEV |
+-					       WMI_STAT_VDEV |
+-					       WMI_STAT_PEER);
++		ret = ath10k_wmi_request_stats(ar, ar->fw_stats_req_mask);
+ 		if (ret) {
+ 			ath10k_warn(ar, "could not request stats (%d)\n", ret);
+ 			return ret;
+
