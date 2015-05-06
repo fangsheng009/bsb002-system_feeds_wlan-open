@@ -202,6 +202,10 @@ find_mac80211_phy() {
 	config_get macaddr "$device" macaddr
 	[ -z "$macaddr" ] && {
 		config_set "$device" macaddr "$(cat /sys/class/ieee80211/${phy}/macaddress)"
+
+	[ -z "$macaddr" ] && {
+		config_set "$device" macaddr "$(cat /sys/class/ieee80211/${phy}/device/net/wlan${phy#phy}/address)"
+		}
 	}
 
 	return 0
