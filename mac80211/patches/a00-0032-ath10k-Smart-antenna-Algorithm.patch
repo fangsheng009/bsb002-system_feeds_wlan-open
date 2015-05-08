@@ -1351,7 +1351,7 @@
 +				     tmin_rssi > tstats->rssi[j][i]) ?
 +				     tstats->rssi[j][i] : tmin_rssi;
 +			tmax_rssi = (tstats->rssi[j][i] >= 0 &&
-+				     tmin_rssi < tstats->rssi[j][i]) ?
++				     tmax_rssi < tstats->rssi[j][i]) ?
 +				     tstats->rssi[j][i] : tmax_rssi;
 +		}
 +
@@ -1713,8 +1713,8 @@
 +			for (j = 0; j < ATH10K_SMART_ANT_MAX_CHAINS;  j++) {
 +				tdata->rssi[j][tdata->samples] =
 +							(u8) fb->rssi[j];
-+				tdata->samples++;
 +			}
++			tdata->samples++;
 +			if (tdata->samples >= ATH10K_SMART_ANT_RSSI_SAMPLE)
 +				tdata->samples = 0;
 +		}
