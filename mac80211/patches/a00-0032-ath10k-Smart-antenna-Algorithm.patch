@@ -289,13 +289,13 @@
 +                                                  char __user *ubuf,
 +                                                  size_t count, loff_t *ppos)
 +{
-+       char buf[8];
++       char buf[16];
 +       struct ath10k *ar = file->private_data;
 +       struct ath10k_smart_ant_params *sparams =
 +					&ar->smart_ant_info.smart_ant_params;
 +       int len = 0;
 +
-+       len = scnprintf(buf, sizeof(buf) - len, "%d %\n",
++       len = scnprintf(buf, sizeof(buf) - len, "%d percent\n",
 +		       sparams->max_perf_delta);
 +
 +       return simple_read_from_buffer(ubuf, count, ppos, buf, len);
