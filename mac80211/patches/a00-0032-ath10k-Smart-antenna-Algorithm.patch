@@ -734,7 +734,7 @@
  #endif
 --- /dev/null
 +++ b/drivers/net/wireless/ath/ath10k/smart_ant_alg.c
-@@ -0,0 +1,1680 @@
+@@ -0,0 +1,1688 @@
 +/*
 + * Copyright (c) 2015, The Linux Foundation.
 + *
@@ -1529,13 +1529,12 @@
 +					ar->smart_ant_info.smart_ant_params;
 +	struct ath10k_smart_ant_perf_info *pinfo;
 +	struct ath10k_smart_ant_rate_stats *rstats = &sa_sta->rate_stats;
-+	u8 status = 0, pdelta, thrshld;
-+	u32 ins_gput;
-+	int i;
++	u32 pdelta, thrshld;
++	u8 status =0;
 +
 +	pinfo = &sa_sta->train_info.perf_info[bw];
 +
-+	if (rstats->nppdu_bw[bw] <= sparams.num_min_pkt) {
++	if (rstats->nppdu_bw[bw] <= sparams.num_pkt_min_threshod[bw]) {
 +		if (pinfo->gput_avg_intvl >=
 +		    (sparams.ignore_goodput_interval +
 +		    sparams.avg_goodput_interval))
@@ -1547,7 +1546,6 @@
 +		return status;
 +	}
 +
-+	ins_gput = sa_sta->rate_stats.ins_gput[i];
 +	if (pinfo->gput_avg_intvl < (sparams.ignore_goodput_interval +
 +	    sparams.avg_goodput_interval)) {
 +		if (pinfo->gput_avg_intvl++ >=
@@ -1555,11 +1553,21 @@
 +			pinfo->avg_gput = pinfo->avg_gput ?
 +				(pinfo->avg_gput + rstats->ins_gput[bw]) >> 1
 +				: rstats->ins_gput[bw];
++		    ath10k_dbg(ar, ATH10K_DBG_SMART_ANT, "BW: %d avg gput %d "
++			       "ins gput %d hyster %d",
++			       bw, pinfo->avg_gput, rstats->ins_gput[bw],
++			       pinfo->hysteresis);
 +		}
 +	} else {
 +		thrshld = (pinfo->avg_gput * sparams.max_perf_delta) / 100;
-+		thrshld = max(thrshld, sparams.min_goodput_threshold);
++                if (sparams.min_goodput_threshold > thrshld)
++                        thrshld = sparams.min_goodput_threshold;
 +		pdelta = abs(pinfo->avg_gput - rstats->ins_gput[bw]);
++
++                ath10k_dbg(ar, ATH10K_DBG_SMART_ANT, "BW %d avg gput %d ins"
++                           "gput %d hyster %d thrshld %d pdelta: %d",
++                           bw, pinfo->avg_gput, rstats->ins_gput[bw],
++                           pinfo->hysteresis, thrshld, pdelta);
 +		if (pdelta < thrshld) {
 +			pinfo->hysteresis = 0;
 +			pinfo->trig_type = ATH10K_SMART_ANT_TRIGGER_TYPE_INIT;
