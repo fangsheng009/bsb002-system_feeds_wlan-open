@@ -1,19 +1,21 @@
 --- a/drivers/net/wireless/ath/wil6210/netdev.c
 +++ b/drivers/net/wireless/ath/wil6210/netdev.c
-@@ -17,6 +17,9 @@
+@@ -17,7 +17,9 @@
  #include <linux/etherdevice.h>
  #include "wil6210.h"
  #include "txrx.h"
+-
 +#if defined(WIL_USE_NSS)
 +#include <nss_api_if.h>
 +#endif
- 
  static int wil_open(struct net_device *ndev)
  {
-@@ -216,9 +219,23 @@ int wil_if_add(struct wil6210_priv *wil)
+ 	struct wil6210_priv *wil = ndev_to_wil(ndev);
+@@ -220,10 +222,21 @@
+ 	int rc;
  
  	wil_dbg_misc(wil, "%s()\n", __func__);
- 
+-
 +#if defined(WIL_USE_NSS)
 +	wil->nss_ctx = nss_create_virt_if(ndev);
 +	if (!wil->nss_ctx) {
@@ -22,7 +24,6 @@
 +	}
 +	wil_info(wil, "Registered with NSS\n");
 +#endif
-+
  	rc = register_netdev(ndev);
  	if (rc < 0) {
  		dev_err(&ndev->dev, "Failed to register netdev: %d\n", rc);
@@ -30,18 +31,17 @@
 +#if defined(WIL_USE_NSS)
 +		nss_destroy_virt_if(wil->nss_ctx);
 +#endif
-+
  		return rc;
  	}
  
-@@ -231,5 +248,9 @@ void wil_if_remove(struct wil6210_priv *wil)
+@@ -235,6 +248,9 @@
+ 	struct net_device *ndev = wil_to_ndev(wil);
  
  	wil_dbg_misc(wil, "%s()\n", __func__);
- 
 +#if defined(WIL_USE_NSS)
 +	nss_destroy_virt_if(wil->nss_ctx);
 +#endif
-+
+ 
  	unregister_netdev(ndev);
  }
 --- a/drivers/net/wireless/ath/wil6210/txrx.c
@@ -56,16 +56,14 @@
  
  static bool rtap_include_phy_info;
  module_param(rtap_include_phy_info, bool, S_IRUGO);
-@@ -576,9 +579,26 @@ void wil_netif_rx_any(struct sk_buff *skb, struct net_device *ndev)
- 	}
- 
+@@ -578,7 +581,25 @@
  	if (skb) { /* deliver to local stack */
--
+ 
  		skb->protocol = eth_type_trans(skb, ndev);
 +#if defined(WIL_USE_NSS)
 +		if (rx_align_2) {
 +			int rc1 = nss_tx_virt_if_rxbuf(wil->nss_ctx,
-+						       skb);
++								skb);
 +			if (rc1) {
 +				wil_err_ratelimited(wil,
 +						    "NSS Rx error: %d\n",
@@ -86,15 +84,14 @@
  	}
 --- a/drivers/net/wireless/ath/wil6210/wil6210.h
 +++ b/drivers/net/wireless/ath/wil6210/wil6210.h
-@@ -610,6 +610,10 @@ struct wil6210_priv {
+@@ -623,7 +623,9 @@
  
  	void *platform_handle;
  	struct wil_platform_ops platform_ops;
-+
+-
 +#if defined(WIL_USE_NSS)
 +	void *nss_ctx;
 +#endif
+ 	struct pmc_ctx pmc;
  };
  
- #define wil_to_wiphy(i) (i->wdev->wiphy)
-
