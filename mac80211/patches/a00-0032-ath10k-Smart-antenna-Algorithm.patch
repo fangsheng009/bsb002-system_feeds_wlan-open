@@ -1369,7 +1369,7 @@
 +		}
 +	}
 +
-+	return tgood_ant_cnt > cgoodant_cnt ? true : false;
++	return cgoodant_cnt > tgood_ant_cnt ? true : false;
 +}
 +
 +static u8 smart_ant_alg_proc_train_stats(struct ath10k *ar,
