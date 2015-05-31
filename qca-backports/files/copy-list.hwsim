@@ -63,3 +63,9 @@ drivers/net/wireless/ath/trace.c
 drivers/net/wireless/ath/trace.h
 drivers/net/wireless/mac80211_hwsim.c
 drivers/net/wireless/mac80211_hwsim.h
+
+# Bluetooth
+include/net/bluetooth/
+net/bluetooth/
+drivers/bluetooth/
+net/ieee802154/
