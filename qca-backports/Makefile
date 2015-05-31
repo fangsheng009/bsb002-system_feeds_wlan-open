@@ -42,14 +42,25 @@ define KernelPackage/qca-mac80211/Default
   DEPENDS:=@(!(TARGET_avr32||TARGET_ps3||TARGET_pxcab)||BROKEN)
 endef
 
+define KernelPackage/qca-compat
+  $(call KernelPackage/qca-mac80211/Default)
+  TITLE:=compat - backport compat driver API
+  FILES:= \
+	$(PKG_BUILD_DIR)/compat/compat.ko
+  AUTOLOAD:=$(call AutoLoad,19,compat)
+endef
+
+define KernelPackage/qca-compat/description
+compat is the Linux backport configuration API.
+endef
+
 define KernelPackage/qca-cfg80211
   $(call KernelPackage/qca-mac80211/Default)
   TITLE:=cfg80211 - wireless configuration API
-  DEPENDS+= +iw +kmod-crypto-core +kmod-crypto-manager +kmod-crypto-aead2
+  DEPENDS+= +iw +kmod-crypto-core +kmod-crypto-manager +kmod-crypto-aead2 +kmod-qca-compat
   FILES:= \
-	$(PKG_BUILD_DIR)/compat/compat.ko \
 	$(PKG_BUILD_DIR)/net/wireless/cfg80211.ko
-  AUTOLOAD:=$(call AutoLoad,20,compat cfg80211)
+  AUTOLOAD:=$(call AutoLoad,20,cfg80211)
 endef
 
 define KernelPackage/qca-cfg80211/description
@@ -319,6 +330,39 @@ This module adds support for wireless adapters based on
 60GHz QCA Wilocity family of chipsets. These support 802.11d.
 endef
 
+define KernelPackage/qca-bluetooth
+  TITLE:=Bluetooth support
+  DEPENDS+=@USB_SUPPORT +kmod-usb-core +kmod-hid +kmod-qca-compat
+  FILES:= \
+	$(PKG_BUILD_DIR)/net/bluetooth/bluetooth.ko \
+	$(PKG_BUILD_DIR)/net/bluetooth/rfcomm/rfcomm.ko \
+	$(PKG_BUILD_DIR)/net/bluetooth/bnep/bnep.ko \
+	$(PKG_BUILD_DIR)/net/bluetooth/hidp/hidp.ko \
+	$(PKG_BUILD_DIR)/drivers/bluetooth/hci_uart.ko \
+	$(PKG_BUILD_DIR)/drivers/bluetooth/btintel.ko \
+	$(PKG_BUILD_DIR)/drivers/bluetooth/btbcm.ko \
+	$(PKG_BUILD_DIR)/drivers/bluetooth/btusb.ko
+  AUTOLOAD:=$(call AutoLoad,90,bluetooth rfcomm bnep hidp hci_uart btintel btbcm btusb)
+endef
+
+define KernelPackage/qca-bluetooth/description
+This module adds support for wireless adapters based on
+USB Bluetooth devices
+endef
+
+define KernelPackage/qca-ath3k
+  TITLE:=QCA ATH3K bluetooth cards support
+  DEPENDS+=+kmod-qca-bluetooth
+  FILES:= \
+	$(PKG_BUILD_DIR)/drivers/bluetooth/ath3k.ko
+  AUTOLOAD:=$(call AutoLoad,91,ath3k)
+endef
+
+define KernelPackage/qca-ath3k/description
+This module adds support for wireless adapters based on
+QCA ATH3k bluetooth family of chipsets.
+endef
+
 config_package=$(if $(CONFIG_PACKAGE_kmod-$(1)),m)
 
 config-y:= \
@@ -368,6 +412,15 @@ config-$(call config_package,qca-ath9k-htc) += ATH9K_HTC
 config-$(call config_package,qca-ath10k) += ATH10K ATH10K_PCI ATH10K_DFS_CERTIFIED
 config-$(call config_package,qca-wil6210) += ATH_CARDS WIL6210
 
+config-$(call config_package,qca-bluetooth) += BT BT_RFCOMM BT_BNEP BT_HIDP BT_INTEL BT_BCM BT_HCIBTUSB BT_HCIUART
+
+ifneq ($(CONFIG_PACKAGE_kmod-qca-ath3k),)
+  config-y += \
+	BT_LE \
+	BT_HCIUART_H4
+endif
+config-$(call config_package,qca-ath3k) += BT_ATH3K
+
 config-$(CONFIG_LEDS_TRIGGERS) += MAC80211_LEDS
 
 EXTRA_KCONFIG:= CONFIG_COMMON_CLK=y
@@ -408,8 +461,7 @@ define Build/Prepare
 	$(TAR) -C $(PKG_BUILD_DIR) -xjf $(DL_DIR)/$(PKG_LINUX_FIRMWARE_SOURCE)
 	rm -rf \
 		$(PKG_BUILD_DIR)/include/linux/ssb \
-		$(PKG_BUILD_DIR)/include/linux/bcma \
-		$(PKG_BUILD_DIR)/include/net/bluetooth
+		$(PKG_BUILD_DIR)/include/linux/bcma
 
 	rm -f \
 		$(PKG_BUILD_DIR)/include/linux/cordic.h \
@@ -423,7 +475,7 @@ define Build/Prepare
 	$(CP) ./files/regdb.txt $(PKG_BUILD_DIR)/net/wireless/db.txt
 endef
 
-ifneq ($(CONFIG_PACKAGE_kmod-qca-cfg80211)$(CONFIG_PACKAGE_kmod-lib80211),)
+ifneq ($(CONFIG_PACKAGE_kmod-qca-cfg80211)$(CONFIG_PACKAGE_kmod-lib80211)$(CONFIG_PACKAGE_kmod-qca-ath3k),)
  define Build/Compile/kmod
 	rm -rf $(PKG_BUILD_DIR)/modules
 	+$(MAKE) $(PKG_JOBS) $(MAKE_OPTS) modules
@@ -472,6 +524,13 @@ define KernelPackage/qca-ath10k/install
 		$(1)/lib/firmware/ath10k/QCA988X/hw2.0/firmware-4.bin
 endef
 
+define KernelPackage/qca-ath3k/install
+	$(INSTALL_DIR) $(1)/lib/firmware/
+	$(CP) 	$(PKG_BUILD_DIR)/$(PKG_LINUX_FIRMWARE_SUBDIR)/ar3k \
+		$(1)/lib/firmware/
+endef
+
+$(eval $(call KernelPackage,qca-compat))
 $(eval $(call KernelPackage,qca-cfg80211))
 $(eval $(call KernelPackage,qca-mac80211))
 $(eval $(call KernelPackage,qca-ath9k-common))
@@ -480,3 +539,5 @@ $(eval $(call KernelPackage,qca-ath9k-htc))
 $(eval $(call KernelPackage,qca-ath10k))
 $(eval $(call KernelPackage,qca-ath))
 $(eval $(call KernelPackage,qca-wil6210))
+$(eval $(call KernelPackage,qca-bluetooth))
+$(eval $(call KernelPackage,qca-ath3k))
