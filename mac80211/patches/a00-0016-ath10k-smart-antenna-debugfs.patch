@@ -15,10 +15,10 @@ Subject: [PATCH] smart antenna debugfs patch
 
 --- a/drivers/net/wireless/ath/ath10k/Makefile
 +++ b/drivers/net/wireless/ath/ath10k/Makefile
-@@ -12,7 +12,8 @@ ath10k_core-y += mac.o \
- 		 bmi.o \
+@@ -13,7 +13,8 @@ ath10k_core-y += mac.o \
  		 hw.o \
  		 p2p.o \
+ 		 swap.o \
 -		 fwlog.o
 +		 fwlog.o \
 +		 debug_smart_ant.o
@@ -27,7 +27,7 @@ Subject: [PATCH] smart antenna debugfs patch
  ath10k_core-$(CPTCFG_NL80211_TESTMODE) += testmode.o
 --- a/drivers/net/wireless/ath/ath10k/core.h
 +++ b/drivers/net/wireless/ath/ath10k/core.h
-@@ -521,6 +521,14 @@ struct ath10k_peer_ratecode_list {
+@@ -546,6 +546,14 @@ struct ath10k_peer_ratecode_list {
  	u8 rt_count[WMI_RATE_COUNT_MAX];
  };
  
@@ -42,7 +42,7 @@ Subject: [PATCH] smart antenna debugfs patch
  struct ath10k {
  	struct ath_common ath_common;
  	struct ieee80211_hw *hw;
-@@ -721,6 +729,8 @@ struct ath10k {
+@@ -787,6 +795,8 @@ struct ath10k {
  	 */
  	struct ath10k_peer_ratecode_list ratecode_list;
  
@@ -53,7 +53,7 @@ Subject: [PATCH] smart antenna debugfs patch
  };
 --- a/drivers/net/wireless/ath/ath10k/debug.c
 +++ b/drivers/net/wireless/ath/ath10k/debug.c
-@@ -2191,6 +2191,9 @@ int ath10k_debug_register(struct ath10k
+@@ -2199,6 +2199,9 @@ int ath10k_debug_register(struct ath10k
  
  	debugfs_create_file("pktlog_filter", S_IRUGO | S_IWUSR,
  			    ar->debug.debugfs_phy, ar, &fops_pktlog_filter);
@@ -65,15 +65,15 @@ Subject: [PATCH] smart antenna debugfs patch
  	debugfs_create_file("quiet_period", S_IRUGO | S_IWUSR,
 --- a/drivers/net/wireless/ath/ath10k/debug.h
 +++ b/drivers/net/wireless/ath/ath10k/debug.h
-@@ -36,6 +36,7 @@ enum ath10k_debug_mask {
- 	ATH10K_DBG_REGULATORY	= 0x00000800,
+@@ -37,6 +37,7 @@ enum ath10k_debug_mask {
  	ATH10K_DBG_TESTMODE	= 0x00001000,
  	ATH10K_DBG_WMI_PRINT	= 0x00002000,
-+	ATH10K_DBG_SMART_ANT	= 0x00004000,
+ 	ATH10K_DBG_PCI_PS	= 0x00004000,
++	ATH10K_DBG_SMART_ANT	= 0x00008000,
  	ATH10K_DBG_ANY		= 0xffffffff,
  };
  
-@@ -85,6 +86,7 @@ int ath10k_debug_get_et_sset_count(struc
+@@ -86,6 +87,7 @@ int ath10k_debug_get_et_sset_count(struc
  void ath10k_debug_get_et_stats(struct ieee80211_hw *hw,
  			       struct ieee80211_vif *vif,
  			       struct ethtool_stats *stats, u64 *data);
@@ -81,7 +81,7 @@ Subject: [PATCH] smart antenna debugfs patch
  #else
  static inline int ath10k_debug_start(struct ath10k *ar)
  {
-@@ -134,6 +136,7 @@ ath10k_debug_get_new_fw_crash_data(struc
+@@ -135,6 +137,7 @@ ath10k_debug_get_new_fw_crash_data(struc
  #define ath10k_debug_get_et_strings NULL
  #define ath10k_debug_get_et_sset_count NULL
  #define ath10k_debug_get_et_stats NULL

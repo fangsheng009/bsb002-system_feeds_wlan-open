@@ -20,7 +20,7 @@
  
  static const struct ath10k_hw_params ath10k_hw_params_list[] = {
  	{
-@@ -883,6 +886,7 @@ static void ath10k_core_restart(struct w
+@@ -937,6 +940,7 @@ static void ath10k_core_restart(struct w
  	 */
  	barrier();
  
@@ -30,7 +30,7 @@
  	complete_all(&ar->scan.started);
 --- a/drivers/net/wireless/ath/ath10k/debug.c
 +++ b/drivers/net/wireless/ath/ath10k/debug.c
-@@ -2259,3 +2259,47 @@ void ath10k_dbg_dump(struct ath10k *ar,
+@@ -2261,3 +2261,47 @@ void ath10k_dbg_dump(struct ath10k *ar,
  EXPORT_SYMBOL(ath10k_dbg_dump);
  
  #endif /* CPTCFG_ATH10K_DEBUG */
@@ -80,7 +80,7 @@
 +EXPORT_SYMBOL(ath10k_dbg_bug_on_fw_assert);
 --- a/drivers/net/wireless/ath/ath10k/debug.h
 +++ b/drivers/net/wireless/ath/ath10k/debug.h
-@@ -55,6 +55,7 @@ enum ath10k_dbg_aggr_mode {
+@@ -56,6 +56,7 @@ enum ath10k_dbg_aggr_mode {
  };
  
  extern unsigned int ath10k_debug_mask;
@@ -88,7 +88,7 @@
  
  __printf(2, 3) void ath10k_info(struct ath10k *ar, const char *fmt, ...);
  __printf(2, 3) void ath10k_err(struct ath10k *ar, const char *fmt, ...);
-@@ -138,6 +139,7 @@ ath10k_debug_get_new_fw_crash_data(struc
+@@ -139,6 +140,7 @@ ath10k_debug_get_new_fw_crash_data(struc
  void ath10k_sta_add_debugfs(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
  			    struct ieee80211_sta *sta, struct dentry *dir);
  #endif /* CPTCFG_MAC80211_DEBUGFS */

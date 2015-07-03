@@ -1,0 +1,26 @@
+--- a/drivers/net/wireless/ath/ath10k/pci.c
++++ b/drivers/net/wireless/ath/ath10k/pci.c
+@@ -1511,6 +1511,8 @@ static void ath10k_pci_hif_stop(struct a
+ 	ath10k_pci_warm_reset(ar);
+ 
+ 	ath10k_pci_irq_disable(ar);
++	if (ar->hw_rev == ATH10K_HW_QCA988X)
++		ath10k_pci_sleep(ar);
+ 	ath10k_pci_irq_sync(ar);
+ 	ath10k_pci_flush(ar);
+ 
+@@ -2141,6 +2143,14 @@ static int ath10k_pci_hif_power_up(struc
+ 
+ 	ath10k_dbg(ar, ATH10K_DBG_BOOT, "boot hif power up\n");
+ 
++	if (ar->hw_rev == ATH10K_HW_QCA988X) {
++		ret = ath10k_pci_wake(ar);
++		if (ret) {
++			ath10k_warn(ar, "failed to wake target: %d\n", ret);
++			return ret;
++		}
++	}
++
+ 	pcie_capability_read_word(ar_pci->pdev, PCI_EXP_LNKCTL,
+ 				  &ar_pci->link_ctl);
+ 	pcie_capability_write_word(ar_pci->pdev, PCI_EXP_LNKCTL,

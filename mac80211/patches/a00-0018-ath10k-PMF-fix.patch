@@ -24,7 +24,7 @@
  		res = -ENOMEM;
 --- a/drivers/net/wireless/ath/ath10k/mac.c
 +++ b/drivers/net/wireless/ath/ath10k/mac.c
-@@ -2002,6 +2002,9 @@ static int ath10k_peer_assoc_prepare(str
+@@ -2469,6 +2469,9 @@ static int ath10k_peer_assoc_prepare(str
  	ath10k_peer_assoc_h_qos(ar, vif, sta, arg);
  	ath10k_peer_assoc_h_phymode(ar, vif, sta, arg);
  
@@ -36,7 +36,7 @@
  
 --- a/drivers/net/wireless/ath/ath10k/wmi.h
 +++ b/drivers/net/wireless/ath/ath10k/wmi.h
-@@ -4531,6 +4531,7 @@ struct wmi_peer_set_q_empty_callback_cmd
+@@ -4552,6 +4552,7 @@ struct wmi_peer_set_q_empty_callback_cmd
  #define WMI_PEER_VHT            0x02000000
  #define WMI_PEER_80MHZ          0x04000000
  #define WMI_PEER_VHT_2G         0x08000000
@@ -44,33 +44,3 @@
  #define WMI_PEER_DISABLE_AMSDU_RESP 0x20000000
  
  /*
---- a/include/net/mac80211.h
-+++ b/include/net/mac80211.h
-@@ -1504,6 +1504,7 @@ struct ieee80211_sta {
- 	struct ieee80211_sta_rates __rcu *rates;
- 	bool tdls;
- 	bool tdls_initiator;
-+	bool mfp;
- 
- 	/* must be last */
- 	u8 drv_priv[0] __aligned(sizeof(void *));
---- a/net/mac80211/cfg.c
-+++ b/net/mac80211/cfg.c
-@@ -1068,6 +1068,7 @@ static int sta_apply_parameters(struct i
- 		sta->sta.wme = set & BIT(NL80211_STA_FLAG_WME);
- 
- 	if (mask & BIT(NL80211_STA_FLAG_MFP)) {
-+		sta->sta.mfp = set & BIT(NL80211_STA_FLAG_MFP);
- 		if (set & BIT(NL80211_STA_FLAG_MFP))
- 			set_sta_flag(sta, WLAN_STA_MFP);
- 		else
---- a/net/mac80211/mlme.c
-+++ b/net/mac80211/mlme.c
-@@ -2973,6 +2973,7 @@ static bool ieee80211_assoc_success(stru
- 		set_sta_flag(sta, WLAN_STA_MFP);
- 
- 	sta->sta.wme = elems.wmm_param;
-+	sta->sta.mfp = !!((ifmgd->flags & IEEE80211_STA_MFP_ENABLED));
- 
- 	err = sta_info_move_state(sta, IEEE80211_STA_ASSOC);
- 	if (!err && !(ifmgd->flags & IEEE80211_STA_CONTROL_PORT))

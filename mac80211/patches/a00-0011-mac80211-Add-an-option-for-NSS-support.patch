@@ -16,7 +16,7 @@
  
 --- a/net/mac80211/ieee80211_i.h
 +++ b/net/mac80211/ieee80211_i.h
-@@ -33,6 +33,10 @@
+@@ -34,6 +34,10 @@
  #include "sta_info.h"
  #include "debug.h"
  
@@ -27,7 +27,7 @@
  struct ieee80211_local;
  
  /* Maximum number of broadcast/multicast frames to buffer when some of the
-@@ -906,6 +910,10 @@ struct ieee80211_sub_if_data {
+@@ -923,6 +927,10 @@ struct ieee80211_sub_if_data {
  	} debugfs;
  #endif
  
@@ -40,7 +40,7 @@
  };
 --- a/net/mac80211/iface.c
 +++ b/net/mac80211/iface.c
-@@ -708,6 +708,13 @@ int ieee80211_do_open(struct wireless_de
+@@ -711,6 +711,13 @@ int ieee80211_do_open(struct wireless_de
  
  	ieee80211_recalc_ps(local, -1);
  
@@ -54,7 +54,7 @@
  	if (sdata->vif.type == NL80211_IFTYPE_MONITOR ||
  	    sdata->vif.type == NL80211_IFTYPE_AP_VLAN) {
  		/* XXX: for AP_VLAN, actually track AP queues */
-@@ -1031,6 +1038,12 @@ static int ieee80211_stop(struct net_dev
+@@ -1040,6 +1047,12 @@ static int ieee80211_stop(struct net_dev
  {
  	struct ieee80211_sub_if_data *sdata = IEEE80211_DEV_TO_SUB_IF(dev);
  
@@ -69,9 +69,9 @@
  	return 0;
 --- a/net/mac80211/rx.c
 +++ b/net/mac80211/rx.c
-@@ -32,6 +32,47 @@
- #include "wme.h"
- #include "rate.h"
+@@ -42,6 +42,47 @@ static inline void ieee80211_rx_stats(st
+ 	u64_stats_update_end(&tstats->syncp);
+ }
  
 +#ifdef CPTCFG_MAC80211_NSS_SUPPORT
 +
@@ -117,12 +117,12 @@
  /*
   * monitor mode reception
   *
-@@ -2105,10 +2146,15 @@ ieee80211_deliver_skb(struct ieee80211_r
- 		/* deliver to local stack */
+@@ -2109,10 +2150,15 @@ ieee80211_deliver_skb(struct ieee80211_r
  		skb->protocol = eth_type_trans(skb, dev);
  		memset(skb->cb, 0, sizeof(skb->cb));
--		if (rx->local->napi)
-+		if (rx->local->napi) {
+ 		if (!(rx->flags & IEEE80211_RX_REORDER_TIMER) &&
+-		    rx->local->napi)
++		    rx->local->napi) {
  			napi_gro_receive(rx->local->napi, skb);
 -		else
 +		} else {
@@ -137,7 +137,7 @@
  	if (xmit_skb) {
 --- a/.local-symbols
 +++ b/.local-symbols
-@@ -37,6 +37,7 @@ LIB80211_CRYPT_CCMP=
+@@ -43,6 +43,7 @@ LIB80211_CRYPT_CCMP=
  LIB80211_CRYPT_TKIP=
  LIB80211_DEBUG=
  MAC80211=

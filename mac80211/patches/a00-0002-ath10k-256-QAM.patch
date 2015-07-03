@@ -1,11 +1,11 @@
 --- a/drivers/net/wireless/ath/ath10k/mac.c
 +++ b/drivers/net/wireless/ath/ath10k/mac.c
-@@ -1849,8 +1849,13 @@ static void ath10k_peer_assoc_h_vht(stru
+@@ -2300,8 +2300,13 @@ static void ath10k_peer_assoc_h_vht(stru
  
  	arg->peer_flags |= WMI_PEER_VHT;
  
--	if (ar->hw->conf.chandef.chan->band == IEEE80211_BAND_2GHZ)
-+	if (ar->hw->conf.chandef.chan->band == IEEE80211_BAND_2GHZ) {
+-	if (def.chan->band == IEEE80211_BAND_2GHZ)
++	if (def.chan->band == IEEE80211_BAND_2GHZ) {
  		arg->peer_flags |= WMI_PEER_VHT_2G;
 +		if (INTEROP_2G_256QAM_CAPBILITY) {
 +			arg->peer_flags |= (WMI_PEER_DISABLE_AMSDU_REQ |
@@ -17,9 +17,9 @@
  
 --- a/drivers/net/wireless/ath/ath10k/mac.h
 +++ b/drivers/net/wireless/ath/ath10k/mac.h
-@@ -28,6 +28,8 @@ struct ath10k_generic_iter {
- 	int ret;
- };
+@@ -39,6 +39,8 @@ struct rfc1042_hdr {
+ 	__be16 snap_type;
+ } __packed;
  
 +#define INTEROP_2G_256QAM_CAPBILITY   1
 +
@@ -28,7 +28,7 @@
  int ath10k_mac_register(struct ath10k *ar);
 --- a/drivers/net/wireless/ath/ath10k/wmi.h
 +++ b/drivers/net/wireless/ath/ath10k/wmi.h
-@@ -4514,6 +4514,7 @@ struct wmi_peer_set_q_empty_callback_cmd
+@@ -4535,6 +4535,7 @@ struct wmi_peer_set_q_empty_callback_cmd
  #define WMI_PEER_QOS            0x00000002
  #define WMI_PEER_NEED_PTK_4_WAY 0x00000004
  #define WMI_PEER_NEED_GTK_2_WAY 0x00000010
@@ -36,7 +36,7 @@
  #define WMI_PEER_APSD           0x00000800
  #define WMI_PEER_HT             0x00001000
  #define WMI_PEER_40MHZ          0x00002000
-@@ -4525,6 +4526,7 @@ struct wmi_peer_set_q_empty_callback_cmd
+@@ -4546,6 +4547,7 @@ struct wmi_peer_set_q_empty_callback_cmd
  #define WMI_PEER_VHT            0x02000000
  #define WMI_PEER_80MHZ          0x04000000
  #define WMI_PEER_VHT_2G         0x08000000

@@ -33,7 +33,7 @@ define Package/$(PKG_NAME)/install
 	$(1)/lib/firmware/ath10k/QCA988X/hw2.0/
 	$(INSTALL_BIN) \
 		$(PKG_BUILD_DIR)/10.2.4/firmware-4.bin_$(PKG_FW_VERSION) \
-	$(1)/lib/firmware/ath10k/QCA988X/hw2.0/firmware-4.bin
+	$(1)/lib/firmware/ath10k/QCA988X/hw2.0/firmware-5.bin
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))

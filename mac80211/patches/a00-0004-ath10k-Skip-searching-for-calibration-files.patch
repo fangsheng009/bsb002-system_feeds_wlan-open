@@ -18,7 +18,7 @@
  
  static const struct ath10k_hw_params ath10k_hw_params_list[] = {
  	{
-@@ -728,7 +731,8 @@ static int ath10k_core_fetch_firmware_fi
+@@ -769,7 +772,8 @@ static int ath10k_core_fetch_firmware_fi
  	int ret;
  
  	/* calibration file is optional, don't check for any errors */
@@ -26,5 +26,5 @@
 +	if (!no_calfile)
 +		ath10k_fetch_cal_file(ar);
  
- 	ar->fw_api = 4;
- 	ath10k_dbg(ar, ATH10K_DBG_BOOT, "trying fw api %d\n", ar->fw_api);
+ 	ret = ath10k_core_fetch_board_file(ar);
+ 	if (ret) {
