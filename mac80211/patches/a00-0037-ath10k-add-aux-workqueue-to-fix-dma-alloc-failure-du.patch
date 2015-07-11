@@ -1,0 +1,176 @@
+--- a/drivers/net/wireless/ath/ath10k/core.c
++++ b/drivers/net/wireless/ath/ath10k/core.c
+@@ -1699,6 +1699,10 @@ struct ath10k *ath10k_core_create(size_t
+ 	if (!ar->workqueue)
+ 		goto err_free_mac;
+ 
++	ar->workqueue_aux = create_singlethread_workqueue("ath10k_aux_wq");
++	if (!ar->workqueue_aux)
++		goto err_free_wq;
++
+ 	mutex_init(&ar->conf_mutex);
+ 	spin_lock_init(&ar->data_lock);
+ 
+@@ -1719,10 +1723,12 @@ struct ath10k *ath10k_core_create(size_t
+ 
+ 	ret = ath10k_debug_create(ar);
+ 	if (ret)
+-		goto err_free_wq;
++		goto err_free_aux_wq;
+ 
+ 	return ar;
+ 
++err_free_aux_wq:
++	destroy_workqueue(ar->workqueue_aux);
+ err_free_wq:
+ 	destroy_workqueue(ar->workqueue);
+ 
+@@ -1738,6 +1744,9 @@ void ath10k_core_destroy(struct ath10k *
+ 	flush_workqueue(ar->workqueue);
+ 	destroy_workqueue(ar->workqueue);
+ 
++	flush_workqueue(ar->workqueue_aux);
++	destroy_workqueue(ar->workqueue_aux);
++
+ 	ath10k_debug_destroy(ar);
+ 	ath10k_mac_destroy(ar);
+ }
+--- a/drivers/net/wireless/ath/ath10k/core.h
++++ b/drivers/net/wireless/ath/ath10k/core.h
+@@ -696,6 +696,8 @@ struct ath10k {
+ 	struct completion vdev_setup_done;
+ 
+ 	struct workqueue_struct *workqueue;
++	/* Auxilary workqueue */
++	struct workqueue_struct *workqueue_aux;
+ 
+ 	/* prevents concurrent FW reconfiguration */
+ 	struct mutex conf_mutex;
+@@ -718,6 +720,9 @@ struct ath10k {
+ 	int num_active_peers;
+ 	int num_tids;
+ 
++	struct work_struct svc_rdy_work;
++	struct sk_buff *svc_rdy_skb;
++
+ 	struct work_struct offchan_tx_work;
+ 	struct sk_buff_head offchan_tx_queue;
+ 	struct completion offchan_tx_completed;
+--- a/drivers/net/wireless/ath/ath10k/wmi-tlv.c
++++ b/drivers/net/wireless/ath/ath10k/wmi-tlv.c
+@@ -497,7 +497,7 @@ static void ath10k_wmi_tlv_op_rx(struct
+ 		break;
+ 	case WMI_TLV_SERVICE_READY_EVENTID:
+ 		ath10k_wmi_event_service_ready(ar, skb);
+-		break;
++		return;
+ 	case WMI_TLV_READY_EVENTID:
+ 		ath10k_wmi_event_ready(ar, skb);
+ 		break;
+--- a/drivers/net/wireless/ath/ath10k/wmi.c
++++ b/drivers/net/wireless/ath/ath10k/wmi.c
+@@ -3820,7 +3820,7 @@ static int ath10k_wmi_alloc_host_mem(str
+ 	ar->wmi.mem_chunks[idx].vaddr = dma_alloc_coherent(ar->dev,
+ 							   pool_size,
+ 							   &paddr,
+-							   GFP_ATOMIC);
++							   GFP_KERNEL);
+ 	if (!ar->wmi.mem_chunks[idx].vaddr) {
+ 		ath10k_warn(ar, "failed to allocate memory chunk\n");
+ 		return -ENOMEM;
+@@ -3909,12 +3909,19 @@ ath10k_wmi_10x_op_pull_svc_rdy_ev(struct
+ 	return 0;
+ }
+ 
+-void ath10k_wmi_event_service_ready(struct ath10k *ar, struct sk_buff *skb)
++void ath10k_wmi_event_service_ready_work(struct work_struct *work)
+ {
++	struct ath10k *ar = container_of(work, struct ath10k, svc_rdy_work);
++	struct sk_buff *skb = ar->svc_rdy_skb;
+ 	struct wmi_svc_rdy_ev_arg arg = {};
+ 	u32 num_units, req_id, unit_size, num_mem_reqs, num_unit_info, i;
+ 	int ret;
+ 
++	if (!skb) {
++		ath10k_warn(ar, "invalid service ready event skb\n");
++		return;
++	}
++
+ 	ret = ath10k_wmi_pull_svc_rdy(ar, skb, &arg);
+ 	if (ret) {
+ 		ath10k_warn(ar, "failed to parse service ready: %d\n", ret);
+@@ -4034,9 +4041,17 @@ void ath10k_wmi_event_service_ready(stru
+ 		   __le32_to_cpu(arg.eeprom_rd),
+ 		   __le32_to_cpu(arg.num_mem_reqs));
+ 
++	dev_kfree_skb(skb);
++	ar->svc_rdy_skb = NULL;
+ 	complete(&ar->wmi.service_ready);
+ }
+ 
++void ath10k_wmi_event_service_ready(struct ath10k *ar, struct sk_buff *skb)
++{
++	ar->svc_rdy_skb = skb;
++	queue_work(ar->workqueue_aux, &ar->svc_rdy_work);
++}
++
+ static int ath10k_wmi_op_pull_rdy_ev(struct ath10k *ar, struct sk_buff *skb,
+ 				     struct wmi_rdy_ev_arg *arg)
+ {
+@@ -4259,7 +4274,7 @@ static void ath10k_wmi_op_rx(struct ath1
+ 		break;
+ 	case WMI_SERVICE_READY_EVENTID:
+ 		ath10k_wmi_event_service_ready(ar, skb);
+-		break;
++		return;
+ 	case WMI_READY_EVENTID:
+ 		ath10k_wmi_event_ready(ar, skb);
+ 		break;
+@@ -4380,7 +4395,7 @@ static void ath10k_wmi_10_1_op_rx(struct
+ 		break;
+ 	case WMI_10X_SERVICE_READY_EVENTID:
+ 		ath10k_wmi_event_service_ready(ar, skb);
+-		break;
++		return;
+ 	case WMI_10X_READY_EVENTID:
+ 		ath10k_wmi_event_ready(ar, skb);
+ 		break;
+@@ -4491,7 +4506,7 @@ static void ath10k_wmi_10_2_op_rx(struct
+ 		break;
+ 	case WMI_10_2_SERVICE_READY_EVENTID:
+ 		ath10k_wmi_event_service_ready(ar, skb);
+-		break;
++		return;
+ 	case WMI_10_2_READY_EVENTID:
+ 		ath10k_wmi_event_ready(ar, skb);
+ 		break;
+@@ -4545,7 +4560,7 @@ static void ath10k_wmi_10_4_op_rx(struct
+ 		return;
+ 	case WMI_10_4_SERVICE_READY_EVENTID:
+ 		ath10k_wmi_event_service_ready(ar, skb);
+-		break;
++		return;
+ 	case WMI_10_4_SCAN_EVENTID:
+ 		ath10k_wmi_event_scan(ar, skb);
+ 		break;
+@@ -6871,6 +6886,8 @@ int ath10k_wmi_attach(struct ath10k *ar)
+ 	init_completion(&ar->wmi.service_ready);
+ 	init_completion(&ar->wmi.unified_ready);
+ 
++	INIT_WORK(&ar->svc_rdy_work, ath10k_wmi_event_service_ready_work);
++
+ 	return 0;
+ }
+ 
+@@ -6878,6 +6895,11 @@ void ath10k_wmi_detach(struct ath10k *ar
+ {
+ 	int i;
+ 
++	cancel_work_sync(&ar->svc_rdy_work);
++
++	if (ar->svc_rdy_skb)
++		dev_kfree_skb(ar->svc_rdy_skb);
++
+ 	/* free the host memory chunks requested by firmware */
+ 	for (i = 0; i < ar->wmi.num_mem_chunks; i++) {
+ 		dma_free_coherent(ar->dev,
