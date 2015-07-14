@@ -332,7 +332,7 @@ endef
 
 define KernelPackage/qca-bluetooth
   TITLE:=Bluetooth support
-  DEPENDS+=@USB_SUPPORT +kmod-usb-core +kmod-hid +kmod-qca-compat
+  DEPENDS+=@USB_SUPPORT +kmod-usb-core +kmod-crypto-ecb +kmod-lib-crc16 +kmod-hid +kmod-qca-compat
   FILES:= \
 	$(PKG_BUILD_DIR)/net/bluetooth/bluetooth.ko \
 	$(PKG_BUILD_DIR)/net/bluetooth/rfcomm/rfcomm.ko \
