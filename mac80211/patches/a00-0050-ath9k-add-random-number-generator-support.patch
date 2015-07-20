@@ -1,6 +1,6 @@
 --- /dev/null
 +++ b/drivers/net/wireless/ath/ath9k/rng.c
-@@ -0,0 +1,71 @@
+@@ -0,0 +1,79 @@
 +/*
 + * Copyright (c) 2015 The Linux Foundation. All rights reserved.
 + *
@@ -28,6 +28,10 @@
 +	struct ath_hw *ah = sc->sc_ah;
 +
 +	ath9k_ps_wakeup(sc);
++
++	REG_RMW_FIELD(ah, AR_PHY_TEST, AR_PHY_TEST_BBB_OBS_SEL, 5);
++	REG_CLR_BIT(ah, AR_PHY_TEST, AR_PHY_TEST_RX_OBS_SEL_BIT5);
++	REG_RMW_FIELD(ah, AR_PHY_TEST_CTL_STATUS, AR_PHY_TEST_CTL_RX_OBS_SEL, 0);
 +
 +	v1 = REG_READ(ah, AR_PHY_TEST_ADC);
 +	v2 = REG_READ(ah, AR_PHY_TEST_ADC);
@@ -57,9 +61,13 @@
 +int ath9k_rng_register(struct ath_softc *sc)
 +{
 +	int err;
++	struct ath_hw *ah = sc->sc_ah;
 +
 +	if (WARN_ON(sc->rng_initialized))
 +		return -EALREADY;
++
++	if (!AR_SREV_9300_20_OR_LATER(ah))
++		return 0;
 +
 +	sc->rng.name = "ath9k";
 +	sc->rng.data_read = ath9k_rng_data_read;
