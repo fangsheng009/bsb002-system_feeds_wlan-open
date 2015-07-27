@@ -1,6 +1,6 @@
 --- a/drivers/net/wireless/ath/ath10k/mac.c
 +++ b/drivers/net/wireless/ath/ath10k/mac.c
-@@ -1252,6 +1252,7 @@ static int ath10k_vdev_start_restart(str
+@@ -1259,6 +1259,7 @@ static int ath10k_vdev_start_restart(str
  	struct ath10k *ar = arvif->ar;
  	struct wmi_vdev_start_request_arg arg = {};
  	int ret = 0;
@@ -8,7 +8,7 @@
  
  	lockdep_assert_held(&ar->conf_mutex);
  
-@@ -1288,6 +1289,17 @@ static int ath10k_vdev_start_restart(str
+@@ -1295,6 +1296,17 @@ static int ath10k_vdev_start_restart(str
  		   arg.vdev_id, arg.channel.freq,
  		   ath10k_wmi_phymode_str(arg.channel.mode));
  

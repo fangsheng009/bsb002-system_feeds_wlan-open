@@ -27,7 +27,7 @@ Subject: [PATCH] smart antenna debugfs patch
  ath10k_core-$(CPTCFG_NL80211_TESTMODE) += testmode.o
 --- a/drivers/net/wireless/ath/ath10k/core.h
 +++ b/drivers/net/wireless/ath/ath10k/core.h
-@@ -546,6 +546,14 @@ struct ath10k_peer_ratecode_list {
+@@ -568,6 +568,14 @@ struct ath10k_peer_ratecode_list {
  	u8 rt_count[WMI_RATE_COUNT_MAX];
  };
  
@@ -42,7 +42,7 @@ Subject: [PATCH] smart antenna debugfs patch
  struct ath10k {
  	struct ath_common ath_common;
  	struct ieee80211_hw *hw;
-@@ -787,6 +795,8 @@ struct ath10k {
+@@ -815,6 +823,8 @@ struct ath10k {
  	 */
  	struct ath10k_peer_ratecode_list ratecode_list;
  
@@ -53,7 +53,7 @@ Subject: [PATCH] smart antenna debugfs patch
  };
 --- a/drivers/net/wireless/ath/ath10k/debug.c
 +++ b/drivers/net/wireless/ath/ath10k/debug.c
-@@ -2199,6 +2199,9 @@ int ath10k_debug_register(struct ath10k
+@@ -2195,6 +2195,9 @@ int ath10k_debug_register(struct ath10k
  
  	debugfs_create_file("pktlog_filter", S_IRUGO | S_IWUSR,
  			    ar->debug.debugfs_phy, ar, &fops_pktlog_filter);
@@ -73,7 +73,7 @@ Subject: [PATCH] smart antenna debugfs patch
  	ATH10K_DBG_ANY		= 0xffffffff,
  };
  
-@@ -86,6 +87,7 @@ int ath10k_debug_get_et_sset_count(struc
+@@ -136,6 +137,7 @@ int ath10k_debug_get_et_sset_count(struc
  void ath10k_debug_get_et_stats(struct ieee80211_hw *hw,
  			       struct ieee80211_vif *vif,
  			       struct ethtool_stats *stats, u64 *data);
@@ -81,7 +81,7 @@ Subject: [PATCH] smart antenna debugfs patch
  #else
  static inline int ath10k_debug_start(struct ath10k *ar)
  {
-@@ -135,6 +137,7 @@ ath10k_debug_get_new_fw_crash_data(struc
+@@ -185,6 +187,7 @@ ath10k_debug_get_new_fw_crash_data(struc
  #define ath10k_debug_get_et_strings NULL
  #define ath10k_debug_get_et_sset_count NULL
  #define ath10k_debug_get_et_stats NULL
@@ -602,7 +602,7 @@ Subject: [PATCH] smart antenna debugfs patch
 +	     RX_ATTENTION_FLAGS_LAST_MPDU))
 +		return;
 +
-+	sa_info->rx_antenna = __le32_to_cpu(rx_desc->ppdu_end.common.info0) &
++	sa_info->rx_antenna = __le32_to_cpu(rx_desc->ppdu_end.qca988x.info0) &
 +			      ATH10K_RX_ANT_MASK;
  }
  

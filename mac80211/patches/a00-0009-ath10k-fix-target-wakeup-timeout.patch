@@ -1,6 +1,6 @@
 --- a/drivers/net/wireless/ath/ath10k/pci.h
 +++ b/drivers/net/wireless/ath/ath10k/pci.h
-@@ -229,7 +229,7 @@ static inline struct ath10k_pci *ath10k_
+@@ -230,7 +230,7 @@ static inline struct ath10k_pci *ath10k_
  
  #define ATH10K_PCI_RX_POST_RETRY_MS 50
  #define ATH_PCI_RESET_WAIT_MAX 10 /* ms */
@@ -11,7 +11,7 @@
  
 --- a/drivers/net/wireless/ath/ath10k/pci.c
 +++ b/drivers/net/wireless/ath/ath10k/pci.c
-@@ -375,6 +375,8 @@ static int ath10k_pci_wake_wait(struct a
+@@ -443,6 +443,8 @@ static int ath10k_pci_wake_wait(struct a
  
  	while (tot_delay < PCIE_WAKE_TIMEOUT) {
  		if (ath10k_pci_is_awake(ar))

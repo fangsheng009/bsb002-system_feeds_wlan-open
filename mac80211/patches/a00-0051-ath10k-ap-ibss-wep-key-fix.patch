@@ -1,6 +1,6 @@
 --- a/drivers/net/wireless/ath/ath10k/mac.c
 +++ b/drivers/net/wireless/ath/ath10k/mac.c
-@@ -241,6 +241,10 @@ static int ath10k_install_peer_wep_keys(
+@@ -248,6 +248,10 @@ static int ath10k_install_peer_wep_keys(
  
  	lockdep_assert_held(&ar->conf_mutex);
  
@@ -11,7 +11,7 @@
  	spin_lock_bh(&ar->data_lock);
  	peer = ath10k_peer_find(ar, arvif->vdev_id, addr);
  	spin_unlock_bh(&ar->data_lock);
-@@ -254,19 +258,44 @@ static int ath10k_install_peer_wep_keys(
+@@ -261,19 +265,44 @@ static int ath10k_install_peer_wep_keys(
  
  		flags = 0;
  		flags |= WMI_KEY_PAIRWISE;
@@ -21,13 +21,14 @@
  
  		ret = ath10k_install_key(arvif, arvif->wep_keys[i], SET_KEY,
  					 addr, flags);
- 		if (ret)
+ 		if (ret < 0)
  			return ret;
 +		if (arvif->def_wep_key_idx == i)
 +			flags |= WMI_KEY_TX_USAGE;
  
  		flags = 0;
  		flags |= WMI_KEY_GROUP;
+-
 +		ret = ath10k_install_key(arvif, arvif->wep_keys[i],
 +					 SET_KEY, addr, flags);
 +		if (ret < 0)
@@ -39,10 +40,10 @@
 +					 WMI_KEY_PAIRWISE);
 +		if (ret < 0)
 +			return ret;
- 
++ 
  		ret = ath10k_install_key(arvif, arvif->wep_keys[i], SET_KEY,
  					 addr, flags);
- 		if (ret)
+ 		if (ret < 0)
  			return ret;
 +		ret = ath10k_install_key(arvif, arvif->wep_keys[i],
 +					 SET_KEY, addr, WMI_KEY_GROUP);
@@ -56,7 +57,7 @@
  
  		spin_lock_bh(&ar->data_lock);
  		peer->keys[i] = arvif->wep_keys[i];
-@@ -281,6 +310,9 @@ static int ath10k_install_peer_wep_keys(
+@@ -288,6 +317,9 @@ static int ath10k_install_peer_wep_keys(
  	 *
  	 * FIXME: Revisit. Perhaps this can be done in a less hacky way.
  	 */

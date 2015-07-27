@@ -7,11 +7,11 @@ PKG_BACKPORTS_VERSION:=c1a4168
 PKG_BACKPORTS_SOURCE_URL:=git://git.kernel.org/pub/scm/linux/kernel/git/backports/backports.git
 PKG_BACKPORTS_BRANCH:=master
 
-PKG_KERNEL_VERSION:=314e7c6
+PKG_KERNEL_VERSION:=a76a25c
 PKG_KERNEL_SOURCE_URL:=https://github.com/kvalo/ath.git
 PKG_KERNEL_BRANCH:=ath-qca
 
-PKG_VERSION:=20150702
+PKG_VERSION:=20150730
 PKG_SOURCE:=backports-$(PKG_VERSION).tar.bz2
 PKG_SUBDIR:=backports-$(PKG_VERSION)
 PKG_RELEASE:=1

@@ -1,8 +1,6 @@
-diff --git a/drivers/net/wireless/ath/ath10k/mac.c b/drivers/net/wireless/ath/ath10k/mac.c
-index 0b31331..bfaeabb 100644
 --- a/drivers/net/wireless/ath/ath10k/mac.c
 +++ b/drivers/net/wireless/ath/ath10k/mac.c
-@@ -4063,6 +4063,43 @@ static u32 get_nss_from_chainmask(u16 chain_mask)
+@@ -4067,6 +4067,43 @@ static u32 get_nss_from_chainmask(u16 ch
  	return 1;
  }
  
@@ -46,7 +44,7 @@ index 0b31331..bfaeabb 100644
  /*
   * TODO:
   * Figure out how to handle WMI_VDEV_SUBTYPE_P2P_DEVICE,
-@@ -4281,6 +4318,13 @@ static int ath10k_add_interface(struct ieee80211_hw *hw,
+@@ -4293,6 +4330,13 @@ static int ath10k_add_interface(struct i
  		}
  	}
  
@@ -60,8 +58,6 @@ index 0b31331..bfaeabb 100644
  	ret = ath10k_mac_set_rts(arvif, ar->hw->wiphy->rts_threshold);
  	if (ret) {
  		ath10k_warn(ar, "failed to set rts threshold for vdev %d: %d\n",
-diff --git a/drivers/net/wireless/ath/ath10k/wmi.h b/drivers/net/wireless/ath/ath10k/wmi.h
-index 0a41ec4..a544292 100644
 --- a/drivers/net/wireless/ath/ath10k/wmi.h
 +++ b/drivers/net/wireless/ath/ath10k/wmi.h
 @@ -4637,6 +4637,11 @@ enum wmi_10_4_vdev_param {
@@ -76,6 +72,3 @@ index 0a41ec4..a544292 100644
  /* slot time long */
  #define WMI_VDEV_SLOT_TIME_LONG		0x1
  /* slot time short */
--- 
-1.9.1
-

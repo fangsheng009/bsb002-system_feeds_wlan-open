@@ -1,6 +1,6 @@
 --- a/drivers/net/wireless/ath/ath10k/core.h
 +++ b/drivers/net/wireless/ath/ath10k/core.h
-@@ -765,6 +765,8 @@ struct ath10k {
+@@ -811,6 +811,8 @@ struct ath10k {
  
  	struct ath10k_smart_ant_info smart_ant_info;
  
@@ -11,7 +11,7 @@
  };
 --- a/drivers/net/wireless/ath/ath10k/debug.c
 +++ b/drivers/net/wireless/ath/ath10k/debug.c
-@@ -2104,6 +2104,52 @@ static const struct file_operations fops
+@@ -2107,6 +2107,52 @@ static const struct file_operations fops
  	.open = simple_open
  };
  
@@ -64,7 +64,7 @@
  int ath10k_debug_create(struct ath10k *ar)
  {
  	ar->debug.fw_crash_data = vzalloc(sizeof(*ar->debug.fw_crash_data));
-@@ -2212,6 +2258,9 @@ int ath10k_debug_register(struct ath10k
+@@ -2215,6 +2261,9 @@ int ath10k_debug_register(struct ath10k
  	debugfs_create_file("quiet_period", S_IRUGO | S_IWUSR,
  			    ar->debug.debugfs_phy, ar, &fops_quiet_period);
  
@@ -112,7 +112,7 @@
  #endif
 --- a/drivers/net/wireless/ath/ath10k/wmi.c
 +++ b/drivers/net/wireless/ath/ath10k/wmi.c
-@@ -154,6 +154,7 @@ static struct wmi_cmd_map wmi_cmd_map =
+@@ -196,6 +196,7 @@ static struct wmi_cmd_map wmi_cmd_map =
  	.peer_set_smart_tx_ant_cmdid = WMI_CMD_UNSUPPORTED,
  	.peer_smart_ant_fb_config_cmdid = WMI_CMD_UNSUPPORTED,
  	.peer_set_smart_ant_train_info_cmdid = WMI_CMD_UNSUPPORTED,
@@ -120,7 +120,7 @@
  };
  
  /* 10.X WMI cmd track */
-@@ -282,6 +283,7 @@ static struct wmi_cmd_map wmi_10x_cmd_ma
+@@ -366,6 +367,7 @@ static struct wmi_cmd_map wmi_10x_cmd_ma
  	.peer_set_smart_tx_ant_cmdid = WMI_CMD_UNSUPPORTED,
  	.peer_smart_ant_fb_config_cmdid = WMI_CMD_UNSUPPORTED,
  	.peer_set_smart_ant_train_info_cmdid = WMI_CMD_UNSUPPORTED,
@@ -128,23 +128,23 @@
  };
  
  /* 10.2.4 WMI cmd track */
-@@ -412,6 +414,7 @@ static struct wmi_cmd_map wmi_10_2_4_cmd
+@@ -538,6 +540,7 @@ static struct wmi_cmd_map wmi_10_2_4_cmd
  			WMI_10_2_PEER_SMART_ANT_SET_NODE_CONFIG_OPS_CMDID,
  	.peer_set_smart_ant_train_info_cmdid =
  			WMI_10_2_PEER_SMART_ANT_SET_TRAIN_INFO_CMDID,
 +	.pdev_enable_cca_detect_cmdid = WMI_10_2_SET_CCA_PARAMS,
  };
  
- /* MAIN WMI VDEV param map */
-@@ -876,6 +879,7 @@ static struct wmi_cmd_map wmi_10_2_cmd_m
+ /* 10.4 WMI cmd track */
+@@ -1466,6 +1469,7 @@ static struct wmi_cmd_map wmi_10_2_cmd_m
  			WMI_10_2_PEER_SMART_ANT_SET_NODE_CONFIG_OPS_CMDID,
  	.peer_set_smart_ant_train_info_cmdid =
  			WMI_10_2_PEER_SMART_ANT_SET_TRAIN_INFO_CMDID,
 +	.pdev_enable_cca_detect_cmdid = WMI_CMD_UNSUPPORTED,
  };
  
- void ath10k_wmi_put_wmi_channel(struct wmi_channel *ch,
-@@ -5459,6 +5463,28 @@ ath10k_wmi_op_gen_set_smart_ant_train_in
+ static struct wmi_pdev_param_map wmi_10_4_pdev_param_map = {
+@@ -6479,6 +6483,28 @@ ath10k_wmi_op_gen_set_smart_ant_train_in
  	return skb;
  }
  
@@ -173,7 +173,7 @@
  static const struct wmi_ops wmi_ops = {
  	.rx = ath10k_wmi_op_rx,
  	.map_svc = wmi_main_svc_map,
-@@ -5597,6 +5623,8 @@ static const struct wmi_ops wmi_10_1_ops
+@@ -6617,6 +6643,8 @@ static const struct wmi_ops wmi_10_1_ops
  	/* .gen_pdev_set_rx_ant not implemented */
  	/* .gen_peer_cfg_smart_ant_fb not implemented */
  	/* .gen_peer_set_smart_ant_train_info not implemented */
@@ -182,7 +182,7 @@
  };
  
  static const struct wmi_ops wmi_10_2_ops = {
-@@ -5665,6 +5693,7 @@ static const struct wmi_ops wmi_10_2_ops
+@@ -6685,6 +6713,7 @@ static const struct wmi_ops wmi_10_2_ops
  	.gen_peer_cfg_smart_ant_fb = ath10k_wmi_op_gen_peer_cfg_smart_ant,
  	.gen_peer_set_smart_ant_train_info =
  				ath10k_wmi_op_gen_set_smart_ant_train_info,
@@ -190,17 +190,17 @@
  };
  
  static const struct wmi_ops wmi_10_2_4_ops = {
-@@ -5736,6 +5765,7 @@ static const struct wmi_ops wmi_10_2_4_o
+@@ -6756,6 +6785,7 @@ static const struct wmi_ops wmi_10_2_4_o
  	.gen_peer_cfg_smart_ant_fb = ath10k_wmi_op_gen_peer_cfg_smart_ant,
  	.gen_peer_set_smart_ant_train_info =
  				ath10k_wmi_op_gen_set_smart_ant_train_info,
 +	.gen_pdev_enable_cca_detect = ath10k_wmi_ops_gen_pdev_enable_cca_detect,
  };
  
- int ath10k_wmi_attach(struct ath10k *ar)
+ static const struct wmi_ops wmi_10_4_ops = {
 --- a/drivers/net/wireless/ath/ath10k/wmi.h
 +++ b/drivers/net/wireless/ath/ath10k/wmi.h
-@@ -570,6 +570,7 @@ struct wmi_cmd_map {
+@@ -758,6 +758,7 @@ struct wmi_cmd_map {
  	u32 peer_set_smart_tx_ant_cmdid;
  	u32 peer_smart_ant_fb_config_cmdid;
  	u32 peer_set_smart_ant_train_info_cmdid;
@@ -208,7 +208,7 @@
  };
  
  /*
-@@ -1179,6 +1180,9 @@ enum wmi_10_2_cmd_id {
+@@ -1367,6 +1368,9 @@ enum wmi_10_2_cmd_id {
  	WMI_10_2_VDEV_ATF_REQUEST_CMDID,
  	WMI_10_2_PEER_ATF_REQUEST_CMDID,
  	WMI_10_2_PDEV_GET_TEMPERATURE_CMDID,
@@ -218,7 +218,7 @@
  	WMI_10_2_PDEV_UTF_CMDID = WMI_10_2_END_CMDID - 1,
  };
  
-@@ -5182,6 +5186,12 @@ struct wmi_peer_ratecode_list_event {
+@@ -6105,6 +6109,12 @@ struct wmi_peer_ratecode_list_event {
  	struct wmi_peer_rate_info peer_rate_info;
  } __packed;
  

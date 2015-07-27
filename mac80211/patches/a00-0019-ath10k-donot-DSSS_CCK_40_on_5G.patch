@@ -1,6 +1,6 @@
 --- a/drivers/net/wireless/ath/ath10k/mac.c
 +++ b/drivers/net/wireless/ath/ath10k/mac.c
-@@ -6732,7 +6732,8 @@ static struct ieee80211_sta_ht_cap ath10
+@@ -6819,7 +6819,8 @@ static struct ieee80211_sta_ht_cap ath10
  	ht_cap.ampdu_factor = IEEE80211_HT_MAX_AMPDU_64K;
  	ht_cap.ampdu_density = IEEE80211_HT_MPDU_DENSITY_8;
  	ht_cap.cap |= IEEE80211_HT_CAP_SUP_WIDTH_20_40;

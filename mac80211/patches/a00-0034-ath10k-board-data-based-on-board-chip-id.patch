@@ -1,6 +1,6 @@
 --- a/drivers/net/wireless/ath/ath10k/core.c
 +++ b/drivers/net/wireless/ath/ath10k/core.c
-@@ -846,6 +846,46 @@ err:
+@@ -863,6 +863,46 @@ err:
  	return ret;
  }
  
@@ -47,9 +47,9 @@
  static int ath10k_core_fetch_firmware_files(struct ath10k *ar)
  {
  	int ret;
-@@ -853,10 +893,12 @@ static int ath10k_core_fetch_firmware_fi
- 	/* calibration file is optional, don't check for any errors */
- 	ath10k_fetch_cal_file(ar);
+@@ -871,10 +911,12 @@ static int ath10k_core_fetch_firmware_fi
+ 	if (!no_calfile)
+ 		ath10k_fetch_cal_file(ar);
  
 -	ret = ath10k_core_fetch_board_file(ar);
 -	if (ret) {
@@ -64,7 +64,7 @@
  	}
  
  	ar->fw_api = 5;
-@@ -897,6 +939,20 @@ static int ath10k_core_fetch_firmware_fi
+@@ -915,6 +957,20 @@ static int ath10k_core_fetch_firmware_fi
  success:
  	ath10k_dbg(ar, ATH10K_DBG_BOOT, "using fw api %d\n", ar->fw_api);
  
@@ -87,7 +87,7 @@
  
 --- a/drivers/net/wireless/ath/ath10k/core.h
 +++ b/drivers/net/wireless/ath/ath10k/core.h
-@@ -128,6 +128,14 @@ static inline u32 host_interest_item_add
+@@ -131,6 +131,14 @@ static inline u32 host_interest_item_add
  	return QCA988X_HOST_INTEREST_ADDRESS + item_offset;
  }
  
@@ -102,7 +102,7 @@
  struct ath10k_bmi {
  	bool done_sent;
  };
-@@ -621,6 +629,8 @@ struct ath10k {
+@@ -657,6 +665,8 @@ struct ath10k {
  	char spec_board_id[100];
  	bool spec_board_loaded;
  
@@ -113,7 +113,7 @@
  
 --- a/drivers/net/wireless/ath/ath10k/pci.c
 +++ b/drivers/net/wireless/ath/ath10k/pci.c
-@@ -2921,11 +2921,16 @@ static int ath10k_pci_probe(struct pci_d
+@@ -2935,11 +2935,16 @@ static int ath10k_pci_probe(struct pci_d
  	ar_pci->dev = &pdev->dev;
  	ar_pci->ar = ar;
  
