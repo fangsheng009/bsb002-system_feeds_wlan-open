@@ -1,3 +1,5 @@
+diff --git a/drivers/net/wireless/ath/ath10k/core.c b/drivers/net/wireless/ath/ath10k/core.c
+index fbda0ac..e3f629e 100644
 --- a/drivers/net/wireless/ath/ath10k/core.c
 +++ b/drivers/net/wireless/ath/ath10k/core.c
 @@ -34,16 +34,19 @@ unsigned int ath10k_debug_mask;
@@ -20,7 +22,7 @@
  
  static const struct ath10k_hw_params ath10k_hw_params_list[] = {
  	{
-@@ -937,6 +940,7 @@ static void ath10k_core_restart(struct w
+@@ -1019,6 +1022,7 @@ static void ath10k_core_restart(struct work_struct *work)
  	 */
  	barrier();
  
@@ -28,18 +30,24 @@
  	ieee80211_stop_queues(ar->hw);
  	ath10k_drain_tx(ar);
  	complete_all(&ar->scan.started);
+diff --git a/drivers/net/wireless/ath/ath10k/debug.c b/drivers/net/wireless/ath/ath10k/debug.c
+index df3cd5d..e126d82 100644
 --- a/drivers/net/wireless/ath/ath10k/debug.c
 +++ b/drivers/net/wireless/ath/ath10k/debug.c
-@@ -2261,3 +2261,47 @@ void ath10k_dbg_dump(struct ath10k *ar,
+@@ -25,6 +25,7 @@
+ #include "debug.h"
+ #include "hif.h"
+ #include "wmi-ops.h"
++#include "pci.h"
+ 
+ /* ms */
+ #define ATH10K_DEBUG_HTT_STATS_INTERVAL 1000
+@@ -2267,3 +2268,153 @@ void ath10k_dbg_dump(struct ath10k *ar,
  EXPORT_SYMBOL(ath10k_dbg_dump);
  
  #endif /* CPTCFG_ATH10K_DEBUG */
 +
-+#define ATH10K_FW_DRAM_LENGTH     0x00050000
-+#define ATH10K_FW_IO_MEM_ADDR     0x41400000
-+#define ATH10K_FW_IO_MEM_SIZE     ((1 * 1024 * 1024) - 128)
-+#define ATH10K_FW_READ_BLOCK      2048
-+void ath10k_dbg_bug_on_fw_assert(struct ath10k *ar)
++void ath10k_dbg_gen_bug_on_fw_assert(struct ath10k *ar)
 +{
 +	int ret, i, num_read;
 +	u8 *addr, *pos;
@@ -77,10 +85,122 @@
 +	ath10k_err(ar, "XXX: Asserting Host...\n");
 +	BUG();
 +}
++
++static const struct fw_mem_map qca99x0_fw_mem_map[] = {
++	{QCA99X0_DRAM_ADDR, QCA99X0_DRAM_LEN, 0},
++	{QCA99X0_SRAM_ADDR, QCA99X0_SRAM_LEN, ATTR_SRAM_MEM},
++	{QCA99X0_IRAM_ADDR, QCA99X0_IRAM_LEN, 0},
++	{QCA99X0_APB_REG_SPACE_1, QCA99X0_APB_REG_LEN_1, ATTR_REG_SPACE},
++	{QCA99X0_WIFI_REG_SPACE, QCA99X0_WIFI_REG_LEN, ATTR_REG_SPACE},
++	{QCA99X0_CE_REG_SPACE, QCA99X0_CE_REG_LEN, ATTR_REG_SPACE},
++	{QCA99X0_SOC_REG_SPACE, QCA99X0_SOC_REG_LEN, ATTR_REG_SPACE},
++	{QCA99X0_APB_REG_SPACE_2, QCA99X0_APB_REG_LEN_2, ATTR_REG_SPACE},
++};
++
++static int ath10k_dbg_qca99x0_fw_sram_dump(struct ath10k *ar, u32 sram_base,
++					   u8 *dst_buf, u32 len)
++{
++	struct ath10k_pci *ar_pci = ath10k_pci_priv(ar);
++	u32 base_addr, i;
++
++	base_addr = ioread32(ar_pci->mem + QCA99X0_PCIE_BAR0_START_REG);
++	base_addr += sram_base;
++
++	for (i = 0; i < len; i += 4) {
++		iowrite32(base_addr + i, ar_pci->mem + QCA99X0_CPU_MEM_ADDR_REG);
++		*(u32 *)(dst_buf + i) = ioread32(ar_pci->mem + QCA99X0_CPU_MEM_DATA_REG);
++	}
++
++	return 0;
++}
++
++static int ath10k_dbg_qca99x0_hw_reg_dump(struct ath10k *ar, u32 base_addr,
++				          u8 *dst_buf, u32 len)
++{
++	struct ath10k_pci *ar_pci = ath10k_pci_priv(ar);
++	u32 i;
++
++	for (i = 0; i < len; i += 4)
++		*(u32 *)(dst_buf + i) = ioread32(ar_pci->mem + base_addr + i);
++
++	return 0;
++}
++
++void ath10k_dbg_qca99x0_bug_on_fw_assert(struct ath10k *ar)
++{
++	u32 rd_addr, rd_len;
++	u8 *dump_addr, *pos, i;
++	int ret;
++
++	dump_addr = (u8 *)ioremap(ATH10K_FW_IO_MEM_REGION_2_ADDR,
++			          ATH10K_FW_IO_MEM_REGION_2_SIZE);
++	if (!dump_addr) {
++		ath10k_err(ar, "Cannot access memory to dump WLAN Firmware data\n");
++		return;
++	}
++
++	pos = dump_addr;
++	memset(dump_addr, 0, ATH10K_FW_IO_MEM_REGION_2_SIZE);
++
++	ath10k_err(ar, "Collecting WLAN Firmware Dump...\n");
++
++	for (i = 0; i < ARRAY_SIZE(qca99x0_fw_mem_map); i++) {
++		rd_addr = qca99x0_fw_mem_map[i].addr;
++		rd_len = qca99x0_fw_mem_map[i].len;
++
++		if ((pos + rd_len) >
++		    (dump_addr + ATH10K_FW_IO_MEM_REGION_2_SIZE)) {
++			ath10k_err(ar, "Memory overflow, stopping WLAN FW dump collection\n");
++                        iounmap(dump_addr);
++                        return;
++		}
++
++		switch(qca99x0_fw_mem_map[i].attr) {
++		case ATTR_SRAM_MEM:
++			ret = ath10k_dbg_qca99x0_fw_sram_dump(ar, rd_addr,
++							      pos, rd_len);
++			break;
++		case ATTR_REG_SPACE:
++			ret = ath10k_dbg_qca99x0_hw_reg_dump(ar, rd_addr,
++							     pos, rd_len);
++			break;
++		default:
++			ret = ath10k_hif_diag_read(ar, rd_addr,
++						   pos, rd_len);
++			break;
++		}
++
++                if (ret) {
++                        ath10k_err(ar, "Failed to read from WLAN target address 0x%x: %d\n",
++				   rd_addr, ret);
++                        iounmap(dump_addr);
++                        return;
++                }
++
++		pos += rd_len;
++	}
++
++        ath10k_err(ar, "Firmware dump collected successfully\n");
++        iounmap(dump_addr);
++
++        ath10k_err(ar, "XXX: Asserting Host...\n");
++        BUG();
++}
++
++void ath10k_dbg_bug_on_fw_assert(struct ath10k *ar)
++{
++	if (QCA_REV_99X0(ar))
++		ath10k_dbg_qca99x0_bug_on_fw_assert(ar);
++	else
++		ath10k_dbg_gen_bug_on_fw_assert(ar);
++}
++
 +EXPORT_SYMBOL(ath10k_dbg_bug_on_fw_assert);
+diff --git a/drivers/net/wireless/ath/ath10k/debug.h b/drivers/net/wireless/ath/ath10k/debug.h
+index 6729c01..93b5a70 100644
 --- a/drivers/net/wireless/ath/ath10k/debug.h
 +++ b/drivers/net/wireless/ath/ath10k/debug.h
-@@ -56,6 +56,7 @@ enum ath10k_dbg_aggr_mode {
+@@ -56,12 +56,63 @@ enum ath10k_dbg_aggr_mode {
  };
  
  extern unsigned int ath10k_debug_mask;
@@ -88,7 +208,63 @@
  
  __printf(2, 3) void ath10k_info(struct ath10k *ar, const char *fmt, ...);
  __printf(2, 3) void ath10k_err(struct ath10k *ar, const char *fmt, ...);
-@@ -139,6 +140,7 @@ ath10k_debug_get_new_fw_crash_data(struc
+ __printf(2, 3) void ath10k_warn(struct ath10k *ar, const char *fmt, ...);
+ void ath10k_print_driver_info(struct ath10k *ar);
+ 
++#define	ATTR_SRAM_MEM	BIT(0)
++#define	ATTR_REG_SPACE	BIT(1)
++
++struct fw_mem_map {
++	u32 addr;
++	u32 len;
++	u8 attr;
++};
++
++#define ATH10K_FW_DRAM_LENGTH          0x00050000
++#define ATH10K_FW_IO_MEM_ADDR          0x41400000
++#define ATH10K_FW_IO_MEM_SIZE          ((1 * 1024 * 1024) - 128)
++#define ATH10K_FW_READ_BLOCK           2048
++
++#define ATH10K_FW_IO_MEM_REGION_2_ADDR 0x44000000
++#define ATH10K_FW_IO_MEM_REGION_2_SIZE 0x00600000 /* 6 mb */
++
++#define QCA99X0_DRAM_ADDR              0x00400000
++#define QCA99X0_DRAM_LEN               0x00060000 /* 384 kb */
++
++#define QCA99X0_IRAM_ADDR              0x00980000
++#define QCA99X0_IRAM_LEN               0x00050000 /* 320 kb */
++
++#define QCA99X0_SRAM_ADDR              0x000C0000
++#define QCA99X0_SRAM_LEN               0x00040000 /* 256 kb */
++
++/* mac, wificmn, wifitimers (note: txpcu buf is not readable). */
++#define QCA99X0_APB_REG_SPACE_1        0x00030000
++#define QCA99X0_APB_REG_LEN_1          0x00007000 /* 28 kb */
++
++/* mac hw_sch, crypto, mxi */
++#define QCA99X0_APB_REG_SPACE_2        0x0003f000
++#define QCA99X0_APB_REG_LEN_2          0x00003000 /* 12 kb */
++
++/* wifi coex, wifi rtc */
++#define QCA99X0_WIFI_REG_SPACE         0x00043000
++#define QCA99X0_WIFI_REG_LEN           0x00003000 /* 12 kb */
++
++/* copy engine */
++#define QCA99X0_CE_REG_SPACE           0x0004A000
++#define QCA99X0_CE_REG_LEN             0x00005000 /* 20 kb */
++
++/* soc rtc, pcie, core */
++#define QCA99X0_SOC_REG_SPACE          0x00080000
++#define QCA99X0_SOC_REG_LEN            0x00006000 /* 24 kb */
++
++#define QCA99X0_PCIE_BAR0_START_REG    0x81030
++#define QCA99X0_CPU_MEM_ADDR_REG       0x4d00c
++#define QCA99X0_CPU_MEM_DATA_REG       0x4d010
++
+ #ifdef CPTCFG_ATH10K_DEBUGFS
+ int ath10k_debug_start(struct ath10k *ar);
+ void ath10k_debug_stop(struct ath10k *ar);
+@@ -139,6 +190,7 @@ ath10k_debug_get_new_fw_crash_data(struct ath10k *ar)
  void ath10k_sta_add_debugfs(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
  			    struct ieee80211_sta *sta, struct dentry *dir);
  #endif /* CPTCFG_MAC80211_DEBUGFS */
