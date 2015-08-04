@@ -43,6 +43,12 @@ define Package/$(PKG_NAME)/install
 		$(PKG_BUILD_DIR)/ath10k/QCA99X0/hw2.0/board-pci-0002-0001.bin  \
 	$(1)/lib/firmware/ath10k/QCA99X0/hw2.0/
 	$(INSTALL_BIN) \
+		$(PKG_BUILD_DIR)/ath10k/QCA99X0/hw2.0/board-pci-0004-0001.bin  \
+	$(1)/lib/firmware/ath10k/QCA99X0/hw2.0/
+	$(INSTALL_BIN) \
+		$(PKG_BUILD_DIR)/ath10k/QCA99X0/hw2.0/board-pci-0006-0001.bin  \
+	$(1)/lib/firmware/ath10k/QCA99X0/hw2.0/
+	$(INSTALL_BIN) \
 		$(PKG_BUILD_DIR)/10.4/firmware-5.bin_$(PKG_BL_FW_VERSION) \
 	$(1)/lib/firmware/ath10k/QCA99X0/hw2.0/firmware-5.bin
 endef
