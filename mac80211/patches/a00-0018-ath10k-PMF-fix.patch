@@ -1,6 +1,6 @@
 --- a/drivers/net/wireless/ath/ath10k/htt_tx.c
 +++ b/drivers/net/wireless/ath/ath10k/htt_tx.c
-@@ -345,6 +345,8 @@ int ath10k_htt_mgmt_tx(struct ath10k_htt
+@@ -417,6 +417,8 @@ int ath10k_htt_mgmt_tx(struct ath10k_htt
  	int len = 0;
  	int msdu_id = -1;
  	int res;
@@ -9,7 +9,7 @@
  
  	res = ath10k_htt_tx_inc_pending(htt);
  	if (res)
-@@ -362,6 +364,12 @@ int ath10k_htt_mgmt_tx(struct ath10k_htt
+@@ -434,6 +436,12 @@ int ath10k_htt_mgmt_tx(struct ath10k_htt
  	msdu_id = res;
  	spin_unlock_bh(&htt->tx_lock);
  
@@ -36,11 +36,11 @@
  
 --- a/drivers/net/wireless/ath/ath10k/wmi.h
 +++ b/drivers/net/wireless/ath/ath10k/wmi.h
-@@ -4552,6 +4552,7 @@ struct wmi_peer_set_q_empty_callback_cmd
+@@ -5460,6 +5460,7 @@ struct wmi_peer_set_q_empty_callback_cmd
  #define WMI_PEER_VHT            0x02000000
  #define WMI_PEER_80MHZ          0x04000000
  #define WMI_PEER_VHT_2G         0x08000000
 +#define WMI_PEER_MFP		0x10000000
- #define WMI_PEER_DISABLE_AMSDU_RESP 0x20000000
+ #define WMI_PEER_DISABLE_AMSDU_RESP ar->wmi.peer_dis_amsdu_resp
  
  /*
