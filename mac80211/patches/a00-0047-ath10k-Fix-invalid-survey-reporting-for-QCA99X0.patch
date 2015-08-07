@@ -1,0 +1,25 @@
+--- a/drivers/net/wireless/ath/ath10k/wmi.c
++++ b/drivers/net/wireless/ath/ath10k/wmi.c
+@@ -2443,8 +2443,10 @@ void ath10k_wmi_event_chan_info(struct a
+ 		ar->ch_info_can_report_survey = true;
+ 	}
+ 
+-	ar->survey_last_rx_clear_count = rx_clear_count;
+-	ar->survey_last_cycle_count = cycle_count;
++	if (!(cmd_flags & WMI_CHAN_INFO_FLAG_PRE_COMPLETE)) {
++		ar->survey_last_rx_clear_count = rx_clear_count;
++		ar->survey_last_cycle_count = cycle_count;
++	}
+ 
+ exit:
+ 	spin_unlock_bh(&ar->data_lock);
+--- a/drivers/net/wireless/ath/ath10k/wmi.h
++++ b/drivers/net/wireless/ath/ath10k/wmi.h
+@@ -5733,6 +5733,7 @@ struct wmi_peer_sta_kickout_event {
+ } __packed;
+ 
+ #define WMI_CHAN_INFO_FLAG_COMPLETE BIT(0)
++#define WMI_CHAN_INFO_FLAG_PRE_COMPLETE BIT(1)
+ 
+ /* Beacon filter wmi command info */
+ #define BCN_FLT_MAX_SUPPORTED_IES	256
