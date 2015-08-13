@@ -1,6 +1,6 @@
 --- a/drivers/net/wireless/ath/ath10k/core.c
 +++ b/drivers/net/wireless/ath/ath10k/core.c
-@@ -64,6 +64,7 @@ static const struct ath10k_hw_params ath
+@@ -67,6 +67,7 @@ static const struct ath10k_hw_params ath
  		.uart_pin = 7,
  		.has_shifted_cc_wraparound = true,
  		.otp_exe_param = 0,
@@ -8,7 +8,7 @@
  		.fw = {
  			.dir = QCA988X_HW_2_0_FW_DIR,
  			.fw = QCA988X_HW_2_0_FW_FILE,
-@@ -79,6 +80,7 @@ static const struct ath10k_hw_params ath
+@@ -82,6 +83,7 @@ static const struct ath10k_hw_params ath
  		.patch_load_addr = QCA6174_HW_2_1_PATCH_LOAD_ADDR,
  		.uart_pin = 6,
  		.otp_exe_param = 0,
@@ -16,7 +16,7 @@
  		.fw = {
  			.dir = QCA6174_HW_2_1_FW_DIR,
  			.fw = QCA6174_HW_2_1_FW_FILE,
-@@ -94,6 +96,7 @@ static const struct ath10k_hw_params ath
+@@ -97,6 +99,7 @@ static const struct ath10k_hw_params ath
  		.patch_load_addr = QCA6174_HW_3_0_PATCH_LOAD_ADDR,
  		.uart_pin = 6,
  		.otp_exe_param = 0,
@@ -24,7 +24,7 @@
  		.fw = {
  			.dir = QCA6174_HW_3_0_FW_DIR,
  			.fw = QCA6174_HW_3_0_FW_FILE,
-@@ -109,6 +112,7 @@ static const struct ath10k_hw_params ath
+@@ -112,6 +115,7 @@ static const struct ath10k_hw_params ath
  		.patch_load_addr = QCA6174_HW_3_0_PATCH_LOAD_ADDR,
  		.uart_pin = 6,
  		.otp_exe_param = 0,
@@ -32,7 +32,7 @@
  		.fw = {
  			/* uses same binaries as hw3.0 */
  			.dir = QCA6174_HW_3_0_FW_DIR,
-@@ -128,6 +132,7 @@ static const struct ath10k_hw_params ath
+@@ -131,6 +135,7 @@ static const struct ath10k_hw_params ath
  		.continuous_frag_desc = true,
  		.pktlog_ce_found = true,
  		.pktlog_ce = 8,
@@ -42,7 +42,7 @@
  			.fw = QCA99X0_HW_2_0_FW_FILE,
 --- a/drivers/net/wireless/ath/ath10k/core.h
 +++ b/drivers/net/wireless/ath/ath10k/core.h
-@@ -633,6 +633,8 @@ struct ath10k {
+@@ -654,6 +654,8 @@ struct ath10k {
  		u8 pktlog_ce;
  		bool pktlog_ce_found;
  
@@ -53,7 +53,7 @@
  			const char *fw;
 --- a/drivers/net/wireless/ath/ath10k/hw.h
 +++ b/drivers/net/wireless/ath/ath10k/hw.h
-@@ -571,8 +571,7 @@ enum ath10k_hw_rate_cck {
+@@ -568,8 +568,7 @@ enum ath10k_hw_rate_cck {
  #define SCRATCH_3_ADDRESS			ar->regs->scratch_3_address
  #define CPU_INTR_ADDRESS			0x0010
  

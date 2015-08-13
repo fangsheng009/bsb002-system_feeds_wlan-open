@@ -9,9 +9,9 @@
  
  	res = ath10k_htt_tx_inc_pending(htt);
  	if (res)
-@@ -434,6 +436,12 @@ int ath10k_htt_mgmt_tx(struct ath10k_htt
+@@ -433,6 +435,12 @@ int ath10k_htt_mgmt_tx(struct ath10k_htt
+ 	}
  	msdu_id = res;
- 	spin_unlock_bh(&htt->tx_lock);
  
 +	if ((ieee80211_is_action(hdr->frame_control) ||
 +	    ieee80211_is_deauth(hdr->frame_control) ||
@@ -24,7 +24,7 @@
  		res = -ENOMEM;
 --- a/drivers/net/wireless/ath/ath10k/mac.c
 +++ b/drivers/net/wireless/ath/ath10k/mac.c
-@@ -2469,6 +2469,9 @@ static int ath10k_peer_assoc_prepare(str
+@@ -2476,6 +2476,9 @@ static int ath10k_peer_assoc_prepare(str
  	ath10k_peer_assoc_h_qos(ar, vif, sta, arg);
  	ath10k_peer_assoc_h_phymode(ar, vif, sta, arg);
  

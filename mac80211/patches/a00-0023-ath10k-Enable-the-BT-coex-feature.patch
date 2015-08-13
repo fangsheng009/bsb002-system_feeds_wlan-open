@@ -1,6 +1,6 @@
 --- a/drivers/net/wireless/ath/ath10k/wmi.c
 +++ b/drivers/net/wireless/ath/ath10k/wmi.c
-@@ -4027,7 +4027,7 @@ static struct sk_buff *ath10k_wmi_10_2_o
+@@ -4966,7 +4966,7 @@ static struct sk_buff *ath10k_wmi_10_2_o
  	cmd = (struct wmi_init_cmd_10_2 *)buf->data;
  
  	features = WMI_10_2_RX_BATCH_MODE;
@@ -11,15 +11,15 @@
  
 --- a/drivers/net/wireless/ath/ath10k/core.c
 +++ b/drivers/net/wireless/ath/ath10k/core.c
-@@ -37,6 +37,7 @@ static bool skip_otp;
+@@ -38,6 +38,7 @@ static bool skip_otp;
  static bool no_calfile = 1;
  bool bug_on_fw_assert = true;
  bool ath10k_enable_smart_antenna = false;
 +bool ath10k_bt_coex = false;
  
  module_param_named(debug_mask, ath10k_debug_mask, uint, 0644);
- module_param(uart_print, bool, 0644);
-@@ -45,6 +46,7 @@ module_param(no_calfile, bool, 0644);
+ module_param_named(cryptmode, ath10k_cryptmode_param, uint, 0644);
+@@ -47,6 +48,7 @@ module_param(no_calfile, bool, 0644);
  module_param(bug_on_fw_assert, bool, 0644);
  module_param_named(enable_smart_antenna, ath10k_enable_smart_antenna,
  		   bool, 0644);
@@ -27,7 +27,7 @@
  
  MODULE_PARM_DESC(debug_mask, "Debugging mask");
  MODULE_PARM_DESC(uart_print, "Uart target debugging");
-@@ -52,6 +54,7 @@ MODULE_PARM_DESC(skip_otp, "Skip otp fai
+@@ -55,6 +57,7 @@ MODULE_PARM_DESC(cryptmode, "Crypto mode
  MODULE_PARM_DESC(no_calfile, "Do not try to download calibration files");
  MODULE_PARM_DESC(bug_on_fw_assert, "Bug on firmware assert");
  MODULE_PARM_DESC(enable_smart_antenna, "Enable smart antenna supprot in fw");
@@ -37,7 +37,7 @@
  	{
 --- a/drivers/net/wireless/ath/ath10k/core.h
 +++ b/drivers/net/wireless/ath/ath10k/core.h
-@@ -787,6 +787,8 @@ static inline bool ath10k_smart_ant_enab
+@@ -833,6 +833,8 @@ static inline bool ath10k_smart_ant_enab
  	return true;
  }
  

@@ -1,7 +1,7 @@
 --- a/drivers/net/wireless/ath/ath10k/pci.c
 +++ b/drivers/net/wireless/ath/ath10k/pci.c
-@@ -1511,6 +1511,8 @@ static void ath10k_pci_hif_stop(struct a
- 	ath10k_pci_warm_reset(ar);
+@@ -1632,6 +1632,8 @@ static void ath10k_pci_hif_stop(struct a
+ 	ath10k_pci_safe_chip_reset(ar);
  
  	ath10k_pci_irq_disable(ar);
 +	if (ar->hw_rev == ATH10K_HW_QCA988X)
@@ -9,7 +9,7 @@
  	ath10k_pci_irq_sync(ar);
  	ath10k_pci_flush(ar);
  
-@@ -2141,6 +2143,14 @@ static int ath10k_pci_hif_power_up(struc
+@@ -2302,6 +2304,14 @@ static int ath10k_pci_hif_power_up(struc
  
  	ath10k_dbg(ar, ATH10K_DBG_BOOT, "boot hif power up\n");
  

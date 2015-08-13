@@ -1,8 +1,6 @@
-diff --git a/drivers/net/wireless/ath/ath10k/core.c b/drivers/net/wireless/ath/ath10k/core.c
-index 6257923..c11afcf 100644
 --- a/drivers/net/wireless/ath/ath10k/core.c
 +++ b/drivers/net/wireless/ath/ath10k/core.c
-@@ -1449,13 +1449,13 @@ int ath10k_wait_for_suspend(struct ath10k *ar, u32 suspend_opt)
+@@ -1491,13 +1491,13 @@ int ath10k_wait_for_suspend(struct ath10
  void ath10k_core_stop(struct ath10k *ar)
  {
  	lockdep_assert_held(&ar->conf_mutex);

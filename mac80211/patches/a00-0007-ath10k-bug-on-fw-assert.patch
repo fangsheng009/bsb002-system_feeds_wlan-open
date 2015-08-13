@@ -1,14 +1,13 @@
-diff --git a/drivers/net/wireless/ath/ath10k/core.c b/drivers/net/wireless/ath/ath10k/core.c
-index fbda0ac..e3f629e 100644
 --- a/drivers/net/wireless/ath/ath10k/core.c
 +++ b/drivers/net/wireless/ath/ath10k/core.c
-@@ -34,16 +34,19 @@ unsigned int ath10k_debug_mask;
+@@ -35,18 +35,21 @@ static unsigned int ath10k_cryptmode_par
  static bool uart_print;
  static bool skip_otp;
  static bool no_calfile = 1;
 +bool bug_on_fw_assert = true;
  
  module_param_named(debug_mask, ath10k_debug_mask, uint, 0644);
+ module_param_named(cryptmode, ath10k_cryptmode_param, uint, 0644);
  module_param(uart_print, bool, 0644);
  module_param(skip_otp, bool, 0644);
  module_param(no_calfile, bool, 0644);
@@ -17,12 +16,13 @@ index fbda0ac..e3f629e 100644
  MODULE_PARM_DESC(debug_mask, "Debugging mask");
  MODULE_PARM_DESC(uart_print, "Uart target debugging");
  MODULE_PARM_DESC(skip_otp, "Skip otp failure for calibration in testmode");
+ MODULE_PARM_DESC(cryptmode, "Crypto mode: 0-hardware, 1-software");
  MODULE_PARM_DESC(no_calfile, "Do not try to download calibration files");
 +MODULE_PARM_DESC(bug_on_fw_assert, "Bug on firmware assert");
  
  static const struct ath10k_hw_params ath10k_hw_params_list[] = {
  	{
-@@ -1019,6 +1022,7 @@ static void ath10k_core_restart(struct work_struct *work)
+@@ -1022,6 +1025,7 @@ static void ath10k_core_restart(struct w
  	 */
  	barrier();
  
@@ -30,8 +30,6 @@ index fbda0ac..e3f629e 100644
  	ieee80211_stop_queues(ar->hw);
  	ath10k_drain_tx(ar);
  	complete_all(&ar->scan.started);
-diff --git a/drivers/net/wireless/ath/ath10k/debug.c b/drivers/net/wireless/ath/ath10k/debug.c
-index df3cd5d..e126d82 100644
 --- a/drivers/net/wireless/ath/ath10k/debug.c
 +++ b/drivers/net/wireless/ath/ath10k/debug.c
 @@ -25,6 +25,7 @@
@@ -42,7 +40,7 @@ index df3cd5d..e126d82 100644
  
  /* ms */
  #define ATH10K_DEBUG_HTT_STATS_INTERVAL 1000
-@@ -2267,3 +2268,153 @@ void ath10k_dbg_dump(struct ath10k *ar,
+@@ -2262,3 +2263,153 @@ void ath10k_dbg_dump(struct ath10k *ar,
  EXPORT_SYMBOL(ath10k_dbg_dump);
  
  #endif /* CPTCFG_ATH10K_DEBUG */
@@ -196,8 +194,6 @@ index df3cd5d..e126d82 100644
 +}
 +
 +EXPORT_SYMBOL(ath10k_dbg_bug_on_fw_assert);
-diff --git a/drivers/net/wireless/ath/ath10k/debug.h b/drivers/net/wireless/ath/ath10k/debug.h
-index 6729c01..93b5a70 100644
 --- a/drivers/net/wireless/ath/ath10k/debug.h
 +++ b/drivers/net/wireless/ath/ath10k/debug.h
 @@ -56,12 +56,63 @@ enum ath10k_dbg_aggr_mode {
@@ -264,7 +260,7 @@ index 6729c01..93b5a70 100644
  #ifdef CPTCFG_ATH10K_DEBUGFS
  int ath10k_debug_start(struct ath10k *ar);
  void ath10k_debug_stop(struct ath10k *ar);
-@@ -139,6 +190,7 @@ ath10k_debug_get_new_fw_crash_data(struct ath10k *ar)
+@@ -139,6 +190,7 @@ ath10k_debug_get_new_fw_crash_data(struc
  void ath10k_sta_add_debugfs(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
  			    struct ieee80211_sta *sta, struct dentry *dir);
  #endif /* CPTCFG_MAC80211_DEBUGFS */

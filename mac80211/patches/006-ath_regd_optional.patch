@@ -58,7 +58,7 @@
  	---help---
 --- a/.local-symbols
 +++ b/.local-symbols
-@@ -88,6 +88,7 @@ MWL8K=
+@@ -92,6 +92,7 @@ MWL8K=
  ATH_COMMON=
  ATH_CARDS=
  ATH_DEBUG=

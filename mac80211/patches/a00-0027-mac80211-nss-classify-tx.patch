@@ -12,9 +12,9 @@
  /* misc utils */
  
  static inline void ieee80211_tx_stats(struct net_device *dev, u32 len)
-@@ -2939,6 +2944,25 @@ netdev_tx_t ieee80211_subif_start_xmit(s
+@@ -2934,6 +2939,25 @@ netdev_tx_t ieee80211_subif_start_xmit(s
  
- 	if (ieee80211_queues_stopped(&local->hw))
+ 	if (ieee80211_queues_stopped(&local->hw, sdata))
  		return NETDEV_TX_BUSY;
 +	/* Packets from NSS does not have valid protocol, priority and other
 +	 * network stack values. Derive required parameters (priority

@@ -1,6 +1,6 @@
 --- a/drivers/net/wireless/ath/ath10k/wmi.c
 +++ b/drivers/net/wireless/ath/ath10k/wmi.c
-@@ -4458,7 +4458,7 @@ static void ath10k_wmi_10_4_op_rx(struct
+@@ -4557,7 +4557,7 @@ static void ath10k_wmi_10_4_op_rx(struct
  		break;
  	case WMI_10_4_DEBUG_MESG_EVENTID:
  		ath10k_wmi_event_debug_mesg(ar, skb);
@@ -8,4 +8,4 @@
 +		return;
  	case WMI_10_4_SERVICE_READY_EVENTID:
  		ath10k_wmi_event_service_ready(ar, skb);
- 		break;
+ 		return;
