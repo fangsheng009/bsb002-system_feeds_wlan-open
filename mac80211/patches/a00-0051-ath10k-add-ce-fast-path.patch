@@ -1,0 +1,349 @@
+--- a/drivers/net/wireless/ath/ath10k/ce.c
++++ b/drivers/net/wireless/ath/ath10k/ce.c
+@@ -19,6 +19,7 @@
+ #include "pci.h"
+ #include "ce.h"
+ #include "debug.h"
++#include "htt.h"
+ 
+ /*
+  * Support for Copy Engine hardware, which is mainly used for
+@@ -457,13 +458,9 @@ int ath10k_ce_completed_recv_next_nolock
+ 
+ 	struct ce_desc *base = dest_ring->base_addr_owner_space;
+ 	struct ce_desc *desc = CE_DEST_RING_TO_DESC(base, sw_index);
+-	struct ce_desc sdesc;
+ 	u16 nbytes;
+ 
+-	/* Copy in one go for performance reasons */
+-	sdesc = *desc;
+-
+-	nbytes = __le16_to_cpu(sdesc.nbytes);
++	nbytes = __le16_to_cpu(desc->nbytes);
+ 	if (nbytes == 0) {
+ 		/*
+ 		 * This closes a relatively unusual race where the Host
+@@ -474,18 +471,18 @@ int ath10k_ce_completed_recv_next_nolock
+ 		return -EIO;
+ 	}
+ 
+-	desc->nbytes = 0;
+-
+ 	/* Return data from completed destination descriptor */
+-	*bufferp = __le32_to_cpu(sdesc.addr);
++	*bufferp = __le32_to_cpu(desc->addr);
+ 	*nbytesp = nbytes;
+-	*transfer_idp = MS(__le16_to_cpu(sdesc.flags), CE_DESC_FLAGS_META_DATA);
++	*transfer_idp = MS(__le16_to_cpu(desc->flags), CE_DESC_FLAGS_META_DATA);
+ 
+-	if (__le16_to_cpu(sdesc.flags) & CE_DESC_FLAGS_BYTE_SWAP)
++	if (__le16_to_cpu(desc->flags) & CE_DESC_FLAGS_BYTE_SWAP)
+ 		*flagsp = CE_RECV_FLAG_SWAPPED;
+ 	else
+ 		*flagsp = 0;
+ 
++	desc->nbytes = 0;
++
+ 	if (per_transfer_contextp)
+ 		*per_transfer_contextp =
+ 			dest_ring->per_transfer_context[sw_index];
+@@ -722,7 +719,8 @@ int ath10k_ce_completed_send_next(struct
+  * Invokes registered callbacks for recv_complete,
+  * send_complete, and watermarks.
+  */
+-void ath10k_ce_per_engine_service(struct ath10k *ar, unsigned int ce_id)
++void ath10k_ce_per_engine_service(struct ath10k *ar, unsigned int ce_id,
++				  bool skip_rx)
+ {
+ 	struct ath10k_pci *ar_pci = ath10k_pci_priv(ar);
+ 	struct ath10k_ce_pipe *ce_state = &ar_pci->ce_states[ce_id];
+@@ -736,7 +734,7 @@ void ath10k_ce_per_engine_service(struct
+ 
+ 	spin_unlock_bh(&ar_pci->ce_lock);
+ 
+-	if (ce_state->recv_cb)
++	if (!skip_rx && ce_state->recv_cb)
+ 		ce_state->recv_cb(ce_state);
+ 
+ 	if (ce_state->send_cb)
+@@ -753,6 +751,83 @@ void ath10k_ce_per_engine_service(struct
+ 	spin_unlock_bh(&ar_pci->ce_lock);
+ }
+ 
++void ath10k_ce_per_engine_service_fast(struct ath10k *ar)
++{
++	struct ath10k_pci *ar_pci = ath10k_pci_priv(ar);
++	struct ath10k_ce_pipe *ce_state = &ar_pci->ce_states[CE_HTT_MSG_CE];
++	struct ath10k_pci_pipe *pipe_info =  &ar_pci->pipe_info[ce_state->id];
++	struct sk_buff *skb;
++	struct sk_buff_head list;
++	void *transfer_context;
++	u32 ctrl_addr = ce_state->ctrl_addr;
++	u32 ce_data, queue_len;
++	unsigned int nbytes, max_nbytes;
++	unsigned int transfer_id;
++	unsigned int flags;
++	int rx_ce_list[] = {1, 2};
++	int i, ce_id;
++
++	/* Clear the copy-complete interrupts that will be handled here. */
++	ath10k_ce_engine_int_status_clear(ar, ctrl_addr,
++					  HOST_IS_COPY_COMPLETE_MASK);
++	/* Service CE 5 (HTT Target->Host) */
++	__skb_queue_head_init(&list);
++	while (ath10k_ce_completed_recv_next(ce_state, &transfer_context,
++					     &ce_data, &nbytes, &transfer_id,
++					     &flags) == 0) {
++		skb = transfer_context;
++		max_nbytes = skb->len + skb_tailroom(skb);
++		dma_unmap_single(ar->dev, ATH10K_SKB_RXCB(skb)->paddr,
++				 max_nbytes, DMA_FROM_DEVICE);
++
++		if (unlikely(max_nbytes < nbytes)) {
++			ath10k_warn(ar, "rxed more than expected (nbytes %d, max %d)",
++				    nbytes, max_nbytes);
++			dev_kfree_skb_any(skb);
++			continue;
++		}
++
++		skb_put(skb, nbytes);
++		__skb_queue_tail(&list, skb);
++	}
++
++	queue_len = skb_queue_len(&list);
++	while ((skb = __skb_dequeue(&list))) {
++		skb_pull(skb, sizeof(struct ath10k_htc_hdr));
++		ath10k_htt_t2h_msg_handler(ar, skb);
++	}
++	ath10k_pci_rx_post_pipe(pipe_info);
++
++	ce_state = &ar_pci->ce_states[CE_HTT_TX_CE];
++	if (ce_state->send_cb)
++		ce_state->send_cb(ce_state);
++
++	/* process rx CE list */
++	for (i = 0; i < CE_NUM_RX_CE; i++) {
++		ce_id = rx_ce_list[i];
++		ce_state = &ar_pci->ce_states[ce_id];
++		ctrl_addr = ce_state->ctrl_addr;
++		ath10k_ce_engine_int_status_clear(ar, ctrl_addr,
++						  HOST_IS_COPY_COMPLETE_MASK);
++		if (ce_state->recv_cb)
++			ce_state->recv_cb(ce_state);
++	}
++
++	/* process tx CE */
++	ce_state = &ar_pci->ce_states[CE_WMI_TX_CE];
++	ctrl_addr = ce_state->ctrl_addr;
++	ath10k_ce_engine_int_status_clear(ar, ctrl_addr,
++					  HOST_IS_COPY_COMPLETE_MASK);
++	if (ce_state->send_cb)
++		ce_state->send_cb(ce_state);
++
++	/* clear the interrupt source for all other CE's */
++	ce_state = &ar_pci->ce_states[0];
++	ctrl_addr = ce_state->ctrl_addr;
++	ath10k_ce_engine_int_status_clear(ar, ctrl_addr,
++					  HOST_IS_COPY_COMPLETE_MASK);
++}
++
+ /*
+  * Handler for per-engine interrupts on ALL active CEs.
+  * This is used in cases where the system is sharing a
+@@ -773,7 +848,7 @@ void ath10k_ce_per_engine_service_any(st
+ 			/* no intr pending on this CE */
+ 			continue;
+ 
+-		ath10k_ce_per_engine_service(ar, ce_id);
++		ath10k_ce_per_engine_service(ar, ce_id, false);
+ 	}
+ }
+ 
+--- a/drivers/net/wireless/ath/ath10k/ce.h
++++ b/drivers/net/wireless/ath/ath10k/ce.h
+@@ -28,6 +28,10 @@
+ #define CE_DESC_RING_ALIGN	8
+ #define CE_SEND_FLAG_GATHER	0x00010000
+ 
++#define CE_HTT_MSG_CE	5
++#define CE_HTT_TX_CE	4
++#define CE_NUM_RX_CE	2
++#define CE_WMI_TX_CE	3
+ /*
+  * Copy Engine support: low-level Target-side Copy Engine API.
+  * This is a hardware access layer used by code that understands
+@@ -243,8 +247,10 @@ int ath10k_ce_cancel_send_next(struct at
+ 			       unsigned int *transfer_idp);
+ 
+ /*==================CE Interrupt Handlers====================*/
++void ath10k_ce_per_engine_service_fast(struct ath10k *ar);
+ void ath10k_ce_per_engine_service_any(struct ath10k *ar);
+-void ath10k_ce_per_engine_service(struct ath10k *ar, unsigned int ce_id);
++void ath10k_ce_per_engine_service(struct ath10k *ar, unsigned int ce_id,
++				  bool skip_rx);
+ int ath10k_ce_disable_interrupts(struct ath10k *ar);
+ void ath10k_ce_enable_interrupts(struct ath10k *ar);
+ 
+--- a/drivers/net/wireless/ath/ath10k/core.h
++++ b/drivers/net/wireless/ath/ath10k/core.h
+@@ -833,6 +833,7 @@ struct ath10k {
+ 
+ 	struct ath10k_thermal thermal;
+ 	struct ath10k_wow wow;
++	void (*service_intr)(struct ath10k *);
+ 
+ 	struct work_struct fwlog_tx_work;
+ 	struct sk_buff_head fwlog_tx_queue;
+--- a/drivers/net/wireless/ath/ath10k/fwlog.c
++++ b/drivers/net/wireless/ath/ath10k/fwlog.c
+@@ -1457,6 +1457,12 @@ static void ath10k_fwlog_print_work(stru
+ 
+ void ath10k_handle_fwlog_msg(struct ath10k *ar, struct sk_buff *skb) {
+ 
++	if (!test_bit(ATH10K_FLAG_CORE_REGISTERED, &ar->dev_flags)) {
++		ath10k_warn(ar, "ignoring fwlog event!!!\n");
++		dev_kfree_skb(skb);
++		return;
++	}
++
+ 	if (skb_queue_len(&ar->fwlog_tx_queue) >= ATH10K_FWLOG_MAX_EVT_QUEUE) {
+ 		ath10k_warn(ar, "reached fwlog  queue limit\n");
+ 		dev_kfree_skb(skb);
+--- a/drivers/net/wireless/ath/ath10k/htt_rx.c
++++ b/drivers/net/wireless/ath/ath10k/htt_rx.c
+@@ -2091,6 +2091,7 @@ void ath10k_htt_t2h_msg_handler(struct a
+ 	/* Free the indication buffer */
+ 	dev_kfree_skb_any(skb);
+ }
++EXPORT_SYMBOL(ath10k_htt_t2h_msg_handler);
+ 
+ static void ath10k_htt_txrx_compl_task(unsigned long ptr)
+ {
+--- a/drivers/net/wireless/ath/ath10k/pci.c
++++ b/drivers/net/wireless/ath/ath10k/pci.c
+@@ -46,6 +46,7 @@ enum ath10k_pci_reset_mode {
+ 
+ static unsigned int ath10k_pci_irq_mode = ATH10K_PCI_IRQ_AUTO;
+ static unsigned int ath10k_pci_reset_mode = ATH10K_PCI_RESET_AUTO;
++static unsigned int ath10k_use_fast_path = 0;
+ 
+ module_param_named(irq_mode, ath10k_pci_irq_mode, uint, 0644);
+ MODULE_PARM_DESC(irq_mode, "0: auto, 1: legacy, 2: msi (default: 0)");
+@@ -53,6 +54,9 @@ MODULE_PARM_DESC(irq_mode, "0: auto, 1:
+ module_param_named(reset_mode, ath10k_pci_reset_mode, uint, 0644);
+ MODULE_PARM_DESC(reset_mode, "0: auto, 1: warm only (default: 0)");
+ 
++module_param_named(use_fast_path, ath10k_use_fast_path, uint, 0644);
++MODULE_PARM_DESC(use_fast_path, "0: regular, 1: fast path (default: 0)");
++
+ /* how long wait to wait for target to initialise, in ms */
+ #define ATH10K_PCI_TARGET_WAIT 3000
+ #define ATH10K_PCI_NUM_WARM_RESET_ATTEMPTS 3
+@@ -95,7 +99,7 @@ static int ath10k_pci_bmi_wait(struct at
+ 			       struct bmi_xfer *xfer);
+ static int ath10k_pci_qca99x0_chip_reset(struct ath10k *ar);
+ 
+-static const struct ce_attr host_ce_config_wlan[] = {
++static struct ce_attr host_ce_config_wlan[] = {
+ 	/* CE0: host->target HTC control and raw streams */
+ 	{
+ 		.flags = CE_ATTR_FLAGS,
+@@ -194,7 +198,7 @@ static const struct ce_attr host_ce_conf
+ };
+ 
+ /* Target firmware's Copy Engine configuration. */
+-static const struct ce_pipe_config target_ce_config_wlan[] = {
++static struct ce_pipe_config target_ce_config_wlan[] = {
+ 	/* CE0: host->target HTC control and raw streams */
+ 	{
+ 		.pipenum = __cpu_to_le32(0),
+@@ -307,7 +311,7 @@ static const struct ce_pipe_config targe
+  * This table is derived from the CE_PCI TABLE, above.
+  * It is passed to the Target at startup for use by firmware.
+  */
+-static const struct service_to_pipe target_service_to_ce_map_wlan[] = {
++static struct service_to_pipe target_service_to_ce_map_wlan[] = {
+ 	{
+ 		__cpu_to_le32(ATH10K_HTC_SVC_ID_WMI_DATA_VO),
+ 		__cpu_to_le32(PIPEDIR_OUT),	/* out = UL = host -> target */
+@@ -732,7 +736,7 @@ static void __ath10k_pci_rx_post_pipe(st
+ 	}
+ }
+ 
+-static void ath10k_pci_rx_post_pipe(struct ath10k_pci_pipe *pipe)
++void ath10k_pci_rx_post_pipe(struct ath10k_pci_pipe *pipe)
+ {
+ 	struct ath10k *ar = pipe->hif_ce_state;
+ 	struct ath10k_pci *ar_pci = ath10k_pci_priv(ar);
+@@ -1337,7 +1341,7 @@ static void ath10k_pci_hif_send_complete
+ 		if (resources > (host_ce_config_wlan[pipe].src_nentries >> 1))
+ 			return;
+ 	}
+-	ath10k_ce_per_engine_service(ar, pipe);
++	ath10k_ce_per_engine_service(ar, pipe, true);
+ }
+ 
+ static void ath10k_pci_hif_set_callbacks(struct ath10k *ar,
+@@ -1996,8 +2000,22 @@ static int ath10k_pci_alloc_pipes(struct
+ {
+ 	struct ath10k_pci *ar_pci = ath10k_pci_priv(ar);
+ 	struct ath10k_pci_pipe *pipe;
++	struct ce_attr *attr;
++	struct ce_pipe_config *config;
+ 	int i, ret;
+ 
++	if (ath10k_use_fast_path) {
++		attr = &host_ce_config_wlan[CE_HTT_MSG_CE];
++		attr->src_sz_max = 512;
++		attr->dest_nentries = 512;
++
++		config = &target_ce_config_wlan[CE_HTT_MSG_CE];
++		config->pipedir = __cpu_to_le32(PIPEDIR_IN);
++		config->nbytes_max = __cpu_to_le32(512);
++
++		target_service_to_ce_map_wlan[15].pipenum = __cpu_to_le32(5);
++	}
++
+ 	for (i = 0; i < CE_COUNT; i++) {
+ 		pipe = &ar_pci->pipe_info[i];
+ 		pipe->ce_hdl = &ar_pci->ce_states[i];
+@@ -2452,7 +2470,7 @@ static void ath10k_pci_ce_tasklet(unsign
+ 	struct ath10k_pci_pipe *pipe = (struct ath10k_pci_pipe *)ptr;
+ 	struct ath10k_pci *ar_pci = pipe->ar_pci;
+ 
+-	ath10k_ce_per_engine_service(ar_pci->ar, pipe->pipe_num);
++	ath10k_ce_per_engine_service(ar_pci->ar, pipe->pipe_num, false);
+ }
+ 
+ static void ath10k_msi_err_tasklet(unsigned long data)
+@@ -2540,7 +2558,7 @@ static void ath10k_pci_tasklet(unsigned
+ 		return;
+ 	}
+ 
+-	ath10k_ce_per_engine_service_any(ar);
++	ar->service_intr(ar);
+ 
+ 	/* Re-enable legacy irq that was disabled in the irq handler */
+ 	if (ar_pci->num_msi_intrs == 0)
+@@ -2651,6 +2669,11 @@ static void ath10k_pci_init_irq_tasklets
+ 	tasklet_init(&ar_pci->msi_fw_err, ath10k_msi_err_tasklet,
+ 		     (unsigned long)ar);
+ 
++	if (ath10k_use_fast_path)
++		ar->service_intr = ath10k_ce_per_engine_service_fast;
++	else
++		ar->service_intr = ath10k_ce_per_engine_service_any;
++
+ 	for (i = 0; i < CE_COUNT; i++) {
+ 		ar_pci->pipe_info[i].ar_pci = ar_pci;
+ 		tasklet_init(&ar_pci->pipe_info[i].intr, ath10k_pci_ce_tasklet,
+--- a/drivers/net/wireless/ath/ath10k/pci.h
++++ b/drivers/net/wireless/ath/ath10k/pci.h
+@@ -249,6 +249,7 @@ u32 ath10k_pci_read32(struct ath10k *ar,
+ u32 ath10k_pci_soc_read32(struct ath10k *ar, u32 addr);
+ u32 ath10k_pci_reg_read32(struct ath10k *ar, u32 addr);
+ 
++void ath10k_pci_rx_post_pipe(struct ath10k_pci_pipe *pipe);
+ /* QCA6174 is known to have Tx/Rx issues when SOC_WAKE register is poked too
+  * frequently. To avoid this put SoC to sleep after a very conservative grace
+  * period. Adjust with great care.
