@@ -1,12 +1,11 @@
 #
 # Copyright (c) 2014 The Linux Foundation. All rights reserved.
 #
-
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ath10k-firmware
-PKG_FW_VERSION:=10.2.4.70.6-1
-PKG_BL_FW_VERSION:=10.4.1.00007-1
+PKG_FW_VERSION:=10.2.4.94-1
+PKG_BL_FW_VERSION:=10.4.1.00021-1
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
 PKG_RELEASE:=1
 
