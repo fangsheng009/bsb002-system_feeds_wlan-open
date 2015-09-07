@@ -77,6 +77,11 @@ define KernelPackage/mac80211/config
 		  like AP148.
     endif
 
+	config PACKAGE_ATH10K_SMART_ANT_ALG
+		bool "Enable Smart Antenna algorithm"
+		default n
+		help
+		  This enables the smart antenna algorithm to select the best antenna combination
 	config PACKAGE_MAC80211_DEBUGFS
 		bool "Export mac80211 internals in DebugFS"
 		select KERNEL_DEBUG_FS
@@ -359,6 +364,7 @@ config-$(CONFIG_PACKAGE_MAC80211_STA_DEBUG) += MAC80211_STA_DEBUG
 config-$(CONFIG_PACKAGE_MAC80211_HT_DEBUG) += MAC80211_HT_DEBUG
 config-$(CONFIG_PACKAGE_MAC80211_IBSS_DEBUG) += MAC80211_IBSS_DEBUG
 config-$(CONFIG_PACKAGE_MAC80211_PS_DEBUG) += MAC80211_PS_DEBUG
+config-$(CONFIG_PACKAGE_ATH10K_SMART_ANT_ALG) += ATH10K_SMART_ANT_ALG
 
 config-$(call config_package,ath) += ATH_CARDS ATH_COMMON
 config-$(CONFIG_PACKAGE_ATH_DEBUG) += ATH_DEBUG ATH10K_DEBUG HWMON
@@ -374,7 +380,7 @@ config-$(CONFIG_ATH_USER_REGD) += ATH_USER_REGD \
 config-$(call config_package,ath9k-htc) += ATH9K_HTC
 config-$(call config_package,ath10k) += ATH10K ATH10K_PCI
 config-$(call config_package,wil6210) += WIL6210
-config-$(CONFIG_PACKAGE_kmod-ath10k) += ATH10K_DFS_CERTIFIED ATH10K_SMART_ANT_ALG
+config-$(CONFIG_PACKAGE_kmod-ath10k) += ATH10K_DFS_CERTIFIED
 
 config-$(CONFIG_LEDS_TRIGGERS) += MAC80211_LEDS
 
