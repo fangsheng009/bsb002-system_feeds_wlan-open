@@ -1,0 +1,41 @@
+--- a/drivers/net/wireless/ath/ath10k/htt_rx.c
++++ b/drivers/net/wireless/ath/ath10k/htt_rx.c
+@@ -646,6 +646,26 @@ struct amsdu_subframe_hdr {
+ 	__be16 len;
+ } __packed;
+ 
++static void ath10k_print_rx_desc_info(struct ath10k *ar,
++				      struct htt_rx_desc *rxd)
++{
++	ath10k_warn(ar, "rx attention flags %08x\nmpdu start:  info0 %08x info1 %08x\nmsdu start:  info0 %08x info1 %08x\nppdu start:  info0 %08x info1 %08x info2 %08x info3 %08x info4 %08x\nmsdu end:  info0 %08x\nmpdu end:  info0 %08x\n",
++		   __le32_to_cpu(rxd->attention.flags),
++		   __le32_to_cpu(rxd->mpdu_start.info0),
++		   __le32_to_cpu(rxd->mpdu_start.info1),
++		   __le32_to_cpu(rxd->msdu_start.common.info0),
++		   __le32_to_cpu(rxd->msdu_start.common.info1),
++		   rxd->ppdu_start.info0, __le32_to_cpu(rxd->ppdu_start.info1),
++		   __le32_to_cpu(rxd->ppdu_start.info2),
++		   __le32_to_cpu(rxd->ppdu_start.info3),
++		   __le32_to_cpu(rxd->ppdu_start.info4),
++		   __le32_to_cpu(rxd->msdu_end.common.info0),
++		   __le32_to_cpu(rxd->mpdu_end.info0));
++
++	ath10k_dbg_dump(ar, ATH10K_DBG_HTT_DUMP, NULL, "rx desc msdu payload: ",
++			(void *)rxd->msdu_payload, 50);
++}
++
+ static void ath10k_htt_rx_h_rates(struct ath10k *ar,
+ 				  struct ieee80211_rx_status *status,
+ 				  struct htt_rx_desc *rxd)
+@@ -700,6 +720,11 @@ static void ath10k_htt_rx_h_rates(struct
+ 		bw = info2 & 3;
+ 		sgi = info3 & 1;
+ 
++		if (mcs > 0x09) {
++			ath10k_warn(ar, "invalid mcs is reported %u\n", mcs);
++			ath10k_print_rx_desc_info(ar, rxd);
++		}
++
+ 		status->rate_idx = mcs;
+ 		status->vht_nss = nss;
+ 
