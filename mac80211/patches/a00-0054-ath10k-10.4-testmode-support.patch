@@ -1,14 +1,14 @@
 --- a/drivers/net/wireless/ath/ath10k/core.c
 +++ b/drivers/net/wireless/ath/ath10k/core.c
-@@ -136,6 +136,7 @@ static const struct ath10k_hw_params ath
+@@ -139,6 +139,7 @@ static const struct ath10k_hw_params ath
+ 		.continuous_frag_desc = true,
+ 		.channel_counters_freq_hz = 150000,
+ 		.max_probe_resp_desc_thres = 24,
++		.utf_codeswap_support = true,
  		.pktlog_ce_found = true,
  		.pktlog_ce = 8,
- 		.ccnt_freq_hz = 150000,
-+		.utf_codeswap_support = true,
  		.fw = {
- 			.dir = QCA99X0_HW_2_0_FW_DIR,
- 			.fw = QCA99X0_HW_2_0_FW_FILE,
-@@ -513,6 +514,14 @@ static int ath10k_download_fw(struct ath
+@@ -529,6 +530,14 @@ static int ath10k_download_fw(struct ath
  		data = ar->testmode.utf->data;
  		data_len = ar->testmode.utf->size;
  		mode_name = "utf";
@@ -23,7 +23,7 @@
  		break;
  	default:
  		ath10k_err(ar, "unknown firmware mode: %d\n", mode);
-@@ -1554,7 +1563,7 @@ static int ath10k_core_probe_fw(struct a
+@@ -1570,7 +1579,7 @@ static int ath10k_core_probe_fw(struct a
  		goto err_free_firmware_files;
  	}
  
@@ -34,7 +34,7 @@
  			   ret);
 --- a/drivers/net/wireless/ath/ath10k/core.h
 +++ b/drivers/net/wireless/ath/ath10k/core.h
-@@ -654,6 +654,11 @@ struct ath10k {
+@@ -662,6 +662,11 @@ struct ath10k {
  		u8 pktlog_ce;
  		bool pktlog_ce_found;
  
@@ -43,10 +43,10 @@
 +		 */
 +		bool utf_codeswap_support;
 +
- 		u32 ccnt_freq_hz;
- 
  		struct ath10k_hw_params_fw {
-@@ -820,6 +825,12 @@ struct ath10k {
+ 			const char *dir;
+ 			const char *fw;
+@@ -826,6 +831,12 @@ struct ath10k {
  		DECLARE_BITMAP(orig_fw_features, ATH10K_FW_FEATURE_COUNT);
  		enum ath10k_fw_wmi_op_version orig_wmi_op_version;
  

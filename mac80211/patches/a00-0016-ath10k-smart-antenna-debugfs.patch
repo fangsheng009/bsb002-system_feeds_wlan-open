@@ -42,7 +42,7 @@ Subject: [PATCH] smart antenna debugfs patch
  struct ath10k {
  	struct ath_common ath_common;
  	struct ieee80211_hw *hw;
-@@ -815,6 +823,8 @@ struct ath10k {
+@@ -823,6 +831,8 @@ struct ath10k {
  	 */
  	struct ath10k_peer_ratecode_list ratecode_list;
  
@@ -53,7 +53,7 @@ Subject: [PATCH] smart antenna debugfs patch
  };
 --- a/drivers/net/wireless/ath/ath10k/debug.c
 +++ b/drivers/net/wireless/ath/ath10k/debug.c
-@@ -2195,6 +2195,9 @@ int ath10k_debug_register(struct ath10k
+@@ -2193,6 +2193,9 @@ int ath10k_debug_register(struct ath10k
  
  	debugfs_create_file("pktlog_filter", S_IRUGO | S_IWUSR,
  			    ar->debug.debugfs_phy, ar, &fops_pktlog_filter);

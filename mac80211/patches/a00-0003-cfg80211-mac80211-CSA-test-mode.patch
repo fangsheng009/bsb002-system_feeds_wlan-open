@@ -19,7 +19,7 @@
   * This is the new netlink-based wireless configuration interface.
   *
   * Copyright 2006-2010	Johannes Berg <johannes@sipsolutions.net>
-@@ -6494,6 +6494,16 @@ skip_beacons:
+@@ -6495,6 +6495,16 @@ skip_beacons:
  	if (err)
  		return err;
  
@@ -33,6 +33,6 @@
 +		printk(KERN_INFO "Disabling DFS test mode\n");
 +	}
 +
- 	if (!cfg80211_reg_can_beacon(&rdev->wiphy, &params.chandef,
- 				     wdev->iftype))
+ 	if (!cfg80211_reg_can_beacon_relax(&rdev->wiphy, &params.chandef,
+ 					   wdev->iftype))
  		return -EINVAL;

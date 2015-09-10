@@ -41,7 +41,7 @@
  ath10k_pci-y += pci.o \
 --- a/drivers/net/wireless/ath/ath10k/core.c
 +++ b/drivers/net/wireless/ath/ath10k/core.c
-@@ -1157,8 +1157,14 @@ static int ath10k_core_init_firmware_fea
+@@ -1178,8 +1178,14 @@ static int ath10k_core_init_firmware_fea
  	case ATH10K_FW_WMI_OP_VERSION_10_1:
  	case ATH10K_FW_WMI_OP_VERSION_10_2:
  	case ATH10K_FW_WMI_OP_VERSION_10_2_4:
@@ -110,7 +110,7 @@
  	struct ieee80211_hw *hw;
 --- a/drivers/net/wireless/ath/ath10k/debug.c
 +++ b/drivers/net/wireless/ath/ath10k/debug.c
-@@ -1905,7 +1905,8 @@ void ath10k_debug_stop(struct ath10k *ar
+@@ -1903,7 +1903,8 @@ void ath10k_debug_stop(struct ath10k *ar
  	if (ar->debug.htt_stats_mask != 0)
  		cancel_delayed_work(&ar->debug.htt_stats_dwork);
  
@@ -120,7 +120,7 @@
  }
  
  static ssize_t ath10k_write_simulate_radar(struct file *file,
-@@ -2001,6 +2002,9 @@ static ssize_t ath10k_write_pktlog_filte
+@@ -1999,6 +2000,9 @@ static ssize_t ath10k_write_pktlog_filte
  
  	mutex_lock(&ar->conf_mutex);
  
@@ -130,7 +130,7 @@
  	if (ar->state != ATH10K_STATE_ON) {
  		ar->debug.pktlog_filter = filter;
  		ret = count;
-@@ -2015,10 +2019,18 @@ static ssize_t ath10k_write_pktlog_filte
+@@ -2013,10 +2017,18 @@ static ssize_t ath10k_write_pktlog_filte
  			goto out;
  		}
  	} else {
@@ -2978,7 +2978,7 @@
 +#endif /* _SMART_ANT_ALG_ */
 --- a/drivers/net/wireless/ath/ath10k/wmi.c
 +++ b/drivers/net/wireless/ath/ath10k/wmi.c
-@@ -4910,11 +4910,13 @@ static struct sk_buff *ath10k_wmi_10_2_o
+@@ -5086,11 +5086,13 @@ static struct sk_buff *ath10k_wmi_10_2_o
  		config.num_peers =
  			__cpu_to_le32(min(TARGET_10_2_SMART_ANT_NUM_PEERS,
  					  TARGET_10X_NUM_PEERS));

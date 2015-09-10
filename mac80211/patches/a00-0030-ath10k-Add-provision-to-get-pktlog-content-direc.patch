@@ -1,9 +1,9 @@
 --- a/drivers/net/wireless/ath/ath10k/core.c
 +++ b/drivers/net/wireless/ath/ath10k/core.c
-@@ -129,6 +129,8 @@ static const struct ath10k_hw_params ath
- 		.uart_pin = 7,
- 		.otp_exe_param = 0x00000700,
+@@ -139,6 +139,8 @@ static const struct ath10k_hw_params ath
  		.continuous_frag_desc = true,
+ 		.channel_counters_freq_hz = 150000,
+ 		.max_probe_resp_desc_thres = 24,
 +		.pktlog_ce_found = true,
 +		.pktlog_ce = 8,
  		.fw = {
@@ -11,9 +11,9 @@
  			.fw = QCA99X0_HW_2_0_FW_FILE,
 --- a/drivers/net/wireless/ath/ath10k/core.h
 +++ b/drivers/net/wireless/ath/ath10k/core.h
-@@ -632,6 +632,12 @@ struct ath10k {
+@@ -640,6 +640,12 @@ struct ath10k {
  		 */
- 		bool continuous_frag_desc;
+ 		u32 max_probe_resp_desc_thres;
  
 +		/* Specifies dedicated copy engine number info (if any) used
 +		 * for pktlog.
@@ -51,7 +51,7 @@
  {
 --- a/drivers/net/wireless/ath/ath10k/pci.c
 +++ b/drivers/net/wireless/ath/ath10k/pci.c
-@@ -1134,6 +1134,11 @@ static void ath10k_pci_ce_recv_data(stru
+@@ -1144,6 +1144,11 @@ static void ath10k_pci_ce_recv_data(stru
  	unsigned int transfer_id;
  	unsigned int flags;
  
@@ -63,7 +63,7 @@
  	__skb_queue_head_init(&list);
  	while (ath10k_ce_completed_recv_next(ce_state, &transfer_context,
  					     &ce_data, &nbytes, &transfer_id,
-@@ -1346,6 +1351,17 @@ static void ath10k_pci_hif_set_callbacks
+@@ -1356,6 +1361,17 @@ static void ath10k_pci_hif_set_callbacks
  	       sizeof(ar_pci->msg_callbacks_current));
  }
  
@@ -81,7 +81,7 @@
  static void ath10k_pci_kill_tasklet(struct ath10k *ar)
  {
  	struct ath10k_pci *ar_pci = ath10k_pci_priv(ar);
-@@ -2419,6 +2435,7 @@ static const struct ath10k_hif_ops ath10
+@@ -2424,6 +2440,7 @@ static const struct ath10k_hif_ops ath10
  	.get_default_pipe	= ath10k_pci_hif_get_default_pipe,
  	.send_complete_check	= ath10k_pci_hif_send_complete_check,
  	.set_callbacks		= ath10k_pci_hif_set_callbacks,
