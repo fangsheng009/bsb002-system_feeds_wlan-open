@@ -90,6 +90,7 @@ mac80211_hostapd_setup_base() {
 		enable_ac=0
 		idx="$channel"
 		case "$htmode" in
+			VHT20)	enable_ac=1;;
 			VHT40)
 				case "$channel" in
 					36|40) idx=38;;
@@ -185,6 +186,19 @@ mac80211_hostapd_setup_base() {
 				vht_capab="$vht_capab[RX-ANTENNA-PATTERN]"
 			[ "$((($vht_cap & 536870912) * $tx_antenna_pattern))" -eq 536870912 ] && \
 				vht_capab="$vht_capab[TX-ANTENNA-PATTERN]"
+
+			#beamforming related configurationss
+			[ "$(($vht_cap & 57344))" -eq 24576 ] && \
+				vht_capab="$vht_capab[BF-ANTENNA-4]"
+			[ "$(($vht_cap & 458752))" -eq 196608 ] && \
+				[ 15 -eq "$txantenna" ] && \
+					vht_capab="$vht_capab[SOUNDING-DIMENSION-4]"
+				[ 7 -eq "$txantenna" -o 11 -eq "$txantenna" -o 13 -eq "$txantenna" ] && \
+					vht_capab="$vht_capab[SOUNDING-DIMENSION-3]"
+				[ 3 -eq "$txantenna" -o 5 -eq "$txantenna" -o 9 -eq "$txantenna" ] && \
+					vht_capab="$vht_capab[SOUNDING-DIMENSION-2]"
+				[ 1 -eq "$txantenna" ] && \
+					vht_capab="$vht_capab[SOUNDING-DIMENSION-1]"
 
 			# supported Channel widths
 			vht160_hw=0
