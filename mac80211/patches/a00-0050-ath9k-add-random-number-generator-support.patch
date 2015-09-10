@@ -113,7 +113,7 @@
  
  #include "common.h"
  #include "debug.h"
-@@ -1051,6 +1052,10 @@ struct ath_softc {
+@@ -1048,6 +1049,10 @@ struct ath_softc {
  	u32 wow_intr_before_sleep;
  	bool force_wow;
  #endif
@@ -124,7 +124,7 @@
  };
  
  /********/
-@@ -1073,6 +1078,12 @@ static inline int ath9k_tx99_send(struct ath_softc *sc,
+@@ -1070,6 +1075,12 @@ static inline int ath9k_tx99_send(struct
  }
  #endif /* CPTCFG_ATH9K_TX99 */
  
@@ -139,7 +139,7 @@
  	common->bus_ops->read_cachesize(common, csz);
 --- a/drivers/net/wireless/ath/ath9k/main.c
 +++ b/drivers/net/wireless/ath/ath9k/main.c
-@@ -737,6 +737,8 @@ static int ath9k_start(struct ieee80211_hw *hw)
+@@ -739,6 +739,8 @@ static int ath9k_start(struct ieee80211_
  
  	ath9k_ps_restore(sc);
  
@@ -148,7 +148,7 @@
  	return 0;
  }
  
-@@ -839,6 +841,8 @@ static void ath9k_stop(struct ieee80211_hw *hw)
+@@ -841,6 +843,8 @@ static void ath9k_stop(struct ieee80211_
  	/* Ensure HW is awake when we try to shut it down. */
  	ath9k_ps_wakeup(sc);
  
