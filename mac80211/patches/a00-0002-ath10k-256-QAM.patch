@@ -1,6 +1,6 @@
 --- a/drivers/net/wireless/ath/ath10k/mac.c
 +++ b/drivers/net/wireless/ath/ath10k/mac.c
-@@ -2307,8 +2307,13 @@ static void ath10k_peer_assoc_h_vht(stru
+@@ -2321,8 +2321,13 @@ static void ath10k_peer_assoc_h_vht(stru
  
  	arg->peer_flags |= WMI_PEER_VHT;
  
@@ -28,7 +28,7 @@
  int ath10k_mac_register(struct ath10k *ar);
 --- a/drivers/net/wireless/ath/ath10k/wmi.h
 +++ b/drivers/net/wireless/ath/ath10k/wmi.h
-@@ -5443,6 +5443,7 @@ struct wmi_peer_set_q_empty_callback_cmd
+@@ -5475,6 +5475,7 @@ struct wmi_peer_set_q_empty_callback_cmd
  #define WMI_PEER_QOS            0x00000002
  #define WMI_PEER_NEED_PTK_4_WAY 0x00000004
  #define WMI_PEER_NEED_GTK_2_WAY 0x00000010
@@ -36,7 +36,7 @@
  #define WMI_PEER_APSD           0x00000800
  #define WMI_PEER_HT             0x00001000
  #define WMI_PEER_40MHZ          0x00002000
-@@ -5454,6 +5455,7 @@ struct wmi_peer_set_q_empty_callback_cmd
+@@ -5486,6 +5487,7 @@ struct wmi_peer_set_q_empty_callback_cmd
  #define WMI_PEER_VHT            0x02000000
  #define WMI_PEER_80MHZ          0x04000000
  #define WMI_PEER_VHT_2G         0x08000000
@@ -46,7 +46,7 @@
   * Peer rate capabilities.
 --- a/drivers/net/wireless/ath/ath10k/wmi.c
 +++ b/drivers/net/wireless/ath/ath10k/wmi.c
-@@ -6489,30 +6489,35 @@ int ath10k_wmi_attach(struct ath10k *ar)
+@@ -6678,30 +6678,35 @@ int ath10k_wmi_attach(struct ath10k *ar)
  		ar->wmi.cmd = &wmi_10_4_cmd_map;
  		ar->wmi.vdev_param = &wmi_10_4_vdev_param_map;
  		ar->wmi.pdev_param = &wmi_10_4_pdev_param_map;
@@ -94,7 +94,7 @@
  	u32 rx_decap_mode;
 --- a/drivers/net/wireless/ath/ath10k/wmi-tlv.c
 +++ b/drivers/net/wireless/ath/ath10k/wmi-tlv.c
-@@ -3472,5 +3472,6 @@ void ath10k_wmi_tlv_attach(struct ath10k
+@@ -3479,5 +3479,6 @@ void ath10k_wmi_tlv_attach(struct ath10k
  	ar->wmi.cmd = &wmi_tlv_cmd_map;
  	ar->wmi.vdev_param = &wmi_tlv_vdev_param_map;
  	ar->wmi.pdev_param = &wmi_tlv_pdev_param_map;

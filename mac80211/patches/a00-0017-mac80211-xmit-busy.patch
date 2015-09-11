@@ -18,7 +18,7 @@
   *
 --- a/net/mac80211/tx.c
 +++ b/net/mac80211/tx.c
-@@ -2928,6 +2928,13 @@ void __ieee80211_subif_start_xmit(struct
+@@ -2930,6 +2930,13 @@ void __ieee80211_subif_start_xmit(struct
  netdev_tx_t ieee80211_subif_start_xmit(struct sk_buff *skb,
  				       struct net_device *dev)
  {

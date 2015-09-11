@@ -54,7 +54,7 @@
  enum ath10k_state {
 --- a/drivers/net/wireless/ath/ath10k/debug.c
 +++ b/drivers/net/wireless/ath/ath10k/debug.c
-@@ -2114,6 +2114,7 @@ void ath10k_debug_destroy(struct ath10k
+@@ -2112,6 +2112,7 @@ void ath10k_debug_destroy(struct ath10k
  	ar->debug.fw_crash_data = NULL;
  
  	ath10k_debug_fw_stats_reset(ar);
@@ -62,7 +62,7 @@
  }
  
  int ath10k_debug_register(struct ath10k *ar)
-@@ -2194,6 +2195,7 @@ int ath10k_debug_register(struct ath10k
+@@ -2192,6 +2193,7 @@ int ath10k_debug_register(struct ath10k
  
  	debugfs_create_file("pktlog_filter", S_IRUGO | S_IWUSR,
  			    ar->debug.debugfs_phy, ar, &fops_pktlog_filter);
@@ -70,7 +70,7 @@
  
  	debugfs_create_file("quiet_period", S_IRUGO | S_IWUSR,
  			    ar->debug.debugfs_phy, ar, &fops_quiet_period);
-@@ -2204,6 +2206,7 @@ int ath10k_debug_register(struct ath10k
+@@ -2202,6 +2204,7 @@ int ath10k_debug_register(struct ath10k
  void ath10k_debug_unregister(struct ath10k *ar)
  {
  	cancel_delayed_work_sync(&ar->debug.htt_stats_dwork);
@@ -80,7 +80,7 @@
  #endif /* CPTCFG_ATH10K_DEBUGFS */
 --- a/drivers/net/wireless/ath/ath10k/htt_rx.c
 +++ b/drivers/net/wireless/ath/ath10k/htt_rx.c
-@@ -1561,6 +1561,7 @@ static void ath10k_htt_rx_handler(struct
+@@ -1604,6 +1604,7 @@ static void ath10k_htt_rx_handler(struct
  			break;
  		}
  
@@ -88,7 +88,7 @@
  		ath10k_htt_rx_h_ppdu(ar, &amsdu, rx_status, 0xffff);
  		ath10k_htt_rx_h_unchain(ar, &amsdu, ret > 0);
  		ath10k_htt_rx_h_filter(ar, &amsdu, rx_status);
-@@ -2046,6 +2047,7 @@ void ath10k_htt_t2h_msg_handler(struct a
+@@ -2089,6 +2090,7 @@ void ath10k_htt_t2h_msg_handler(struct a
  		trace_ath10k_htt_pktlog(ar, resp->pktlog_msg.payload,
  					sizeof(*hdr) +
  					__le16_to_cpu(hdr->size));

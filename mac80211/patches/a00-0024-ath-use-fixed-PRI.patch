@@ -1,8 +1,6 @@
-diff --git a/drivers/net/wireless/ath/dfs_pri_detector.c b/drivers/net/wireless/ath/dfs_pri_detector.c
-index 1b5ad19..fef459a 100644
 --- a/drivers/net/wireless/ath/dfs_pri_detector.c
 +++ b/drivers/net/wireless/ath/dfs_pri_detector.c
-@@ -25,6 +25,8 @@ struct ath_dfs_pool_stats global_dfs_pool_stats = {};
+@@ -25,6 +25,8 @@ struct ath_dfs_pool_stats global_dfs_poo
  
  #define DFS_POOL_STAT_INC(c) (global_dfs_pool_stats.c++)
  #define DFS_POOL_STAT_DEC(c) (global_dfs_pool_stats.c--)
@@ -11,7 +9,7 @@ index 1b5ad19..fef459a 100644
  
  /**
   * struct pulse_elem - elements in pulse queue
-@@ -243,7 +245,8 @@ static bool pseq_handler_create_sequences(struct pri_detector *pde,
+@@ -243,7 +245,8 @@ static bool pseq_handler_create_sequence
  		ps.count_falses = 0;
  		ps.first_ts = p->ts;
  		ps.last_ts = ts;

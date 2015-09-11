@@ -1,8 +1,6 @@
-diff --git a/drivers/net/wireless/ath/ath10k/ce.c b/drivers/net/wireless/ath/ath10k/ce.c
-index cf28fbe..e90840d 100644
 --- a/drivers/net/wireless/ath/ath10k/ce.c
 +++ b/drivers/net/wireless/ath/ath10k/ce.c
-@@ -1076,9 +1076,7 @@ void ath10k_ce_deinit_pipe(struct ath10k *ar, unsigned int ce_id)
+@@ -1076,9 +1076,7 @@ void ath10k_ce_deinit_pipe(struct ath10k
  }
  
  int ath10k_ce_alloc_pipe(struct ath10k *ar, int ce_id,
@@ -13,7 +11,7 @@ index cf28fbe..e90840d 100644
  {
  	struct ath10k_pci *ar_pci = ath10k_pci_priv(ar);
  	struct ath10k_ce_pipe *ce_state = &ar_pci->ce_states[ce_id];
-@@ -1104,10 +1102,10 @@ int ath10k_ce_alloc_pipe(struct ath10k *ar, int ce_id,
+@@ -1104,10 +1102,10 @@ int ath10k_ce_alloc_pipe(struct ath10k *
  	ce_state->src_sz_max = attr->src_sz_max;
  
  	if (attr->src_nentries)
@@ -26,11 +24,9 @@ index cf28fbe..e90840d 100644
  
  	if (attr->src_nentries) {
  		ce_state->src_ring = ath10k_ce_alloc_src_ring(ar, ce_id, attr);
-diff --git a/drivers/net/wireless/ath/ath10k/ce.h b/drivers/net/wireless/ath/ath10k/ce.h
-index 5c903e1..dbb94fd 100644
 --- a/drivers/net/wireless/ath/ath10k/ce.h
 +++ b/drivers/net/wireless/ath/ath10k/ce.h
-@@ -209,9 +209,7 @@ int ath10k_ce_init_pipe(struct ath10k *ar, unsigned int ce_id,
+@@ -209,9 +209,7 @@ int ath10k_ce_init_pipe(struct ath10k *a
  			const struct ce_attr *attr);
  void ath10k_ce_deinit_pipe(struct ath10k *ar, unsigned int ce_id);
  int ath10k_ce_alloc_pipe(struct ath10k *ar, int ce_id,
@@ -51,8 +47,6 @@ index 5c903e1..dbb94fd 100644
  };
  
  #define SR_BA_ADDRESS		0x0000
-diff --git a/drivers/net/wireless/ath/ath10k/hif.h b/drivers/net/wireless/ath/ath10k/hif.h
-index 44235c4..a589270 100644
 --- a/drivers/net/wireless/ath/ath10k/hif.h
 +++ b/drivers/net/wireless/ath/ath10k/hif.h
 @@ -80,9 +80,6 @@ struct ath10k_hif_ops {
@@ -65,7 +59,7 @@ index 44235c4..a589270 100644
  	void (*set_pktlog_callbacks)(struct ath10k *ar,
  				     struct ath10k_hif_cb *callbacks);
  
-@@ -166,12 +163,6 @@ static inline void ath10k_hif_send_complete_check(struct ath10k *ar,
+@@ -166,12 +163,6 @@ static inline void ath10k_hif_send_compl
  	ar->hif.ops->send_complete_check(ar, pipe_id, force);
  }
  
@@ -78,11 +72,9 @@ index 44235c4..a589270 100644
  static inline void ath10k_hif_set_pktlog_callbacks(struct ath10k *ar,
  						   struct ath10k_hif_cb *cb)
  {
-diff --git a/drivers/net/wireless/ath/ath10k/htc.c b/drivers/net/wireless/ath/ath10k/htc.c
-index 85bfa2a..c552e78 100644
 --- a/drivers/net/wireless/ath/ath10k/htc.c
 +++ b/drivers/net/wireless/ath/ath10k/htc.c
-@@ -179,8 +179,7 @@ err_pull:
+@@ -181,8 +181,7 @@ err_pull:
  	return ret;
  }
  
@@ -92,7 +84,7 @@ index 85bfa2a..c552e78 100644
  {
  	struct ath10k_htc *htc = &ar->htc;
  	struct ath10k_skb_cb *skb_cb;
-@@ -197,6 +196,7 @@ static int ath10k_htc_tx_completion_handler(struct ath10k *ar,
+@@ -199,6 +198,7 @@ static int ath10k_htc_tx_completion_hand
  
  	return 0;
  }
@@ -100,7 +92,7 @@ index 85bfa2a..c552e78 100644
  
  /***********/
  /* Receive */
-@@ -302,8 +302,7 @@ static int ath10k_htc_process_trailer(struct ath10k_htc *htc,
+@@ -304,8 +304,7 @@ static int ath10k_htc_process_trailer(st
  	return status;
  }
  
@@ -110,7 +102,7 @@ index 85bfa2a..c552e78 100644
  {
  	int status = 0;
  	struct ath10k_htc *htc = &ar->htc;
-@@ -440,6 +439,7 @@ out:
+@@ -442,6 +441,7 @@ out:
  
  	return status;
  }
@@ -118,7 +110,7 @@ index 85bfa2a..c552e78 100644
  
  static void ath10k_htc_control_rx_complete(struct ath10k *ar,
  					   struct sk_buff *skb)
-@@ -839,7 +839,6 @@ int ath10k_htc_start(struct ath10k_htc *htc)
+@@ -841,7 +841,6 @@ int ath10k_htc_start(struct ath10k_htc *
  /* registered target arrival callback from the HIF layer */
  int ath10k_htc_init(struct ath10k *ar)
  {
@@ -126,7 +118,7 @@ index 85bfa2a..c552e78 100644
  	struct ath10k_htc_ep *ep = NULL;
  	struct ath10k_htc *htc = &ar->htc;
  
-@@ -847,15 +846,11 @@ int ath10k_htc_init(struct ath10k *ar)
+@@ -849,15 +848,11 @@ int ath10k_htc_init(struct ath10k *ar)
  
  	ath10k_htc_reset_endpoint_states(htc);
  
@@ -142,11 +134,9 @@ index 85bfa2a..c552e78 100644
  	ath10k_hif_get_default_pipe(ar, &ep->ul_pipe_id, &ep->dl_pipe_id);
  
  	init_completion(&htc->ctl_resp);
-diff --git a/drivers/net/wireless/ath/ath10k/htc.h b/drivers/net/wireless/ath/ath10k/htc.h
-index 527179c..d1fc8e7 100644
 --- a/drivers/net/wireless/ath/ath10k/htc.h
 +++ b/drivers/net/wireless/ath/ath10k/htc.h
-@@ -355,5 +355,7 @@ int ath10k_htc_connect_service(struct ath10k_htc *htc,
+@@ -355,5 +355,7 @@ int ath10k_htc_connect_service(struct at
  int ath10k_htc_send(struct ath10k_htc *htc, enum ath10k_htc_ep_id eid,
  		    struct sk_buff *packet);
  struct sk_buff *ath10k_htc_alloc_skb(struct ath10k *ar, int size);
@@ -154,23 +144,19 @@ index 527179c..d1fc8e7 100644
 +int ath10k_htc_rx_completion_handler(struct ath10k *ar, struct sk_buff *skb);
  
  #endif
-diff --git a/drivers/net/wireless/ath/ath10k/htt.h b/drivers/net/wireless/ath/ath10k/htt.h
-index e01490b..978954c 100644
 --- a/drivers/net/wireless/ath/ath10k/htt.h
 +++ b/drivers/net/wireless/ath/ath10k/htt.h
-@@ -1596,6 +1596,7 @@ int ath10k_htt_send_rx_ring_cfg_ll(struct ath10k_htt *htt);
+@@ -1597,6 +1597,7 @@ int ath10k_htt_send_rx_ring_cfg_ll(struc
  int ath10k_htt_h2t_aggr_cfg_msg(struct ath10k_htt *htt,
  				u8 max_subfrms_ampdu,
  				u8 max_subfrms_amsdu);
 +void ath10k_htt_hif_tx_complete(struct ath10k *ar, struct sk_buff *skb);
  
- void __ath10k_htt_tx_dec_pending(struct ath10k_htt *htt);
+ void __ath10k_htt_tx_dec_pending(struct ath10k_htt *htt, bool limit_mgmt_desc);
  int ath10k_htt_tx_alloc_msdu_id(struct ath10k_htt *htt, struct sk_buff *skb);
-diff --git a/drivers/net/wireless/ath/ath10k/htt_rx.c b/drivers/net/wireless/ath/ath10k/htt_rx.c
-index 0cd3298..684ad5d 100644
 --- a/drivers/net/wireless/ath/ath10k/htt_rx.c
 +++ b/drivers/net/wireless/ath/ath10k/htt_rx.c
-@@ -2116,6 +2116,7 @@ void ath10k_htt_t2h_msg_handler(struct ath10k *ar, struct sk_buff *skb)
+@@ -2134,6 +2134,7 @@ void ath10k_htt_t2h_msg_handler(struct a
  	/* Free the indication buffer */
  	dev_kfree_skb_any(skb);
  }
@@ -178,11 +164,9 @@ index 0cd3298..684ad5d 100644
  
  static void ath10k_htt_txrx_compl_task(unsigned long ptr)
  {
-diff --git a/drivers/net/wireless/ath/ath10k/htt_tx.c b/drivers/net/wireless/ath/ath10k/htt_tx.c
-index 6a5e852..79a48f6 100644
 --- a/drivers/net/wireless/ath/ath10k/htt_tx.c
 +++ b/drivers/net/wireless/ath/ath10k/htt_tx.c
-@@ -160,6 +160,12 @@ void ath10k_htt_htc_tx_complete(struct ath10k *ar, struct sk_buff *skb)
+@@ -175,6 +175,12 @@ void ath10k_htt_htc_tx_complete(struct a
  	dev_kfree_skb_any(skb);
  }
  
@@ -195,11 +179,9 @@ index 6a5e852..79a48f6 100644
  int ath10k_htt_h2t_ver_req_msg(struct ath10k_htt *htt)
  {
  	struct ath10k *ar = htt->ar;
-diff --git a/drivers/net/wireless/ath/ath10k/pci.c b/drivers/net/wireless/ath/ath10k/pci.c
-index dd25db2..4cc0bb6 100644
 --- a/drivers/net/wireless/ath/ath10k/pci.c
 +++ b/drivers/net/wireless/ath/ath10k/pci.c
-@@ -94,6 +94,10 @@ static int ath10k_pci_bmi_wait(struct ath10k_ce_pipe *tx_pipe,
+@@ -104,6 +104,10 @@ static int ath10k_pci_bmi_wait(struct at
  			       struct ath10k_ce_pipe *rx_pipe,
  			       struct bmi_xfer *xfer);
  static int ath10k_pci_qca99x0_chip_reset(struct ath10k *ar);
@@ -210,7 +192,7 @@ index dd25db2..4cc0bb6 100644
  
  static const struct ce_attr host_ce_config_wlan[] = {
  	/* CE0: host->target HTC control and raw streams */
-@@ -102,6 +106,8 @@ static const struct ce_attr host_ce_config_wlan[] = {
+@@ -112,6 +116,8 @@ static const struct ce_attr host_ce_conf
  		.src_nentries = 16,
  		.src_sz_max = 256,
  		.dest_nentries = 0,
@@ -219,7 +201,7 @@ index dd25db2..4cc0bb6 100644
  	},
  
  	/* CE1: target->host HTT + HTC control */
-@@ -110,6 +116,8 @@ static const struct ce_attr host_ce_config_wlan[] = {
+@@ -120,6 +126,8 @@ static const struct ce_attr host_ce_conf
  		.src_nentries = 0,
  		.src_sz_max = 2048,
  		.dest_nentries = 512,
@@ -228,7 +210,7 @@ index dd25db2..4cc0bb6 100644
  	},
  
  	/* CE2: target->host WMI */
-@@ -118,6 +126,8 @@ static const struct ce_attr host_ce_config_wlan[] = {
+@@ -128,6 +136,8 @@ static const struct ce_attr host_ce_conf
  		.src_nentries = 0,
  		.src_sz_max = 2048,
  		.dest_nentries = 128,
@@ -237,7 +219,7 @@ index dd25db2..4cc0bb6 100644
  	},
  
  	/* CE3: host->target WMI */
-@@ -126,6 +136,8 @@ static const struct ce_attr host_ce_config_wlan[] = {
+@@ -136,6 +146,8 @@ static const struct ce_attr host_ce_conf
  		.src_nentries = 32,
  		.src_sz_max = 2048,
  		.dest_nentries = 0,
@@ -246,7 +228,7 @@ index dd25db2..4cc0bb6 100644
  	},
  
  	/* CE4: host->target HTT */
-@@ -134,14 +146,18 @@ static const struct ce_attr host_ce_config_wlan[] = {
+@@ -144,14 +156,18 @@ static const struct ce_attr host_ce_conf
  		.src_nentries = CE_HTT_H2T_MSG_SRC_NENTRIES,
  		.src_sz_max = 256,
  		.dest_nentries = 0,
@@ -268,7 +250,7 @@ index dd25db2..4cc0bb6 100644
  	},
  
  	/* CE6: target autonomous hif_memcpy */
-@@ -247,12 +263,12 @@ static const struct ce_pipe_config target_ce_config_wlan[] = {
+@@ -257,12 +273,12 @@ static const struct ce_pipe_config targe
  
  	/* NB: 50% of src nentries, since tx has 2 frags */
  
@@ -284,7 +266,7 @@ index dd25db2..4cc0bb6 100644
  		.flags = __cpu_to_le32(CE_ATTR_FLAGS),
  		.reserved = __cpu_to_le32(0),
  	},
-@@ -386,7 +402,7 @@ static const struct service_to_pipe target_service_to_ce_map_wlan[] = {
+@@ -396,7 +412,7 @@ static const struct service_to_pipe targ
  	{
  		__cpu_to_le32(ATH10K_HTC_SVC_ID_HTT_DATA_MSG),
  		__cpu_to_le32(PIPEDIR_IN),	/* in = DL = target -> host */
@@ -293,7 +275,7 @@ index dd25db2..4cc0bb6 100644
  	},
  
  	/* (Additions here) */
-@@ -1129,11 +1145,9 @@ static int ath10k_pci_diag_write32(struct ath10k *ar, u32 address, u32 value)
+@@ -1104,11 +1120,9 @@ static int ath10k_pci_diag_write32(struc
  }
  
  /* Called by lower (CE) layer when a send to Target completes. */
@@ -306,7 +288,7 @@ index dd25db2..4cc0bb6 100644
  	struct sk_buff_head list;
  	struct sk_buff *skb;
  	u32 ce_data;
-@@ -1151,16 +1165,16 @@ static void ath10k_pci_ce_send_done(struct ath10k_ce_pipe *ce_state)
+@@ -1126,16 +1140,16 @@ static void ath10k_pci_ce_send_done(stru
  	}
  
  	while ((skb = __skb_dequeue(&list)))
@@ -326,7 +308,7 @@ index dd25db2..4cc0bb6 100644
  	struct sk_buff *skb;
  	struct sk_buff_head list;
  	void *transfer_context;
-@@ -1200,12 +1214,90 @@ static void ath10k_pci_ce_recv_data(struct ath10k_ce_pipe *ce_state)
+@@ -1175,12 +1189,90 @@ static void ath10k_pci_ce_recv_data(stru
  		ath10k_dbg_dump(ar, ATH10K_DBG_PCI_DUMP, NULL, "pci rx: ",
  				skb->data, skb->len);
  
@@ -418,7 +400,7 @@ index dd25db2..4cc0bb6 100644
  static int ath10k_pci_hif_tx_sg(struct ath10k *ar, u8 pipe_id,
  				struct ath10k_hif_sg_item *items, int n_items)
  {
-@@ -1375,17 +1467,6 @@ static void ath10k_pci_hif_send_complete_check(struct ath10k *ar, u8 pipe,
+@@ -1350,17 +1442,6 @@ static void ath10k_pci_hif_send_complete
  	ath10k_ce_per_engine_service(ar, pipe);
  }
  
@@ -436,7 +418,7 @@ index dd25db2..4cc0bb6 100644
  static void ath10k_pci_hif_set_pktlog_callbacks(struct ath10k *ar,
  						struct ath10k_hif_cb *callbacks)
  {
-@@ -1622,7 +1703,7 @@ static void ath10k_pci_tx_pipe_cleanup(struct ath10k_pci_pipe *pci_pipe)
+@@ -1597,7 +1678,7 @@ static void ath10k_pci_tx_pipe_cleanup(s
  
  		ce_ring->per_transfer_context[i] = NULL;
  
@@ -445,7 +427,7 @@ index dd25db2..4cc0bb6 100644
  	}
  }
  
-@@ -2037,9 +2118,7 @@ static int ath10k_pci_alloc_pipes(struct ath10k *ar)
+@@ -2017,9 +2098,7 @@ static int ath10k_pci_alloc_pipes(struct
  		pipe->pipe_num = i;
  		pipe->hif_ce_state = ar;
  
@@ -456,7 +438,7 @@ index dd25db2..4cc0bb6 100644
  		if (ret) {
  			ath10k_err(ar, "failed to allocate copy engine pipe %d: %d\n",
  				   i, ret);
-@@ -2462,7 +2541,6 @@ static const struct ath10k_hif_ops ath10k_pci_hif_ops = {
+@@ -2439,7 +2518,6 @@ static const struct ath10k_hif_ops ath10
  	.map_service_to_pipe	= ath10k_pci_hif_map_service_to_pipe,
  	.get_default_pipe	= ath10k_pci_hif_get_default_pipe,
  	.send_complete_check	= ath10k_pci_hif_send_complete_check,
@@ -464,8 +446,6 @@ index dd25db2..4cc0bb6 100644
  	.set_pktlog_callbacks	= ath10k_pci_hif_set_pktlog_callbacks,
  	.get_free_queue_number	= ath10k_pci_hif_get_free_queue_number,
  	.power_up		= ath10k_pci_hif_power_up,
-diff --git a/drivers/net/wireless/ath/ath10k/pci.h b/drivers/net/wireless/ath/ath10k/pci.h
-index e2d3810..6f90d43 100644
 --- a/drivers/net/wireless/ath/ath10k/pci.h
 +++ b/drivers/net/wireless/ath/ath10k/pci.h
 @@ -175,7 +175,6 @@ struct ath10k_pci {

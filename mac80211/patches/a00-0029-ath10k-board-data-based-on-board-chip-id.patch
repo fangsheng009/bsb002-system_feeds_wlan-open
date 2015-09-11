@@ -1,6 +1,6 @@
 --- a/drivers/net/wireless/ath/ath10k/core.c
 +++ b/drivers/net/wireless/ath/ath10k/core.c
-@@ -863,6 +863,46 @@ err:
+@@ -884,6 +884,46 @@ err:
  	return ret;
  }
  
@@ -47,7 +47,7 @@
  static int ath10k_core_fetch_firmware_files(struct ath10k *ar)
  {
  	int ret;
-@@ -871,10 +911,12 @@ static int ath10k_core_fetch_firmware_fi
+@@ -892,10 +932,12 @@ static int ath10k_core_fetch_firmware_fi
  	if (!no_calfile)
  		ath10k_fetch_cal_file(ar);
  
@@ -64,7 +64,7 @@
  	}
  
  	ar->fw_api = 5;
-@@ -915,6 +957,20 @@ static int ath10k_core_fetch_firmware_fi
+@@ -936,6 +978,20 @@ static int ath10k_core_fetch_firmware_fi
  success:
  	ath10k_dbg(ar, ATH10K_DBG_BOOT, "using fw api %d\n", ar->fw_api);
  
@@ -102,7 +102,7 @@
  struct ath10k_bmi {
  	bool done_sent;
  };
-@@ -657,6 +665,8 @@ struct ath10k {
+@@ -665,6 +673,8 @@ struct ath10k {
  	char spec_board_id[100];
  	bool spec_board_loaded;
  
@@ -113,9 +113,9 @@
  
 --- a/drivers/net/wireless/ath/ath10k/pci.c
 +++ b/drivers/net/wireless/ath/ath10k/pci.c
-@@ -2935,11 +2935,16 @@ static int ath10k_pci_probe(struct pci_d
- 	ar_pci->dev = &pdev->dev;
+@@ -2942,11 +2942,16 @@ static int ath10k_pci_probe(struct pci_d
  	ar_pci->ar = ar;
+ 	ar->dev_id = pci_dev->device;
  
 -	if (pdev->subsystem_vendor || pdev->subsystem_device)
 +	if (QCA_REV_99X0(ar))

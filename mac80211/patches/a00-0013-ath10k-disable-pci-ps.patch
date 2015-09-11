@@ -1,6 +1,6 @@
 --- a/drivers/net/wireless/ath/ath10k/pci.c
 +++ b/drivers/net/wireless/ath/ath10k/pci.c
-@@ -457,12 +457,39 @@ static int ath10k_pci_wake_wait(struct ath10k *ar)
+@@ -467,12 +467,39 @@ static int ath10k_pci_wake_wait(struct a
  	return -ETIMEDOUT;
  }
  
@@ -40,7 +40,7 @@
  	spin_lock_irqsave(&ar_pci->ps_lock, flags);
  
  	ath10k_dbg(ar, ATH10K_DBG_PCI_PS, "pci ps wake refcount %lu awake %d\n",
-@@ -494,6 +521,9 @@ static void ath10k_pci_sleep(struct ath10k *ar)
+@@ -504,6 +531,9 @@ static void ath10k_pci_sleep(struct ath1
  	struct ath10k_pci *ar_pci = ath10k_pci_priv(ar);
  	unsigned long flags;
  
@@ -50,7 +50,7 @@
  	spin_lock_irqsave(&ar_pci->ps_lock, flags);
  
  	ath10k_dbg(ar, ATH10K_DBG_PCI_PS, "pci ps sleep refcount %lu awake %d\n",
-@@ -536,6 +566,11 @@ static void ath10k_pci_sleep_sync(struct ath10k *ar)
+@@ -546,6 +576,11 @@ static void ath10k_pci_sleep_sync(struct
  	struct ath10k_pci *ar_pci = ath10k_pci_priv(ar);
  	unsigned long flags;
  
@@ -62,7 +62,7 @@
  	del_timer_sync(&ar_pci->ps_timer);
  
  	spin_lock_irqsave(&ar_pci->ps_lock, flags);
-@@ -2401,6 +2436,9 @@ static int ath10k_pci_hif_resume(struct ath10k *ar)
+@@ -2400,6 +2435,9 @@ static int ath10k_pci_hif_resume(struct
  	struct pci_dev *pdev = ar_pci->pdev;
  	u32 val;
  
@@ -72,7 +72,7 @@
  	/* Suspend/Resume resets the PCI configuration space, so we have to
  	 * re-disable the RETRY_TIMEOUT register (0x41) to keep PCI Tx retries
  	 * from interfering with C3 CPU state. pci_restore_state won't help
-@@ -2506,6 +2544,9 @@ static irqreturn_t ath10k_pci_interrupt_handler(int irq, void *arg)
+@@ -2504,6 +2542,9 @@ static irqreturn_t ath10k_pci_interrupt_
  	struct ath10k *ar = arg;
  	struct ath10k_pci *ar_pci = ath10k_pci_priv(ar);
  
@@ -82,7 +82,7 @@
  	if (ar_pci->num_msi_intrs == 0) {
  		if (!ath10k_pci_irq_pending(ar))
  			return IRQ_NONE;
-@@ -2912,16 +2953,20 @@ static int ath10k_pci_probe(struct pci_dev *pdev,
+@@ -2910,17 +2951,21 @@ static int ath10k_pci_probe(struct pci_d
  	struct ath10k_pci *ar_pci;
  	enum ath10k_hw_rev hw_rev;
  	u32 chip_id;
@@ -93,6 +93,7 @@
  		hw_rev = ATH10K_HW_QCA988X;
 +		pci_ps = 0;
  		break;
+ 	case QCA6164_2_1_DEVICE_ID:
  	case QCA6174_2_1_DEVICE_ID:
  		hw_rev = ATH10K_HW_QCA6174;
 +		pci_ps = 1;
@@ -103,15 +104,15 @@
  		break;
  	default:
  		WARN_ON(1);
-@@ -2941,6 +2986,7 @@ static int ath10k_pci_probe(struct pci_dev *pdev,
+@@ -2940,6 +2985,7 @@ static int ath10k_pci_probe(struct pci_d
  	ar_pci->pdev = pdev;
  	ar_pci->dev = &pdev->dev;
  	ar_pci->ar = ar;
 +	ar_pci->pci_ps = pci_ps;
+ 	ar->dev_id = pci_dev->device;
  
- 	if (QCA_REV_99X0(ar))
- 		ar->board_id_from_otp = true;
-@@ -2993,6 +3039,9 @@ static int ath10k_pci_probe(struct pci_dev *pdev,
+ 	if (pdev->subsystem_vendor || pdev->subsystem_device)
+@@ -2988,6 +3034,9 @@ static int ath10k_pci_probe(struct pci_d
  		goto err_deinit_irq;
  	}
  
@@ -123,7 +124,7 @@
  		ath10k_err(ar, "failed to reset chip: %d\n", ret);
 --- a/drivers/net/wireless/ath/ath10k/pci.h
 +++ b/drivers/net/wireless/ath/ath10k/pci.h
-@@ -222,6 +222,8 @@ struct ath10k_pci {
+@@ -221,6 +221,8 @@ struct ath10k_pci {
  	 * powersave register state changes.
  	 */
  	bool ps_awake;
