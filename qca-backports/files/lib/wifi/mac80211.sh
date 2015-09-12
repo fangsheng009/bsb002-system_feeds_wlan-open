@@ -215,8 +215,8 @@ scan_mac80211() {
 	local device="$1"
 	local adhoc sta ap monitor mesh disabled
 
-	config_get vifs "$device" vifs
-	for vif in $vifs; do
+	config_get vifs_mac80211 "$device" vifs
+	for vif in $vifs_mac80211; do
 		config_get_bool disabled "$vif" disabled 0
 		[ $disabled = 0 ] || continue
 
@@ -311,7 +311,7 @@ mac80211_generate_mac() {
 enable_mac80211() {
 	local device="$1"
 	config_get channel "$device" channel
-	config_get vifs "$device" vifs
+	config_get vifs_mac80211 "$device" vifs
 	config_get txpower "$device" txpower
 	config_get country "$device" country
 	config_get distance "$device" distance
@@ -356,7 +356,7 @@ enable_mac80211() {
 	local freq="$(get_freq "$phy" "${fixed:+$channel}")"
 
 	wifi_fixup_hwmode "$device" "g"
-	for vif in $vifs; do
+	for vif in $vifs_mac80211; do
 		config_get ifname "$vif" ifname
 		[ -n "$ifname" ] || {
 			[ $i -gt 0 ] && ifname="wlan${phy#phy}-$i" || ifname="wlan${phy#phy}"
@@ -438,7 +438,7 @@ enable_mac80211() {
 
 	local start_hostapd=
 	rm -f /var/run/hostapd-$phy.conf
-	for vif in $vifs; do
+	for vif in $vifs_mac80211; do
 		config_get mode "$vif" mode
 		case "$mode" in
 			ap)
@@ -459,7 +459,7 @@ enable_mac80211() {
 		}
 		sleep 2
 
-		for vif in $vifs; do
+		for vif in $vifs_mac80211; do
 			config_get mode "$vif" mode
 			config_get ifname "$vif" ifname
 			[ "$mode" = "ap" ] || continue
@@ -468,7 +468,7 @@ enable_mac80211() {
 		done
 	}
 
-	for vif in $vifs; do
+	for vif in $vifs_mac80211; do
 		config_get mode "$vif" mode
 		config_get ifname "$vif" ifname
 		[ "$mode" = "ap" ] || ifconfig "$ifname" up
