@@ -1,6 +1,6 @@
 --- a/drivers/net/wireless/ath/ath10k/wmi.c
 +++ b/drivers/net/wireless/ath/ath10k/wmi.c
-@@ -4966,7 +4966,7 @@ static struct sk_buff *ath10k_wmi_10_2_o
+@@ -5142,7 +5142,7 @@ static struct sk_buff *ath10k_wmi_10_2_o
  	cmd = (struct wmi_init_cmd_10_2 *)buf->data;
  
  	features = WMI_10_2_RX_BATCH_MODE;
@@ -37,7 +37,7 @@
  	{
 --- a/drivers/net/wireless/ath/ath10k/core.h
 +++ b/drivers/net/wireless/ath/ath10k/core.h
-@@ -833,6 +833,8 @@ static inline bool ath10k_smart_ant_enab
+@@ -841,6 +841,8 @@ static inline bool ath10k_smart_ant_enab
  	return true;
  }
  

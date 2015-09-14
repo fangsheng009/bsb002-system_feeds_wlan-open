@@ -22,7 +22,7 @@
  
  static const struct ath10k_hw_params ath10k_hw_params_list[] = {
  	{
-@@ -1022,6 +1025,7 @@ static void ath10k_core_restart(struct w
+@@ -1043,6 +1046,7 @@ static void ath10k_core_restart(struct w
  	 */
  	barrier();
  
@@ -32,7 +32,7 @@
  	complete_all(&ar->scan.started);
 --- a/drivers/net/wireless/ath/ath10k/debug.c
 +++ b/drivers/net/wireless/ath/ath10k/debug.c
-@@ -25,6 +25,7 @@
+@@ -24,6 +24,7 @@
  #include "debug.h"
  #include "hif.h"
  #include "wmi-ops.h"
@@ -40,7 +40,7 @@
  
  /* ms */
  #define ATH10K_DEBUG_HTT_STATS_INTERVAL 1000
-@@ -2262,3 +2263,153 @@ void ath10k_dbg_dump(struct ath10k *ar,
+@@ -2260,3 +2261,153 @@ void ath10k_dbg_dump(struct ath10k *ar,
  EXPORT_SYMBOL(ath10k_dbg_dump);
  
  #endif /* CPTCFG_ATH10K_DEBUG */

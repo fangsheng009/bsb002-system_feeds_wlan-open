@@ -1,15 +1,6 @@
 --- a/drivers/net/wireless/ath/ath10k/htt_tx.c
 +++ b/drivers/net/wireless/ath/ath10k/htt_tx.c
-@@ -417,6 +417,8 @@ int ath10k_htt_mgmt_tx(struct ath10k_htt
- 	int len = 0;
- 	int msdu_id = -1;
- 	int res;
-+	struct ieee80211_hdr *hdr = (struct ieee80211_hdr *)msdu->data;
-+
- 
- 	res = ath10k_htt_tx_inc_pending(htt);
- 	if (res)
-@@ -433,6 +435,12 @@ int ath10k_htt_mgmt_tx(struct ath10k_htt
+@@ -459,6 +459,12 @@ int ath10k_htt_mgmt_tx(struct ath10k_htt
  	}
  	msdu_id = res;
  
@@ -24,7 +15,7 @@
  		res = -ENOMEM;
 --- a/drivers/net/wireless/ath/ath10k/mac.c
 +++ b/drivers/net/wireless/ath/ath10k/mac.c
-@@ -2476,6 +2476,9 @@ static int ath10k_peer_assoc_prepare(str
+@@ -2490,6 +2490,9 @@ static int ath10k_peer_assoc_prepare(str
  	ath10k_peer_assoc_h_qos(ar, vif, sta, arg);
  	ath10k_peer_assoc_h_phymode(ar, vif, sta, arg);
  
@@ -36,7 +27,7 @@
  
 --- a/drivers/net/wireless/ath/ath10k/wmi.h
 +++ b/drivers/net/wireless/ath/ath10k/wmi.h
-@@ -5460,6 +5460,7 @@ struct wmi_peer_set_q_empty_callback_cmd
+@@ -5492,6 +5492,7 @@ struct wmi_peer_set_q_empty_callback_cmd
  #define WMI_PEER_VHT            0x02000000
  #define WMI_PEER_80MHZ          0x04000000
  #define WMI_PEER_VHT_2G         0x08000000

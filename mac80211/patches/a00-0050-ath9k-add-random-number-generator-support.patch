@@ -113,7 +113,7 @@
  
  #include "common.h"
  #include "debug.h"
-@@ -1050,6 +1051,10 @@ struct ath_softc {
+@@ -1048,6 +1049,10 @@ struct ath_softc {
  	u32 wow_intr_before_sleep;
  	bool force_wow;
  #endif
@@ -124,7 +124,7 @@
  };
  
  /********/
-@@ -1072,6 +1077,12 @@ static inline int ath9k_tx99_send(struct
+@@ -1070,6 +1075,12 @@ static inline int ath9k_tx99_send(struct
  }
  #endif /* CPTCFG_ATH9K_TX99 */
  
