@@ -74,7 +74,24 @@
  {
 --- a/drivers/net/wireless/ath/ath10k/htc.c
 +++ b/drivers/net/wireless/ath/ath10k/htc.c
-@@ -181,8 +181,7 @@ err_pull:
+@@ -23,16 +23,6 @@
+ /* Send */
+ /********/
+ 
+-static inline void ath10k_htc_send_complete_check(struct ath10k_htc_ep *ep,
+-						  int force)
+-{
+-	/*
+-	 * Check whether HIF has any prior sends that have finished,
+-	 * have not had the post-processing done.
+-	 */
+-	ath10k_hif_send_complete_check(ep->htc->ar, ep->ul_pipe_id, force);
+-}
+-
+ static void ath10k_htc_control_tx_complete(struct ath10k *ar,
+ 					   struct sk_buff *skb)
+ {
+@@ -181,8 +171,7 @@ err_pull:
  	return ret;
  }
  
@@ -84,7 +101,7 @@
  {
  	struct ath10k_htc *htc = &ar->htc;
  	struct ath10k_skb_cb *skb_cb;
-@@ -199,6 +198,7 @@ static int ath10k_htc_tx_completion_hand
+@@ -199,6 +188,7 @@ static int ath10k_htc_tx_completion_hand
  
  	return 0;
  }
@@ -92,7 +109,7 @@
  
  /***********/
  /* Receive */
-@@ -304,8 +304,7 @@ static int ath10k_htc_process_trailer(st
+@@ -304,8 +294,7 @@ static int ath10k_htc_process_trailer(st
  	return status;
  }
  
@@ -102,7 +119,23 @@
  {
  	int status = 0;
  	struct ath10k_htc *htc = &ar->htc;
-@@ -442,6 +441,7 @@ out:
+@@ -332,15 +321,6 @@ static int ath10k_htc_rx_completion_hand
+ 
+ 	ep = &htc->endpoint[eid];
+ 
+-	/*
+-	 * If this endpoint that received a message from the target has
+-	 * a to-target HIF pipe whose send completions are polled rather
+-	 * than interrupt-driven, this is a good point to ask HIF to check
+-	 * whether it has any completed sends to handle.
+-	 */
+-	if (ep->ul_is_polled)
+-		ath10k_htc_send_complete_check(ep, 1);
+-
+ 	payload_len = __le16_to_cpu(hdr->len);
+ 
+ 	if (payload_len + sizeof(*hdr) > ATH10K_HTC_MAX_LEN) {
+@@ -442,6 +422,7 @@ out:
  
  	return status;
  }
@@ -110,7 +143,7 @@
  
  static void ath10k_htc_control_rx_complete(struct ath10k *ar,
  					   struct sk_buff *skb)
-@@ -841,7 +841,6 @@ int ath10k_htc_start(struct ath10k_htc *
+@@ -841,7 +822,6 @@ int ath10k_htc_start(struct ath10k_htc *
  /* registered target arrival callback from the HIF layer */
  int ath10k_htc_init(struct ath10k *ar)
  {
@@ -118,7 +151,7 @@
  	struct ath10k_htc_ep *ep = NULL;
  	struct ath10k_htc *htc = &ar->htc;
  
-@@ -849,15 +848,11 @@ int ath10k_htc_init(struct ath10k *ar)
+@@ -849,15 +829,11 @@ int ath10k_htc_init(struct ath10k *ar)
  
  	ath10k_htc_reset_endpoint_states(htc);
  
@@ -232,7 +265,7 @@
  		.src_nentries = CE_HTT_H2T_MSG_SRC_NENTRIES,
  		.src_sz_max = 256,
  		.dest_nentries = 0,
-+		.send_cb = ath10k_pci_htc_tx_cb,
++		.send_cb = ath10k_pci_htt_tx_cb,
 +		.recv_cb = ath10k_pci_htc_rx_cb,
  	},
  
@@ -275,7 +308,7 @@
  	},
  
  	/* (Additions here) */
-@@ -1104,11 +1120,9 @@ static int ath10k_pci_diag_write32(struc
+@@ -1139,11 +1155,9 @@ static int ath10k_pci_diag_write32(struc
  }
  
  /* Called by lower (CE) layer when a send to Target completes. */
@@ -288,7 +321,7 @@
  	struct sk_buff_head list;
  	struct sk_buff *skb;
  	u32 ce_data;
-@@ -1126,16 +1140,16 @@ static void ath10k_pci_ce_send_done(stru
+@@ -1161,16 +1175,16 @@ static void ath10k_pci_ce_send_done(stru
  	}
  
  	while ((skb = __skb_dequeue(&list)))
@@ -308,7 +341,7 @@
  	struct sk_buff *skb;
  	struct sk_buff_head list;
  	void *transfer_context;
-@@ -1175,12 +1189,90 @@ static void ath10k_pci_ce_recv_data(stru
+@@ -1210,12 +1224,87 @@ static void ath10k_pci_ce_recv_data(stru
  		ath10k_dbg_dump(ar, ATH10K_DBG_PCI_DUMP, NULL, "pci rx: ",
  				skb->data, skb->len);
  
@@ -323,24 +356,21 @@
 +static void ath10k_pci_htt_tx_cb(struct ath10k_ce_pipe *ce_state)
 +{
 +	struct ath10k *ar = ce_state->ar;
-+	struct sk_buff_head list;
 +	struct sk_buff *skb;
 +	u32 ce_data;
 +	unsigned int nbytes;
 +	unsigned int transfer_id;
 +
-+	__skb_queue_head_init(&list);
 +	while (ath10k_ce_completed_send_next(ce_state, (void **)&skb, &ce_data,
 +					     &nbytes, &transfer_id) == 0) {
 +		/* no need to call tx completion for NULL pointers */
 +		if (skb == NULL)
 +			continue;
 +
-+		__skb_queue_tail(&list, skb);
-+	}
-+
-+	while ((skb = __skb_dequeue(&list)))
++		dma_unmap_single(ar->dev, ATH10K_SKB_RXCB(skb)->paddr,
++				 skb->len, DMA_TO_DEVICE);
 +		ath10k_htt_hif_tx_complete(ar, skb);
++	}
 +}
 +
 +/* Called by lower (CE) layer when HTT data is received from the Target. */
@@ -393,14 +423,14 @@
 +	 * HTT Rx (target->host) is processed.
 +	 */
 +	ce_state = &ar_pci->ce_states[4];
-+	ath10k_pci_htc_tx_cb(ce_state);
++	ath10k_pci_htt_tx_cb(ce_state);
 +}
 +
 +
  static int ath10k_pci_hif_tx_sg(struct ath10k *ar, u8 pipe_id,
  				struct ath10k_hif_sg_item *items, int n_items)
  {
-@@ -1350,17 +1442,6 @@ static void ath10k_pci_hif_send_complete
+@@ -1385,17 +1474,6 @@ static void ath10k_pci_hif_send_complete
  	ath10k_ce_per_engine_service(ar, pipe);
  }
  
@@ -418,7 +448,7 @@
  static void ath10k_pci_hif_set_pktlog_callbacks(struct ath10k *ar,
  						struct ath10k_hif_cb *callbacks)
  {
-@@ -1597,7 +1678,7 @@ static void ath10k_pci_tx_pipe_cleanup(s
+@@ -1632,7 +1710,7 @@ static void ath10k_pci_tx_pipe_cleanup(s
  
  		ce_ring->per_transfer_context[i] = NULL;
  
@@ -427,7 +457,7 @@
  	}
  }
  
-@@ -2017,9 +2098,7 @@ static int ath10k_pci_alloc_pipes(struct
+@@ -2052,9 +2130,7 @@ static int ath10k_pci_alloc_pipes(struct
  		pipe->pipe_num = i;
  		pipe->hif_ce_state = ar;
  
@@ -438,7 +468,7 @@
  		if (ret) {
  			ath10k_err(ar, "failed to allocate copy engine pipe %d: %d\n",
  				   i, ret);
-@@ -2439,7 +2518,6 @@ static const struct ath10k_hif_ops ath10
+@@ -2477,7 +2553,6 @@ static const struct ath10k_hif_ops ath10
  	.map_service_to_pipe	= ath10k_pci_hif_map_service_to_pipe,
  	.get_default_pipe	= ath10k_pci_hif_get_default_pipe,
  	.send_complete_check	= ath10k_pci_hif_send_complete_check,
