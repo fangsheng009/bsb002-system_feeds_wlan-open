@@ -316,6 +316,19 @@ QCA IEEE 802.11ac family of chipsets. For now only
 PCI is supported.
 endef
 
+define KernelPackage/qca-wil6210/config
+  if PACKAGE_kmod-qca-wil6210
+	if TARGET_ipq806x
+	config PACKAGE_WIL6210_NSS_SUPPORT
+		bool "Enable NSS support for 11ad wil6210 driver"
+		default y
+		help
+		This option enables support for NSS in boards
+	endif
+
+  endif
+endef
+
 define KernelPackage/qca-wil6210
   $(call KernelPackage/qca-mac80211/Default)
   TITLE:=QCA 802.11ad wireless cards support
@@ -411,6 +424,7 @@ config-$(CONFIG_QCA_ATH_USER_REGD) += ATH_USER_REGD \
 config-$(call config_package,qca-ath9k-htc) += ATH9K_HTC
 config-$(call config_package,qca-ath10k) += ATH10K ATH10K_PCI ATH10K_DFS_CERTIFIED
 config-$(call config_package,qca-wil6210) += ATH_CARDS WIL6210
+config-$(CONFIG_PACKAGE_WIL6210_NSS_SUPPORT) += WIL6210_NSS_SUPPORT
 
 config-$(call config_package,qca-bluetooth) += BT BT_RFCOMM BT_BNEP BT_HIDP BT_INTEL BT_BCM BT_HCIBTUSB BT_HCIUART
 
@@ -429,15 +443,11 @@ EXTRA_CFLAGS:= \
 	$(patsubst CONFIG_%, -DCONFIG_%=1, $(patsubst %=m,%,$(filter %=m,$(EXTRA_KCONFIG)))) \
 	$(patsubst CONFIG_%, -DCONFIG_%=1, $(patsubst %=y,%,$(filter %=y,$(EXTRA_KCONFIG))))
 
-ifeq ($(ARCH_PACKAGES),ipq806x)
-  EXTRA_CFLAGS += "-I$(STAGING_DIR)/usr/include/qca-nss-drv"
-  EXTRA_CFLAGS += "-DWIL_USE_NSS"
-endif
 
 MAKE_OPTS:= -C "$(PKG_BUILD_DIR)" \
 	CROSS_COMPILE="$(KERNEL_CROSS)" \
 	ARCH="$(LINUX_KARCH)" \
-	EXTRA_CFLAGS="-I$(PKG_BUILD_DIR)/include $(EXTRA_CFLAGS)"  \
+	EXTRA_CFLAGS="-I$(PKG_BUILD_DIR)/include $(EXTRA_CFLAGS) -I$(STAGING_DIR)/usr/include/qca-nss-drv"  \
 	KLIB_BUILD="$(LINUX_DIR)" \
 	MODPROBE=true \
 	KLIB=$(TARGET_MODULES_DIR) \
