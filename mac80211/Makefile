@@ -374,6 +374,8 @@ config-$(CONFIG_ATH_USER_REGD) += ATH_USER_REGD \
 config-$(call config_package,ath9k-htc) += ATH9K_HTC
 config-$(call config_package,ath10k) += ATH10K ATH10K_PCI
 config-$(call config_package,wil6210) += WIL6210
+
+config-$(CONFIG_PACKAGE_kmod-ath9k) += ATH9K_CHANNEL_CONTEXT
 config-$(CONFIG_PACKAGE_kmod-ath10k) += ATH10K_DFS_CERTIFIED ATH10K_SMART_ANT_ALG
 
 config-$(CONFIG_LEDS_TRIGGERS) += MAC80211_LEDS
