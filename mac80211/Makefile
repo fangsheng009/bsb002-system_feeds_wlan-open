@@ -68,7 +68,7 @@ endef
 define KernelPackage/mac80211/config
   if PACKAGE_kmod-mac80211
 
-    if CONFIG_PACKAGE_kmod-qca-nss-drv
+    if PACKAGE_kmod-qca-nss-drv
 	config PACKAGE_MAC80211_NSS_SUPPORT
 		bool "Enable NSS support for IPQ platform"
 		default y
