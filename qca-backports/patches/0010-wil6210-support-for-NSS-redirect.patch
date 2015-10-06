@@ -5,7 +5,7 @@
  #include "wil6210.h"
  #include "txrx.h"
 -
-+#if defined(WIL_USE_NSS)
++#ifdef CPTCFG_WIL6210_NSS_SUPPORT
 +#include <nss_api_if.h>
 +#endif
  static int wil_open(struct net_device *ndev)
@@ -16,7 +16,7 @@
  
  	wil_dbg_misc(wil, "%s()\n", __func__);
 -
-+#if defined(WIL_USE_NSS)
++#ifdef CPTCFG_WIL6210_NSS_SUPPORT
 +	wil->nss_ctx = nss_create_virt_if(ndev);
 +	if (!wil->nss_ctx) {
 +		wil_err(wil, "Failed to register with NSS\n");
@@ -28,7 +28,7 @@
  	if (rc < 0) {
  		dev_err(&ndev->dev, "Failed to register netdev: %d\n", rc);
 +
-+#if defined(WIL_USE_NSS)
++#ifdef CPTCFG_WIL6210_NSS_SUPPORT
 +		nss_destroy_virt_if(wil->nss_ctx);
 +#endif
  		return rc;
@@ -38,7 +38,7 @@
  	struct net_device *ndev = wil_to_ndev(wil);
  
  	wil_dbg_misc(wil, "%s()\n", __func__);
-+#if defined(WIL_USE_NSS)
++#ifdef CPTCFG_WIL6210_NSS_SUPPORT
 +	nss_destroy_virt_if(wil->nss_ctx);
 +#endif
  
@@ -50,7 +50,7 @@
  #include "wmi.h"
  #include "txrx.h"
  #include "trace.h"
-+#if defined(WIL_USE_NSS)
++#ifdef CPTCFG_WIL6210_NSS_SUPPORT
 +#include <nss_api_if.h>
 +#endif
  
@@ -60,7 +60,7 @@
  	if (skb) { /* deliver to local stack */
  
  		skb->protocol = eth_type_trans(skb, ndev);
-+#if defined(WIL_USE_NSS)
++#ifdef CPTCFG_WIL6210_NSS_SUPPORT
 +		if (rx_align_2) {
 +			int rc1 = nss_tx_virt_if_rxbuf(wil->nss_ctx,
 +								skb);
@@ -76,7 +76,7 @@
 +		} else {
 +			rc = napi_gro_receive(&wil->napi_rx, skb);
 +		}
-+#else /* if defined(WIL_USE_NSS) */
++#else /* ifdef CPTCFG_WIL6210_NSS_SUPPORT */
  		rc = napi_gro_receive(&wil->napi_rx, skb);
 +#endif
  		wil_dbg_txrx(wil, "Rx complete %d bytes => %s\n",
@@ -89,7 +89,7 @@
  	void *platform_handle;
  	struct wil_platform_ops platform_ops;
 -
-+#if defined(WIL_USE_NSS)
++#ifdef CPTCFG_WIL6210_NSS_SUPPORT
 +	void *nss_ctx;
 +#endif
  	struct pmc_ctx pmc;
