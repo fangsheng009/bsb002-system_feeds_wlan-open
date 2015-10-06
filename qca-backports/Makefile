@@ -308,7 +308,7 @@ endef
 define KernelPackage/qca-wil6210
   $(call KernelPackage/qca-mac80211/Default)
   TITLE:=QCA 802.11ad wireless cards support
-  DEPENDS+= @PCI_SUPPORT +kmod-qca-cfg80211 +kmod-qca-nss-drv
+  DEPENDS+= @PCI_SUPPORT +kmod-qca-cfg80211 +TARGET_ipq806x:kmod-qca-nss-drv
   FILES:= \
 	$(PKG_BUILD_DIR)/drivers/net/wireless/ath/wil6210/wil6210.ko
   AUTOLOAD:=$(call AutoLoad,33,wil6210)
@@ -376,10 +376,15 @@ EXTRA_CFLAGS:= \
 	$(patsubst CONFIG_%, -DCONFIG_%=1, $(patsubst %=m,%,$(filter %=m,$(EXTRA_KCONFIG)))) \
 	$(patsubst CONFIG_%, -DCONFIG_%=1, $(patsubst %=y,%,$(filter %=y,$(EXTRA_KCONFIG))))
 
+ifeq ($(ARCH_PACKAGES),ipq806x)
+  EXTRA_CFLAGS += "-I$(STAGING_DIR)/usr/include/qca-nss-drv"
+  EXTRA_CFLAGS += "-DWIL_USE_NSS"
+endif
+
 MAKE_OPTS:= -C "$(PKG_BUILD_DIR)" \
 	CROSS_COMPILE="$(KERNEL_CROSS)" \
 	ARCH="$(LINUX_KARCH)" \
-	EXTRA_CFLAGS="-I$(PKG_BUILD_DIR)/include -I$(STAGING_DIR)/usr/include/qca-nss-drv -DWIL_USE_NSS $(EXTRA_CFLAGS)"  \
+	EXTRA_CFLAGS="-I$(PKG_BUILD_DIR)/include $(EXTRA_CFLAGS)"  \
 	KLIB_BUILD="$(LINUX_DIR)" \
 	MODPROBE=true \
 	KLIB=$(TARGET_MODULES_DIR) \
