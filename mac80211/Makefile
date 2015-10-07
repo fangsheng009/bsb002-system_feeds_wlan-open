@@ -376,7 +376,8 @@ config-$(call config_package,ath10k) += ATH10K ATH10K_PCI
 config-$(call config_package,wil6210) += WIL6210
 
 config-$(CONFIG_PACKAGE_kmod-ath9k) += ATH9K_CHANNEL_CONTEXT
-config-$(CONFIG_PACKAGE_kmod-ath10k) += ATH10K_DFS_CERTIFIED ATH10K_SMART_ANT_ALG
+config-$(CONFIG_PACKAGE_kmod-ath10k) += ATH10K_DFS_CERTIFIED ATH10K_SMART_ANT_ALG \
+					ATH10K_AHB
 
 config-$(CONFIG_LEDS_TRIGGERS) += MAC80211_LEDS
 
