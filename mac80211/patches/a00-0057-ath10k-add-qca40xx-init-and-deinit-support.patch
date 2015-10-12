@@ -46,7 +46,7 @@ index 0000000..966a9c6
 +++ b/drivers/net/wireless/ath/ath10k/ahb.c
 @@ -0,0 +1,930 @@
 +/*
-+ * Copyright (c) 2015 Qualcomm Atheros, Inc.
++ * Copyright (c) 2015, The Linux Foundation. All rights reserved.
 + *
 + * Permission to use, copy, modify, and/or distribute this software for any
 + * purpose with or without fee is hereby granted, provided that the above
@@ -982,7 +982,7 @@ index 0000000..8ac3c96
 +++ b/drivers/net/wireless/ath/ath10k/ahb.h
 @@ -0,0 +1,86 @@
 +/*
-+ * Copyright (c) 2015 Qualcomm Atheros, Inc.
++ * Copyright (c) 2015, The Linux Foundation. All rights reserved.
 + *
 + * Permission to use, copy, modify, and/or distribute this software for any
 + * purpose with or without fee is hereby granted, provided that the above
